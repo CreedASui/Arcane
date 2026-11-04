@@ -1307,8 +1307,9 @@ local function BuildHub()
 		RefreshHub()
 	end)
 	o.lock:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + COL_W, y)
+	y = y - 30
 	local platesButton = C.Button(o, 148, 24, "", function()
-		if C.arcanePlatesOptions then C.arcanePlatesOptions() end
+		if C.arcanePlatesOptions then C.arcanePlatesOptions(o) end
 	end)
 	C.LText(platesButton.text, "Tiny Plates settings")
 	platesButton:SetPoint("TOPLEFT", o, "TOPLEFT", 14, y)
@@ -1318,9 +1319,7 @@ local function BuildHub()
 	end)
 	C.LText(langButton.text, "Language")
 	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
-	y = y - 30
 	-- the language: a button that opens the list of them, each in its own words
-	-- the language control now shares a row with the Tiny Plates submenu
 	o.lang = langButton
 	local menu = CreateFrame("Frame", "ArcaneLanguageMenu", o)
 	o.langMenu = menu
