@@ -11,39 +11,39 @@ Everything used to build and check Arcane UI outside the game. Run the commands 
 
 ## The stand-in game client and its tests
 
-`AUI/mock_cui.lua` is a stand-in for the game: its widgets (only the calls the 1.12 client really
+`arcane/mock_arcane.lua` is a stand-in for the game: its widgets (only the calls the 1.12 client really
 has: a missing one is an error, see `engine_methods.lua`), the Azeroth Survivors API as the game
-answers it, and Azeroth Survivors' character window (`AUI/mock_char.lua`). `bt/sim.lua` plays runs
+answers it, and Azeroth Survivors' character window (`arcane/mock_char.lua`). `bt/sim.lua` plays runs
 on it: bosses, guardians, cards, deaths, victory.
 
 | Command | What it checks |
 | --- | --- |
-| `lua50 AUI/tests.lua . ../Arcane` | Every part, end to end (500+ checks) |
-| `lua50 AUI/timer_tests.lua . ../Arcane` | The boss timer |
-| `lua50 AUI/numbers_harness.lua . ../Arcane/Numbers.lua` | The damage numbers (`CROWD=1` for crowds) |
-| `lua50 AUI/smoke.lua . ../Arcane <out folder>` | A long run with everything on, no errors |
-| `lua50 AUI/globals.lua . ../Arcane` | No stray globals (`this`, `event` and `arg1` are the game's) |
-| `lua50 AUI/overflow.lua . ../Arcane` | No text spilling out of its place, in all 11 languages |
-| `python3 AUI/locale_check.py ../Arcane` | Every phrase translated, its `{1}` slots kept |
+| `lua50 arcane/tests.lua . ../Arcane` | Every part, end to end (500+ checks) |
+| `lua50 arcane/timer_tests.lua . ../Arcane` | The boss timer |
+| `lua50 arcane/numbers_harness.lua . ../Arcane/Numbers.lua` | The damage numbers (`CROWD=1` for crowds) |
+| `lua50 arcane/smoke.lua . ../Arcane <out folder>` | A long run with everything on, no errors |
+| `lua50 arcane/globals.lua . ../Arcane` | No stray globals (`this`, `event` and `arg1` are the game's) |
+| `lua50 arcane/overflow.lua . ../Arcane` | No text spilling out of its place, in all 11 languages |
+| `python3 arcane/locale_check.py ../Arcane` | Every phrase translated, its `{1}` slots kept |
 
 ## Pictures of it
 
-The `AUI/*prev.lua` scripts set a scene and write a dump; `AUI/render_cui.py` draws it:
+The `arcane/*prev.lua` scripts set a scene and write a dump; `arcane/render_arcane.py` draws it:
 
 ```
-lua50 AUI/charprev.lua . ../Arcane out
-python3 AUI/render_cui.py out/char.txt out/char.png 2 0 150 590 720
+lua50 arcane/charprev.lua . ../Arcane out
+python3 arcane/render_arcane.py out/char.txt out/char.png 2 0 150 590 720
 ```
 
-`AUI/classprev.lua` writes the party in all nine class colors (`out/class1..3.txt`); `AUI/guardprev.lua`
-one boss and four guardians (`out/guards.txt`); `AUI/cardsprev.lua` the character window behind the
-level-up cards (`out/cards.txt`). `AUI/talprev.lua` opens the talent window (`out/talents.txt`); `AUI/numprev.lua` a single hit beside a
-stacked DoT (`out/numbers.txt`). `AUI/partyprev.lua` sets friends down (a revive mark and an edge arrow), the Level Up! button and the
-meter on Damage Taken (`out/party.txt`), then the run's summary (`out/summary.txt`); `AUI/rankprev.lua`
-the skill bar's rank boxes. `AUI/skullprev.lua` sets a boss fight with the skulls over two bosses and writes `out/skulls.txt`, and
+`arcane/classprev.lua` writes the party in all nine class colors (`out/class1..3.txt`); `arcane/guardprev.lua`
+one boss and four guardians (`out/guards.txt`); `arcane/cardsprev.lua` the character window behind the
+level-up cards (`out/cards.txt`). `arcane/talprev.lua` opens the talent window (`out/talents.txt`); `arcane/numprev.lua` a single hit beside a
+stacked DoT (`out/numbers.txt`). `arcane/partyprev.lua` sets friends down (a revive mark and an edge arrow), the Level Up! button and the
+meter on Damage Taken (`out/party.txt`), then the run's summary (`out/summary.txt`); `arcane/rankprev.lua`
+the skill bar's rank boxes. `arcane/skullprev.lua` sets a boss fight with the skulls over two bosses and writes `out/skulls.txt`, and
 the options window in `out/hub.txt`.
 
-A 1920x1080 game screenshot at `AUI/shot.png` (or named in `ARCANE_SHOT`) is drawn behind it,
+A 1920x1080 game screenshot at `arcane/shot.png` (or named in `ARCANE_SHOT`) is drawn behind it,
 with its action bar icons standing in for the game's; without one, a plain backdrop. The game's
 fonts are stood in for by system ones (`bt/render_bt.py`).
 
