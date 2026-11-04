@@ -35,6 +35,11 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The GitHub App token cannot create workflow files unless it has
+          # the special "workflows" scope. Keep the repo-owned workflow files
+          # untouched in this bootstrap commit; install the Arcane ZIP workflow
+          # separately through a normal GitHub UI commit.
+          rm -rf .github/workflows/package-arcane-zip.yml
           git add -A
           git commit -m "Rebrand working UI foundation as Arcane"
           git push origin HEAD:main
