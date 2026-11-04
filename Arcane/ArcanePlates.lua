@@ -575,15 +575,17 @@ local function UpdateBossGuardianDebuffs(frame)
 	if unit and unit.id then frame.arcanePlatesDebuffUnitID = unit.id end
 	local unitID = frame.arcanePlatesDebuffUnitID
 	if not unitID then row:Hide(); return end
-	local debuffs
-	if type(AZS_GetDebuffs) == "function" then
+	-- Prefer the already cached boss/guardian unit snapshot to avoid an extra
+	-- API call on every plate update. Query by ID only when the snapshot has no data.
+	local debuffs = unit and unit.debuffs
+	if type(debuffs) ~= "table" and type(AZS_GetDebuffs) == "function" then
 		local ok, value = pcall(AZS_GetDebuffs, unitID)
-		if ok then debuffs = value end
+		if ok and type(value) == "table" then debuffs = value end
 	end
-	if (not debuffs or type(debuffs) ~= "table") and unit and type(unit.debuffs) == "table" then
-		debuffs = unit.debuffs
+	if type(debuffs) ~= "table" then
+		row:Hide()
+		return
 	end
-	if type(debuffs) ~= "table" then return end
 
 	-- Debuff structure only changes when the game's revision changes. Reuse icons and
 	-- skip texture/stack writes until the actual content changes; durations tick separately.
@@ -791,7 +793,11 @@ ApplyBarOverride = function(bar, color)
 	else
 		local original = bar.arcanePlatesOriginalColor
 		if bar.arcanePlatesAppliedColor and original then
-			bar:SetStatusBarColor(original[1], original[2], original[3], original[4])
+			if original[4] ~= nil then
+				bar:SetStatusBarColor(original[1], original[2], original[3], original[4])
+			else
+				bar:SetStatusBarColor(original[1], original[2], original[3])
+			end
 		end
 		bar.arcanePlatesAppliedColor = nil
 		bar.arcanePlatesOriginalColor = nil
