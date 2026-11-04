@@ -138,14 +138,10 @@ local function Swatch(parent, category, color, x, y)
 		picker:Hide()
 		picker.hasOpacity = nil
 		picker.opacityFunc = nil
-		picker.func = Apply
-		picker.cancelFunc = Cancel
-		if picker.SetColorRGB then
-			picker:SetColorRGB(r, g, blue)
-		elseif picker.swatchFunc then
-			picker.swatchFunc(r, g, blue)
-		end
-		picker:Show()
+		ColorPickerFrame.func = Apply
+		ColorPickerFrame.cancelFunc = Cancel
+		ColorPickerFrame.previousValues = { r, g, blue }
+		ColorPickerFrame:Show()
 	end)
 	return b
 end
