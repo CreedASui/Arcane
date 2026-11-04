@@ -1222,7 +1222,7 @@ local function BuildHub()
 	hub = o
 	o:SetWidth(HUB_W)
 	local perColumn = math.ceil(table.getn(C.parts) / 2)
-	o:SetHeight(62 + perColumn * 26 + 14 + 60 + 24 + 12) -- the rows, then three lines of buttons
+	o:SetHeight(62 + perColumn * 26 + 14 + 60 + 24 + 12 + 30) -- rows, panels and three lines of buttons
 	o:SetPoint("CENTER", UIParent, "CENTER", 0, 10)
 	o:SetFrameStrata("DIALOG")
 	o:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
@@ -1307,13 +1307,25 @@ local function BuildHub()
 		RefreshHub()
 	end)
 	o.lock:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + COL_W, y)
+	local platesButton = C.Button(o, 148, 24, "", function()
+		if C.tinyPlatesOptions then C.tinyPlatesOptions() end
+	end)
+	C.LText(platesButton.text, "Tiny Plates settings")
+	platesButton:SetPoint("TOPLEFT", o, "TOPLEFT", 14, y)
+	local langButton = C.Button(o, 148, 24, "", function()
+		if o.langMenu:IsShown() then o.langMenu:Hide() else o.langMenu:Show() end
+		RefreshHub()
+	end)
+	C.LText(langButton.text, "Language")
+	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
 	y = y - 30
 	-- the language: a button that opens the list of them, each in its own words
 	o.lang = C.Button(o, 302, 24, "", function()
 		if o.langMenu:IsShown() then o.langMenu:Hide() else o.langMenu:Show() end
 		RefreshHub()
 	end)
-	o.lang:SetPoint("TOPLEFT", o, "TOPLEFT", 14, y)
+	-- the language control now shares a row with the Tiny Plates submenu
+	o.lang = langButton
 	local menu = CreateFrame("Frame", "ArcaneLanguageMenu", o)
 	o.langMenu = menu
 	local n = table.getn(C.LANG_LIST)
