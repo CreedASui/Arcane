@@ -1,0 +1,7 @@
+*.zip
+.DS_Store
+Thumbs.db
+dev/AUI/bg_*.png
+dev/AUI/shot.png
+dev/out/
+__pycache__/
