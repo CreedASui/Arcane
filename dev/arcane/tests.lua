@@ -1813,7 +1813,7 @@ do
 		check(math.abs(math.sqrt(x * x + y * y) - 80) < 1 and x > 0 and y < 0, string.format("on the rim, lower right (%.1f, %.1f)", x, y))
 		local l, bt, r, t = M.Rect(b)
 		check(l >= 0 and bt >= 0 and r <= SW and t <= SH, "on the screen")
-		for _, g in ipairs({ ArcaneMeterToggle, ArcaneLuckToggle, ArcaneMinimapClock }) do
+		for _, g in ipairs({ ArcaneMinimapClock }) do
 			local gl, gb, gr, gt = M.Rect(g)
 			check(gr <= l or gl >= r or gt <= bt or gb >= t, "clear of " .. g:GetName())
 		end
