@@ -658,13 +658,13 @@ function IMPL.GetColorRGB(self)
 end
 function M.PickColor(r, g, b)
 	ColorPickerFrame:SetColorRGB(r, g, b)
-	ColorPickerFrame.shown = false
 end
 function M.CancelColor()
 	if ColorPickerFrame.cancelFunc then
 		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
 	end
 	ColorPickerFrame.shown = false
+	ColorPickerFrame:Hide()
 end
 GameTooltip = {
 	SetOwner = function(self, owner, anchor) M.tip.owner, M.tip.anchor, M.tip.lines = owner, anchor, {} end,
