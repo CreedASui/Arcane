@@ -202,7 +202,7 @@ local function BuildPanel(parent)
 	panel:SetBackdropColor(0.05, 0.05, 0.07, 0.98)
 	panel:SetBackdropBorderColor(0.91, 0.70, 0.30, 0.8)
 	panel:EnableMouse(true)
-	panel:SetFrameStrata("DIALOG")
+	panel:SetFrameStrata(parent and parent:GetFrameStrata() or "DIALOG")
 	panel:Hide()
 	if parent then
 		parent:SetScript("OnHide", function()
