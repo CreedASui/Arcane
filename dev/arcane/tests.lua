@@ -112,6 +112,20 @@ check(bossPlate.arcanePlatesBossGuardianLabel and bossPlate.arcanePlatesBossGuar
 check(bossPlate.arcanePlatesDebuffRow and bossPlate.arcanePlatesDebuffRow:IsShown(),
 	"boss and guardian debuffs are shown below the plate")
 
+-- Settings panel is a child feature of Arcane, not a standalone addon control.
+Arcane.arcanePlatesOptions()
+check(ArcanePlatesOptions and ArcanePlatesOptions:IsShown(),
+	"Tiny Plates settings open from the Arcane options hub")
+check(type(ArcaneDB.nameplates) == "table",
+	"Tiny Plates preferences are stored under ArcaneDB.nameplates")
+local bossColorPicker = ColorPickerFrame
+M.PickColor(0.2, 0.4, 0.8)
+check(ArcaneDB.nameplates.bossBarColorOn == true
+	and ArcaneDB.nameplates.bossBarColor[1] == 0.2,
+	"the legacy color picker saves custom plate colors")
+bossColorPicker.cancelFunc({ 0.8, 0.8, 0.8 })
+bossColorPicker:Hide()
+
 local nameplatesPart
 for i = 1, table.getn(Arcane.parts) do
 	if Arcane.parts[i].key == "nameplates" then nameplatesPart = Arcane.parts[i] end
