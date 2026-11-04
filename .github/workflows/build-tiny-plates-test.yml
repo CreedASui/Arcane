@@ -5,6 +5,7 @@ on:
     branches:
       - feature/tiny-plates-integration
       - feature/menu-luck-meter-toggles
+      - feature/tiny-plates-arcane-theme
     paths:
       - 'Arcane/**'
       - 'tools/package.py'
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  package:
+  test-and-package:
     runs-on: ubuntu-latest
     steps:
       - name: Check out feature branch
@@ -26,14 +27,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install font tooling
-        run: python -m pip install fonttools
+      - name: Install Lua and font tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+          python -m pip install fonttools
+      - name: Check Lua syntax
+        run: |
+          find Arcane -name '*.lua' -print0 | xargs -0 -n1 luac5.1 -p
+          luac5.1 -p dev/arcane/tiny_plates_tests.lua
+      - name: Run Arcane mock regression suite
+        working-directory: dev
+        run: lua5.1 arcane/tiny_plates_tests.lua . ../Arcane
       - name: Validate and package addon
-        run: python tools/package.py --output dist/Arcane-Menu-Toggles-test.zip
+        run: python tools/package.py --output dist/Arcane-Tiny-Plates-Arcane-Style-test.zip
       - name: Upload installable test ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: Arcane-Menu-Toggles-test
-          path: dist/Arcane-Menu-Toggles-test.zip
+          name: Arcane-Tiny-Plates-Arcane-Style-test
+          path: dist/Arcane-Tiny-Plates-Arcane-Style-test.zip
           if-no-files-found: error
           retention-days: 7

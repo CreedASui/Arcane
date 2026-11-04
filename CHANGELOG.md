@@ -3,6 +3,7 @@
 ## 1.14.1
 - **Lua 5.0 packaging guard:** reject Lua 5.1-style vararg expressions before producing an addon ZIP, so stale or incompatible source cannot silently ship.
 - **Repository cleanup:** remove duplicate root-level addon sources and assets; the installable source lives only under `Arcane/`, and the package builder checks that duplicates do not return.
+- **Tiny Plates:** regular nameplates now use Arcane's shared FRIZQT face, hostile-name color and layered enemy-red bars; bosses and guardians use the same bar style at full size. The health numbers inside the bars have their own Show health numbers toggle, independent of bar visibility. The game's health values, V visibility toggle and native restoration when Tiny Plates is off are preserved.
 - **Bronze gold everywhere:** every frame's metal (your frame, your target and party, the boss bars, the minimap ring, the meter, the luck window and the rest) is the skill bar's bronze gold in every zone, instead of taking the zone's colors. The boss timer keeps its own.
 - **Dragons:** both face out now, perched on the bar's ends with the end rail behind them.
 - **The skill bar keeps one size:** it no longer grows when a run starts and the kills, gold and cache show up, or as their numbers get longer.

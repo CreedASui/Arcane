@@ -13,6 +13,7 @@ local DEFAULTS = {
 	hideShrunkPlates = false,
 	hideBossName = false,
 	showShrunkName = false,
+	showHealthText = true,
 	bossBarColorOn = false,
 	regularBarColorOn = false,
 	bossBarColor = { 0, 0.64, 1 },
@@ -64,6 +65,7 @@ end
 
 local function Checkbox(parent, key, label, note, x, y)
 	local b = CreateFrame("CheckButton", nil, parent)
+	b.arcanePlatesOptionKey = key
 	b:SetWidth(20)
 	b:SetHeight(20)
 	b:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -200,7 +202,7 @@ local function BuildPanel(parent)
 	if panel then return end
 	panel = CreateFrame("Frame", "ArcanePlatesOptions", parent or UIParent)
 	panel:SetWidth(310)
-	panel:SetHeight(380)
+	panel:SetHeight(430)
 	panel:SetPoint("TOPLEFT", parent or UIParent, "TOPLEFT", 324, -62)
 	panel:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
 	panel:SetBackdropColor(0.05, 0.05, 0.07, 0.98)
@@ -229,8 +231,11 @@ local function BuildPanel(parent)
 	Checkbox(panel, "hideShrunkPlates", "Hide regular plates", "Hide ordinary mob plates entirely. Requires overlapping nameplates.", 18, -137)
 	Checkbox(panel, "showShrunkName", "Show names on nameplates", "Show each regular mob name above its shrunken plate.", 18, -162)
 
-	MakeColorRow(panel, "boss", "Boss / guardian health color", -198)
-	MakeColorRow(panel, "regular", "Regular health color", -274)
+	PanelText(panel, "Health display", 16, -198, 280, 10, { 0.72, 0.68, 0.58 })
+	Checkbox(panel, "showHealthText", "Show health numbers", "Show current / maximum health numbers inside each plate. The colored health bars remain visible either way.", 18, -214)
+
+	MakeColorRow(panel, "boss", "Boss / guardian health color", -250)
+	MakeColorRow(panel, "regular", "Regular health color", -326)
 	UpdateControls()
 end
 
