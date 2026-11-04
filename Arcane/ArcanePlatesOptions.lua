@@ -120,7 +120,7 @@ local function Swatch(parent, category, color, x, y)
 			r, g, blue = d[category .. "BarColor"][1], d[category .. "BarColor"][2], d[category .. "BarColor"][3]
 		end
 		local function Apply()
-			local cr, cg, cb = picker:GetColorRGB()
+			local cr, cg, cb = ColorPickerFrame_GetColorRGB()
 			d[category .. "BarColor"] = { cr, cg, cb }
 			d[category .. "BarColorOn"] = true
 			C.ArcanePlatesRefresh(true)
