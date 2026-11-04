@@ -1,6 +1,7 @@
 name: Bootstrap Arcane from working base
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
