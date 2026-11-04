@@ -12,6 +12,7 @@ local overlayClock = 0
 local refreshPending = true
 local styleRevision = 0
 local scanFrame
+local ApplyBarOverride
 
 local function Opt(key)
 	if type(C.ArcanePlatesOption) == "function" then return C.ArcanePlatesOption(key) end
@@ -173,16 +174,16 @@ local function IsBossOrGuardianPlate(frame)
 end
 
 local function SaveObjectState(object, states)
-	local state = { object = object, shown = object:IsShown() };
-	if ( object.GetAlpha ) then state.alpha = object:GetAlpha(); end
-	table.insert(states, state);
-	if ( object.GetRegions ) then
-		local regions = { object:GetRegions() };
-		for i = 1, table.getn(regions) do SaveObjectState(regions[i], states); end
-	end
-	if ( object.GetChildren ) then
-		local children = { object:GetChildren() };
-		for i = 1, table.getn(children) do SaveObjectState(children[i], states); end
+	local state = { object = object, shown = object:IsShown() }
+	if object.GetAlpha then state.alpha = object:GetAlpha() end
+	table.insert(states, state)
+	local kind = object:GetObjectType()
+	-- Regions (Texture/FontString) have visibility and alpha, but no child tree.
+	if kind ~= "Texture" and kind ~= "FontString" then
+		local regions = { object:GetRegions() }
+		for i = 1, table.getn(regions) do SaveObjectState(regions[i], states) end
+		local children = { object:GetChildren() }
+		for i = 1, table.getn(children) do SaveObjectState(children[i], states) end
 	end
 end
 
@@ -774,7 +775,7 @@ local function ColorsDiffer(r1, g1, b1, r2, g2, b2)
 		or math.abs((b1 or 0) - b2) > 0.01;
 end
 
-local function ApplyBarOverride(bar, color)
+ApplyBarOverride = function(bar, color)
 	if not bar or not bar.SetStatusBarColor then return end
 	if color then
 		local r, g, b, a = bar:GetStatusBarColor()
