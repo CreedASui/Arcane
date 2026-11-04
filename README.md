@@ -26,7 +26,7 @@ Every part can be turned on or off, sized and moved.
 
 ## Build
 
-From the repository root, run `python3 tools/package.py`. The script validates the addon TOC, required assets, saved-variable name and Arcane branding, then creates `dist/Arcane-<version>.zip`. The ZIP contains only the installable `Arcane/` addon folder, not the development tools.
+Requires Python 3 and FontTools (`python -m pip install fonttools`). From the repository root, run `python3 tools/package.py`. The script validates the addon TOC, required assets, saved-variable name and Arcane branding, updates the bundled fonts' internal family names to Arcane UI in the staged package, then creates `dist/Arcane-<version>.zip`. The ZIP contains only the installable `Arcane/` addon folder, not the development tools.
 
 ## Install
 
