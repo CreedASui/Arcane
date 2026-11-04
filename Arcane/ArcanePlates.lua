@@ -8,7 +8,9 @@ local active = true
 local scanClock = 0
 local SCAN_INTERVAL = 0.50
 local OVERLAY_INTERVAL = 0.10
+local DEBUFF_INTERVAL = 0.25
 local overlayClock = 0
+local debuffClock = 0
 local refreshPending = true
 local styleRevision = 0
 local scanFrame
@@ -1178,6 +1180,22 @@ local function RegisterPlate(frame)
 		table.insert(orderedPlates, frame)
 		CaptureNativeState(frame)
 		frame.arcanePlatesOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale() or 1
+	else
+		-- New native children can be added when a pooled plate is reused by the game.
+		-- Snapshot only previously unseen objects, before Arcane styles this incarnation.
+		local states = frame.arcanePlatesNativeState or {}
+		local seen = {}
+		for i = 1, table.getn(states) do seen[states[i].object] = true end
+		local fresh = {}
+		local children = { frame:GetChildren() }
+		for i = 1, table.getn(children) do
+			if not seen[children[i]] and not children[i].arcanePlatesOverlay
+					and not children[i].arcanePlatesDebuffRow then SaveObjectState(children[i], fresh) end
+		end
+		local regions = { frame:GetRegions() }
+		for i = 1, table.getn(regions) do if not seen[regions[i]] then SaveObjectState(regions[i], fresh) end end
+		for i = 1, table.getn(fresh) do table.insert(states, fresh[i]) end
+		frame.arcanePlatesNativeState = states
 	end
 	local currentName = GetPlateName(frame)
 	if currentName ~= frame.arcanePlatesPlateName then
@@ -1219,7 +1237,7 @@ local function SyncOverlayValues()
 	end
 end
 
-local function ApplyKnownPlate(frame)
+local function ApplyKnownPlate(frame, updateDebuffs)
 	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Frame" or not frame:IsVisible() then return end
 	local special = IsBossOrGuardianPlate(frame)
 	local category = special and "boss" or "regular"
@@ -1237,7 +1255,7 @@ local function ApplyKnownPlate(frame)
 			if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
 		end
 	end
-	if special then
+	if special and updateDebuffs then
 		if Opt("showDebuffs") then
 			UpdateBossGuardianDebuffs(frame)
 		elseif frame.arcanePlatesDebuffRow and frame.arcanePlatesDebuffRow:IsShown() then
@@ -1246,9 +1264,9 @@ local function ApplyKnownPlate(frame)
 	end
 end
 
-local function StyleKnownPlates()
+local function StyleKnownPlates(updateDebuffs)
 	RefreshBossGuardianNames()
-	for i = 1, table.getn(orderedPlates) do ApplyKnownPlate(orderedPlates[i]) end
+	for i = 1, table.getn(orderedPlates) do ApplyKnownPlate(orderedPlates[i], updateDebuffs) end
 end
 
 local function ScanNameplates()
@@ -1325,7 +1343,7 @@ C.OnInit(function()
 	scanFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	scanFrame:RegisterEvent("CHAT_MSG_ADDON")
 	scanFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-		scanFrame:SetScript("OnEvent", function()
+	scanFrame:SetScript("OnEvent", function()
 		if event == "CHAT_MSG_ADDON" and arg1 ~= "AZSUNITS" then return end
 		RefreshAll()
 	end)
@@ -1344,11 +1362,31 @@ C.OnInit(function()
 			overlayClock = OVERLAY_INTERVAL
 			SyncOverlayValues()
 		end
+		debuffClock = debuffClock - dt
+		local updateDebuffs = false
+		if debuffClock <= 0 then
+			debuffClock = DEBUFF_INTERVAL
+			updateDebuffs = true
+		end
 		if refreshPending then
 			refreshPending = false
-			local ok, err = pcall(StyleKnownPlates)
+			local ok, err = pcall(StyleKnownPlates, updateDebuffs)
 			if not ok then
 				C.Print(C.L("Arcane nameplates stopped after an error: ") .. tostring(err))
+				SetEnabled(false)
+			end
+		elseif updateDebuffs then
+			local ok, err = pcall(function()
+				RefreshBossGuardianNames()
+				for i = 1, table.getn(orderedPlates) do
+					local frame = orderedPlates[i]
+					if frame.arcanePlatesBossGuardian and frame:IsVisible() and Opt("showDebuffs") then
+						UpdateBossGuardianDebuffs(frame)
+					end
+				end
+			end)
+			if not ok then
+				C.Print(C.L("Arcane nameplate debuff update stopped after an error: ") .. tostring(err))
 				SetEnabled(false)
 			end
 		end
