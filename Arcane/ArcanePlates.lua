@@ -120,6 +120,7 @@ local function IsOwnObject(frame, object)
 	return object == frame.arcanePlatesOverlay
 		or object == frame.arcanePlatesDebuffRow
 		or object == frame.arcanePlatesShrunkLabelHolder
+		or object == frame.arcanePlatesBossGuardianLabel
 end
 
 -- Searches the plate and its descendants, because UI replacements such as SDUI
@@ -175,7 +176,11 @@ local function IsBossOrGuardianPlate(frame)
 	return false
 end
 
-local function SaveObjectState(object, states)
+local function SaveObjectState(object, states, plate)
+	plate = plate or object
+	-- Never snapshot Arcane-owned overlays/labels/debuff rows as native plate UI.
+	-- Their lifetime is independent and they must stay hidden when native state returns.
+	if object ~= plate and IsOwnObject(plate, object) then return end
 	local state = { object = object, shown = object:IsShown() }
 	if object.GetAlpha then state.alpha = object:GetAlpha() end
 	table.insert(states, state)
@@ -183,9 +188,9 @@ local function SaveObjectState(object, states)
 	-- Regions (Texture/FontString) have visibility and alpha, but no child tree.
 	if kind ~= "Texture" and kind ~= "FontString" then
 		local regions = { object:GetRegions() }
-		for i = 1, table.getn(regions) do SaveObjectState(regions[i], states) end
+		for i = 1, table.getn(regions) do SaveObjectState(regions[i], states, plate) end
 		local children = { object:GetChildren() }
-		for i = 1, table.getn(children) do SaveObjectState(children[i], states) end
+		for i = 1, table.getn(children) do SaveObjectState(children[i], states, plate) end
 	end
 end
 
@@ -230,12 +235,14 @@ local function RestoreNativeState(frame)
 		-- store a native visibility snapshot.
 		local regions = { frame:GetRegions() }
 		for i = 1, table.getn(regions) do
-			if regions[i]:GetObjectType() == "FontString" then regions[i]:SetAlpha(1) end
-			regions[i]:Show()
+			if not IsOwnObject(frame, regions[i]) then
+				if regions[i]:GetObjectType() == "FontString" then regions[i]:SetAlpha(1) end
+				regions[i]:Show()
+			end
 		end
 		local children = { frame:GetChildren() }
 		for i = 1, table.getn(children) do
-			if children[i] ~= frame.arcanePlatesOverlay then children[i]:Show() end
+			if not IsOwnObject(frame, children[i]) then children[i]:Show() end
 		end
 	end
 	if frame.arcanePlatesStyledVisual then
