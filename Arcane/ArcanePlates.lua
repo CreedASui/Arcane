@@ -1206,9 +1206,14 @@ local function UpdateKnownPlates()
 			local oldName = frame.arcanePlatesPlateName
 			local currentName = GetPlateName(frame)
 			if currentName ~= oldName then
+				-- Blizzard recycles nameplate frames. Restore the old unit's native
+				-- visuals before snapshotting or classifying the new unit.
+				if oldName ~= nil then RestoreNativeState(frame) end
 				frame.arcanePlatesPlateName = currentName
 				frame.arcanePlatesDebuffUnitID = nil
 				frame.arcanePlatesDebuffSignature = nil
+				frame.arcanePlatesAppliedCategory = nil
+				frame.arcanePlatesStyleRevision = -1
 				frame.arcanePlatesNativeRestored = false
 			end
 			local special = IsBossOrGuardianPlate(frame)
