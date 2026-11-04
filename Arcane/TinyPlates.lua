@@ -1,5 +1,5 @@
 -- Arcane Tiny Plates
--- Based on ASTinyPlates by Valorless (MIT); see ATTRIBUTION.md and TinyPlates-LICENSE.txt.
+-- Based on ArcanePlates by Valorless (MIT); see ATTRIBUTION.md and TinyPlates-LICENSE.txt.
 -- Adapted for Arcane's shared DB, menu, lifecycle and Lua 5.0 client.
 local C = Arcane
 local knownPlates = {}
@@ -58,11 +58,11 @@ end
 local function ClearBossGuardianPlateFlags()
 	for i = 1, table.getn(orderedPlates) do
 		local frame = orderedPlates[i]
-		frame.astinyplatesBossGuardian = nil
-		frame.astinyplatesBossGuardianName = nil
-		frame.astinyplatesDebuffUnitID = nil
-		frame.astinyplatesDebuffSignature = nil
-		if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
+		frame.arcanePlatesBossGuardian = nil
+		frame.arcanePlatesBossGuardianName = nil
+		frame.arcanePlatesDebuffUnitID = nil
+		frame.arcanePlatesDebuffSignature = nil
+		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
 	end
 end
 
@@ -105,7 +105,7 @@ local function NormalizeName(text)
 end
 
 local function IsOwnObject(frame, object)
-	return object == frame.astinyplatesOverlay or object == frame.astinyplatesDebuffRow;
+	return object == frame.arcanePlatesOverlay or object == frame.arcanePlatesDebuffRow;
 end
 
 -- Searches the plate and its descendants, because UI replacements such as SDUI
@@ -115,12 +115,12 @@ local function GetPlateName(frame, root)
 	local regions = { root:GetRegions() };
 	for i = 1, table.getn(regions) do
 		local region = regions[i];
-		if ( region and region ~= frame.astinyplatesBossGuardianLabel
+		if ( region and region ~= frame.arcanePlatesBossGuardianLabel
 				and region:GetObjectType() == "FontString" ) then
 			local name = NormalizeName(region:GetText());
 			-- Purely numeric text is a level indicator, not a name.
 			if ( name and not string.find(name, "^%d+$") ) then
-				frame.astinyplatesNameRegion = region;
+				frame.arcanePlatesNameRegion = region;
 				return name;
 			end
 		end
@@ -140,24 +140,24 @@ local function IsBossOrGuardianName(name)
 end
 
 local function IsBossOrGuardianPlate(frame)
-	local name = frame.astinyplatesPlateName
+	local name = frame.arcanePlatesPlateName
 	if not name then
-		frame.astinyplatesBossGuardian = false
-		frame.astinyplatesBossGuardianName = nil
+		frame.arcanePlatesBossGuardian = false
+		frame.arcanePlatesBossGuardianName = nil
 		return false
 	end
-	if frame.astinyplatesBossGuardianName ~= name then
-		frame.astinyplatesDebuffUnitID = nil
-		frame.astinyplatesDebuffSignature = nil
-		if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
+	if frame.arcanePlatesBossGuardianName ~= name then
+		frame.arcanePlatesDebuffUnitID = nil
+		frame.arcanePlatesDebuffSignature = nil
+		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
 	end
 	if IsBossOrGuardianName(name) then
-		frame.astinyplatesBossGuardian = true
-		frame.astinyplatesBossGuardianName = name
+		frame.arcanePlatesBossGuardian = true
+		frame.arcanePlatesBossGuardianName = name
 		return true
 	end
-	frame.astinyplatesBossGuardian = false
-	frame.astinyplatesBossGuardianName = nil
+	frame.arcanePlatesBossGuardian = false
+	frame.arcanePlatesBossGuardianName = nil
 	return false
 end
 
@@ -176,42 +176,42 @@ local function SaveObjectState(object, states)
 end
 
 local function CaptureNativeState(frame)
-	if frame.astinyplatesNativeCaptured then return end
-	local previouslyStyled = frame.astinyplatesStyledVisual or frame.astinyplatesOverlay;
+	if frame.arcanePlatesNativeCaptured then return end
+	local previouslyStyled = frame.arcanePlatesStyledVisual or frame.arcanePlatesOverlay;
 	local point, relativeTo, relativePoint, x, y = frame:GetPoint();
-	frame.astinyplatesNativeWidth = frame.astinyplatesStackOriginalWidth or frame:GetWidth();
-	frame.astinyplatesNativeHeight = frame.astinyplatesStackOriginalHeight or frame:GetHeight();
-	frame.astinyplatesNativeScale = frame.astinyplatesStackOriginalScale
-		or frame.astinyplatesOriginalScale or frame:GetScale();
-	frame.astinyplatesNativePoint = frame.astinyplatesStackPoint or point;
-	frame.astinyplatesNativeRelativeTo = frame.astinyplatesStackRelativeTo or relativeTo;
-	frame.astinyplatesNativeRelativePoint = frame.astinyplatesStackRelativePoint or relativePoint;
-	frame.astinyplatesNativeX = frame.astinyplatesStackPoint and frame.astinyplatesStackX or x;
-	frame.astinyplatesNativeY = frame.astinyplatesStackPoint and frame.astinyplatesStackY or y;
+	frame.arcanePlatesNativeWidth = frame.arcanePlatesStackOriginalWidth or frame:GetWidth();
+	frame.arcanePlatesNativeHeight = frame.arcanePlatesStackOriginalHeight or frame:GetHeight();
+	frame.arcanePlatesNativeScale = frame.arcanePlatesStackOriginalScale
+		or frame.arcanePlatesOriginalScale or frame:GetScale();
+	frame.arcanePlatesNativePoint = frame.arcanePlatesStackPoint or point;
+	frame.arcanePlatesNativeRelativeTo = frame.arcanePlatesStackRelativeTo or relativeTo;
+	frame.arcanePlatesNativeRelativePoint = frame.arcanePlatesStackRelativePoint or relativePoint;
+	frame.arcanePlatesNativeX = frame.arcanePlatesStackPoint and frame.arcanePlatesStackX or x;
+	frame.arcanePlatesNativeY = frame.arcanePlatesStackPoint and frame.arcanePlatesStackY or y;
 	local states = {};
 	SaveObjectState(frame, states);
 	-- A reload can leave our old custom visual attached while the native plate
 	-- is already hidden; in that case restore all native children below.
-	if not previouslyStyled then frame.astinyplatesNativeState = states end
-	frame.astinyplatesNativeCaptured = true
+	if not previouslyStyled then frame.arcanePlatesNativeState = states end
+	frame.arcanePlatesNativeCaptured = true
 end
 
 local function RestoreNativeState(frame)
-	if frame.astinyplatesNativeRestored then return end
-	local wasModified = frame.astinyplatesOverlay or frame.astinyplatesStyledVisual
-		or frame.astinyplatesNativeState or frame.astinyplatesSourceBar
+	if frame.arcanePlatesNativeRestored then return end
+	local wasModified = frame.arcanePlatesOverlay or frame.arcanePlatesStyledVisual
+		or frame.arcanePlatesNativeState or frame.arcanePlatesSourceBar
 	if not wasModified then
-		frame.astinyplatesNativeRestored = true
+		frame.arcanePlatesNativeRestored = true
 		return
 	end
-	if frame.astinyplatesOverlay then frame.astinyplatesOverlay:Hide() end
-	if frame.astinyplatesNativeState then
-		for i = 1, table.getn(frame.astinyplatesNativeState) do
-			local state = frame.astinyplatesNativeState[i]
+	if frame.arcanePlatesOverlay then frame.arcanePlatesOverlay:Hide() end
+	if frame.arcanePlatesNativeState then
+		for i = 1, table.getn(frame.arcanePlatesNativeState) do
+			local state = frame.arcanePlatesNativeState[i]
 			local object = state.object
-			if object ~= frame.astinyplatesOverlay and object ~= frame.astinyplatesDebuffRow
-					and object ~= frame.astinyplatesBossGuardianLabel
-				and object ~= frame.astinyplatesShrunkLabelHolder then
+			if object ~= frame.arcanePlatesOverlay and object ~= frame.arcanePlatesDebuffRow
+					and object ~= frame.arcanePlatesBossGuardianLabel
+				and object ~= frame.arcanePlatesShrunkLabelHolder then
 				if object.SetAlpha and state.alpha ~= nil then object:SetAlpha(state.alpha) end
 				if state.shown then object:Show() else object:Hide() end
 			end
@@ -226,37 +226,37 @@ local function RestoreNativeState(frame)
 		end
 		local children = { frame:GetChildren() }
 		for i = 1, table.getn(children) do
-			if children[i] ~= frame.astinyplatesOverlay then children[i]:Show() end
+			if children[i] ~= frame.arcanePlatesOverlay then children[i]:Show() end
 		end
 	end
-	if frame.astinyplatesStyledVisual then
-		local styled = frame.astinyplatesStyledVisual
-		if frame.astinyplatesStyledOriginalScale then styled:SetScale(frame.astinyplatesStyledOriginalScale) end
+	if frame.arcanePlatesStyledVisual then
+		local styled = frame.arcanePlatesStyledVisual
+		if frame.arcanePlatesStyledOriginalScale then styled:SetScale(frame.arcanePlatesStyledOriginalScale) end
 		styled:ClearAllPoints()
-		styled:SetPoint(frame.astinyplatesStyledPoint or "CENTER",
-			frame.astinyplatesStyledRelativeTo or frame,
-			frame.astinyplatesStyledRelativePoint or "CENTER",
-			frame.astinyplatesStyledX or 0, frame.astinyplatesStyledY or 0)
+		styled:SetPoint(frame.arcanePlatesStyledPoint or "CENTER",
+			frame.arcanePlatesStyledRelativeTo or frame,
+			frame.arcanePlatesStyledRelativePoint or "CENTER",
+			frame.arcanePlatesStyledX or 0, frame.arcanePlatesStyledY or 0)
 	end
-	if frame.astinyplatesSourceBar then
-		if frame.astinyplatesSourceOriginalWidth then frame.astinyplatesSourceBar:SetWidth(frame.astinyplatesSourceOriginalWidth) end
-		if frame.astinyplatesSourceOriginalHeight then frame.astinyplatesSourceBar:SetHeight(frame.astinyplatesSourceOriginalHeight) end
+	if frame.arcanePlatesSourceBar then
+		if frame.arcanePlatesSourceOriginalWidth then frame.arcanePlatesSourceBar:SetWidth(frame.arcanePlatesSourceOriginalWidth) end
+		if frame.arcanePlatesSourceOriginalHeight then frame.arcanePlatesSourceBar:SetHeight(frame.arcanePlatesSourceOriginalHeight) end
 	end
-	for bar in pairs(frame.astinyplatesColoredBars or {}) do ApplyBarOverride(bar, nil) end
-	if frame.astinyplatesNativeWidth then frame:SetWidth(frame.astinyplatesNativeWidth) end
-	if frame.astinyplatesNativeHeight then frame:SetHeight(frame.astinyplatesNativeHeight) end
-	if frame.astinyplatesNativeScale then frame:SetScale(frame.astinyplatesNativeScale) end
-	if frame.astinyplatesNativePoint then
+	for bar in pairs(frame.arcanePlatesColoredBars or {}) do ApplyBarOverride(bar, nil) end
+	if frame.arcanePlatesNativeWidth then frame:SetWidth(frame.arcanePlatesNativeWidth) end
+	if frame.arcanePlatesNativeHeight then frame:SetHeight(frame.arcanePlatesNativeHeight) end
+	if frame.arcanePlatesNativeScale then frame:SetScale(frame.arcanePlatesNativeScale) end
+	if frame.arcanePlatesNativePoint then
 		frame:ClearAllPoints()
-		frame:SetPoint(frame.astinyplatesNativePoint,
-			frame.astinyplatesNativeRelativeTo or frame:GetParent(),
-			frame.astinyplatesNativeRelativePoint or frame.astinyplatesNativePoint,
-			frame.astinyplatesNativeX or 0, frame.astinyplatesNativeY or 0)
+		frame:SetPoint(frame.arcanePlatesNativePoint,
+			frame.arcanePlatesNativeRelativeTo or frame:GetParent(),
+			frame.arcanePlatesNativeRelativePoint or frame.arcanePlatesNativePoint,
+			frame.arcanePlatesNativeX or 0, frame.arcanePlatesNativeY or 0)
 	end
-	if frame.astinyplatesBossGuardianLabel then frame.astinyplatesBossGuardianLabel:Hide() end
-	if frame.astinyplatesShrunkLabelHolder then frame.astinyplatesShrunkLabelHolder:Hide() end
-	if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
-	frame.astinyplatesNativeRestored = true
+	if frame.arcanePlatesBossGuardianLabel then frame.arcanePlatesBossGuardianLabel:Hide() end
+	if frame.arcanePlatesShrunkLabelHolder then frame.arcanePlatesShrunkLabelHolder:Hide() end
+	if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+	frame.arcanePlatesNativeRestored = true
 end
 
 local function IdentifyNameplate(frame)
@@ -287,7 +287,7 @@ local function HideNameText(frame)
 	local regions = { frame:GetRegions() };
 	for i = 1, table.getn(regions) do
 		local region = regions[i];
-		if ( region and region ~= frame.astinyplatesBossGuardianLabel
+		if ( region and region ~= frame.arcanePlatesBossGuardianLabel
 				and region:GetObjectType() == "FontString" ) then
 			region:SetAlpha(0);
 			region:Hide();
@@ -313,10 +313,10 @@ local function HideMatchingNameText(frame, name, keep)
 end
 
 local function ShowNameText(frame)
-	if ( frame.astinyplatesNameRegion and frame.astinyplatesPlateName ) then
-		local text = frame.astinyplatesNameRegion:GetText();
+	if ( frame.arcanePlatesNameRegion and frame.arcanePlatesPlateName ) then
+		local text = frame.arcanePlatesNameRegion:GetText();
 		if ( not text or text == "" ) then
-			frame.astinyplatesNameRegion:SetText(frame.astinyplatesPlateName);
+			frame.arcanePlatesNameRegion:SetText(frame.arcanePlatesPlateName);
 		end
 	end
 	local regions = { frame:GetRegions() };
@@ -324,8 +324,8 @@ local function ShowNameText(frame)
 		local region = regions[i];
 		if ( region and region:GetObjectType() == "FontString" ) then
 			local text = region:GetText();
-			if ( ( not text or text == "" ) and frame.astinyplatesPlateName ) then
-				region:SetText(frame.astinyplatesPlateName);
+			if ( ( not text or text == "" ) and frame.arcanePlatesPlateName ) then
+				region:SetText(frame.arcanePlatesPlateName);
 			end
 			region:SetAlpha(1);
 			region:Show();
@@ -334,21 +334,21 @@ local function ShowNameText(frame)
 end
 
 local function UpdateBossGuardianLabel(frame)
-	local name = frame.astinyplatesPlateName;
+	local name = frame.arcanePlatesPlateName;
 	if ( not name or name == "" ) then
-		if ( frame.astinyplatesBossGuardianLabel ) then frame.astinyplatesBossGuardianLabel:Hide(); end
+		if ( frame.arcanePlatesBossGuardianLabel ) then frame.arcanePlatesBossGuardianLabel:Hide(); end
 		return;
 	end
-	local label = frame.astinyplatesBossGuardianLabel;
+	local label = frame.arcanePlatesBossGuardianLabel;
 	if ( not label ) then
 		label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall");
 		label:SetWidth(180);
 		label:SetHeight(14);
 		label:SetJustifyH("CENTER");
 		label:SetTextColor(1, 0.82, 0.15, 1);
-		frame.astinyplatesBossGuardianLabel = label;
+		frame.arcanePlatesBossGuardianLabel = label;
 	end
-	local bar = frame.astinyplatesSourceBar;
+	local bar = frame.arcanePlatesSourceBar;
 	if ( not bar ) then
 		local children = { frame:GetChildren() };
 		for i = 1, table.getn(children) do
@@ -358,7 +358,7 @@ local function UpdateBossGuardianLabel(frame)
 			end
 		end
 	end
-	frame.astinyplatesBossGuardianBar = bar;
+	frame.arcanePlatesBossGuardianBar = bar;
 	label:ClearAllPoints();
 	if ( bar ) then
 		label:SetPoint("BOTTOM", bar, "TOP", 0, 2);
@@ -398,7 +398,7 @@ local function FindStyledVisual(frame, source)
 	for i = 1, table.getn(children) do
 		local child = children[i];
 		local width, height = child:GetWidth(), child:GetHeight();
-		if ( child ~= source and child ~= frame.astinyplatesOverlay
+		if ( child ~= source and child ~= frame.arcanePlatesOverlay
 				and child:GetObjectType() ~= "StatusBar"
 				and width and height and width >= 30 and width <= 200
 				and height >= 5 and height <= 60 and ContainsStatusBar(child) ) then
@@ -429,12 +429,12 @@ local function FindNameFontString(frame, name)
 end
 
 local function ApplyBossGuardianLabelFont(frame)
-	local label = frame.astinyplatesBossGuardianLabel;
-	local name = frame.astinyplatesPlateName;
+	local label = frame.arcanePlatesBossGuardianLabel;
+	local name = frame.arcanePlatesPlateName;
 	local source;
-	local visual = frame.astinyplatesBossGuardianStyleVisual;
+	local visual = frame.arcanePlatesBossGuardianStyleVisual;
 	if ( not visual ) then
-		local sourceBar = frame.astinyplatesSourceBar;
+		local sourceBar = frame.arcanePlatesSourceBar;
 		if ( not sourceBar ) then
 			local children = { frame:GetChildren() };
 			for i = 1, table.getn(children) do
@@ -445,10 +445,10 @@ local function ApplyBossGuardianLabelFont(frame)
 			end
 		end
 		visual = FindStyledVisual(frame, sourceBar);
-		frame.astinyplatesBossGuardianStyleVisual = visual;
+		frame.arcanePlatesBossGuardianStyleVisual = visual;
 	end
 	if ( visual ) then source = FindNameFontString(visual, name); end
-	if ( not source ) then source = frame.astinyplatesNameRegion; end
+	if ( not source ) then source = frame.arcanePlatesNameRegion; end
 	if ( not source or not source.GetFont ) then return; end
 	local font, height, flags = source:GetFont();
 	if ( font and height ) then label:SetFont(font, height, flags); end
@@ -532,7 +532,7 @@ end
 local function FindBossGuardianUnit(frame, name)
 	local candidates = name and bossGuardianUnitsByName[name];
 	if ( not candidates or table.getn(candidates) == 0 ) then return nil; end
-	local bar = frame.astinyplatesBossGuardianBar;
+	local bar = frame.arcanePlatesBossGuardianBar;
 	local currentHealthRatio;
 	if ( bar ) then
 		local value = bar:GetValue();
@@ -556,17 +556,17 @@ local function FindBossGuardianUnit(frame, name)
 end
 
 local function UpdateBossGuardianDebuffs(frame)
-	local name = frame.astinyplatesPlateName
+	local name = frame.arcanePlatesPlateName
 	local unit = FindBossGuardianUnit(frame, name)
-	local row = frame.astinyplatesDebuffRow
+	local row = frame.arcanePlatesDebuffRow
 	if not row then
 		row = CreateFrame("Frame", nil, frame)
 		row:SetHeight(DEBUFF_ICON_SIZE)
 		row:SetFrameLevel(frame:GetFrameLevel() + 5)
-		frame.astinyplatesDebuffRow = row
+		frame.arcanePlatesDebuffRow = row
 	end
-	if unit and unit.id then frame.astinyplatesDebuffUnitID = unit.id end
-	local unitID = frame.astinyplatesDebuffUnitID
+	if unit and unit.id then frame.arcanePlatesDebuffUnitID = unit.id end
+	local unitID = frame.arcanePlatesDebuffUnitID
 	if not unitID then row:Hide(); return end
 	local debuffs
 	if type(AZS_GetDebuffs) == "function" then
@@ -590,15 +590,15 @@ local function UpdateBossGuardianDebuffs(frame)
 		end
 	end
 	local signature = table.concat(signatureParts, "|")
-	local changed = frame.astinyplatesDebuffSignature ~= signature
-	frame.astinyplatesDebuffSignature = signature
+	local changed = frame.arcanePlatesDebuffSignature ~= signature
+	frame.arcanePlatesDebuffSignature = signature
 	local iconIndex = 0
 	for i = 1, count do
 		local debuff = debuffs[i]
 		if debuff then
 			iconIndex = iconIndex + 1
-			local icons = frame.astinyplatesDebuffIcons
-			if not icons then icons = {}; frame.astinyplatesDebuffIcons = icons end
+			local icons = frame.arcanePlatesDebuffIcons
+			if not icons then icons = {}; frame.arcanePlatesDebuffIcons = icons end
 			local icon = icons[iconIndex]
 			if not icon then
 				icon = CreateDebuffIcon(row, iconIndex)
@@ -629,12 +629,12 @@ local function UpdateBossGuardianDebuffs(frame)
 			if not icon.overlay:IsShown() then icon.overlay:Show() end
 		end
 	end
-	local icons = frame.astinyplatesDebuffIcons or {}
+	local icons = frame.arcanePlatesDebuffIcons or {}
 	for i = iconIndex + 1, table.getn(icons) do if icons[i]:IsShown() then icons[i]:Hide() end end
 	if iconIndex == 0 then row:Hide(); return end
 	local width = iconIndex * DEBUFF_ICON_SIZE + (iconIndex - 1) * DEBUFF_ICON_GAP
 	if row:GetWidth() ~= width then row:SetWidth(width) end
-	local bar = frame.astinyplatesStyledVisual or frame.astinyplatesBossGuardianBar or frame.astinyplatesOverlay or frame
+	local bar = frame.arcanePlatesStyledVisual or frame.arcanePlatesBossGuardianBar or frame.arcanePlatesOverlay or frame
 	local point, relativeTo, relativePoint, x, y = row:GetPoint()
 	if point ~= "TOP" or relativeTo ~= bar or relativePoint ~= "BOTTOM" or x ~= 0 or y ~= -3 then
 		row:ClearAllPoints()
@@ -643,7 +643,7 @@ local function UpdateBossGuardianDebuffs(frame)
 	if not row:IsShown() then row:Show() end
 end
 local function EnsureOverlayBorder(frame, overlay)
-	if ( frame.astinyplatesOverlayBorder ) then return; end
+	if ( frame.arcanePlatesOverlayBorder ) then return; end
 	local border = CreateFrame("Frame", nil, overlay);
 	border:SetPoint("TOPLEFT", overlay, "TOPLEFT", -3, 3);
 	border:SetPoint("BOTTOMRIGHT", overlay, "BOTTOMRIGHT", 3, -3);
@@ -654,7 +654,7 @@ local function EnsureOverlayBorder(frame, overlay)
 		insets = { left = 3, right = 3, top = 3, bottom = 3 },
 	});
 	border:SetBackdropBorderColor(1, 1, 1, 1);
-	frame.astinyplatesOverlayBorder = border;
+	frame.arcanePlatesOverlayBorder = border;
 end
 
 local function HideNativePlate(frame, keep)
@@ -665,42 +665,42 @@ local function HideNativePlate(frame, keep)
 	end
 	local children = { frame:GetChildren() };
 	for i = 1, table.getn(children) do
-		if ( children[i] ~= keep and children[i] ~= frame.astinyplatesOverlay
-				and children[i] ~= frame.astinyplatesShrunkLabelHolder ) then
+		if ( children[i] ~= keep and children[i] ~= frame.arcanePlatesOverlay
+				and children[i] ~= frame.arcanePlatesShrunkLabelHolder ) then
 			children[i]:Hide();
 		end
 	end
 end
 
 local function IsPlaceholderShrunk(frame)
-	local visual = frame.astinyplatesStyledVisual;
-	if ( visual and visual:IsShown() and frame.astinyplatesStyledOriginalScale ) then
-		return visual:GetScale() < frame.astinyplatesStyledOriginalScale * 0.99;
+	local visual = frame.arcanePlatesStyledVisual;
+	if ( visual and visual:IsShown() and frame.arcanePlatesStyledOriginalScale ) then
+		return visual:GetScale() < frame.arcanePlatesStyledOriginalScale * 0.99;
 	end
-	local overlay = frame.astinyplatesOverlay;
-	if ( overlay and overlay:IsShown() and frame.astinyplatesOverlayBaseWidth ) then
-		return overlay:GetWidth() < frame.astinyplatesOverlayBaseWidth * 0.99;
+	local overlay = frame.arcanePlatesOverlay;
+	if ( overlay and overlay:IsShown() and frame.arcanePlatesOverlayBaseWidth ) then
+		return overlay:GetWidth() < frame.arcanePlatesOverlayBaseWidth * 0.99;
 	end
-	local source = frame.astinyplatesSourceBar;
-	if ( source and source:IsShown() and frame.astinyplatesSourceOriginalWidth ) then
-		return source:GetWidth() < frame.astinyplatesSourceOriginalWidth * 0.99;
+	local source = frame.arcanePlatesSourceBar;
+	if ( source and source:IsShown() and frame.arcanePlatesSourceOriginalWidth ) then
+		return source:GetWidth() < frame.arcanePlatesSourceOriginalWidth * 0.99;
 	end
 	return false;
 end
 
 local function HideShrunkNameLabel(frame)
-	if ( frame.astinyplatesShrunkLabelHolder ) then frame.astinyplatesShrunkLabelHolder:Hide(); end
+	if ( frame.arcanePlatesShrunkLabelHolder ) then frame.arcanePlatesShrunkLabelHolder:Hide(); end
 end
 
 -- Name above a shrunken plate; lives on its own child frame so the native-child hiding does not remove it.
 local function UpdateShrunkNameLabel(frame)
-	local name = frame.astinyplatesPlateName;
-	if ( not Opt("showShrunkName") or frame.astinyplatesBossGuardian
+	local name = frame.arcanePlatesPlateName;
+	if ( not Opt("showShrunkName") or frame.arcanePlatesBossGuardian
 			or not name or name == "" ) then
 		HideShrunkNameLabel(frame);
 		return;
 	end
-	local holder = frame.astinyplatesShrunkLabelHolder;
+	local holder = frame.arcanePlatesShrunkLabelHolder;
 	if ( not holder ) then
 		holder = CreateFrame("Frame", nil, frame);
 		holder:SetAllPoints(frame);
@@ -711,10 +711,10 @@ local function UpdateShrunkNameLabel(frame)
 		text:SetJustifyH("CENTER");
 		text:SetTextColor(1, 1, 1, 1);
 		holder.text = text;
-		frame.astinyplatesShrunkLabelHolder = holder;
+		frame.arcanePlatesShrunkLabelHolder = holder;
 	end
-	local anchor = frame.astinyplatesStyledVisual or frame.astinyplatesOverlay
-		or frame.astinyplatesSourceBar or frame;
+	local anchor = frame.arcanePlatesStyledVisual or frame.arcanePlatesOverlay
+		or frame.arcanePlatesSourceBar or frame;
 	holder.text:ClearAllPoints();
 	holder.text:SetPoint("BOTTOM", anchor, "TOP", 0, 2);
 	holder.text:SetText(name);
@@ -723,24 +723,24 @@ local function UpdateShrunkNameLabel(frame)
 end
 
 local function UpdateNamePlaceholder(frame)
-	local label = frame.astinyplatesBossGuardianLabel;
+	local label = frame.arcanePlatesBossGuardianLabel;
 	if ( IsPlaceholderShrunk(frame) ) then
 		if ( label ) then label:Hide(); end
 		UpdateShrunkNameLabel(frame);
 		return;
 	end
 	HideShrunkNameLabel(frame);
-	if ( frame.astinyplatesBossGuardian and Opt("hideBossName") ) then
+	if ( frame.arcanePlatesBossGuardian and Opt("hideBossName") ) then
 		if ( label ) then label:Hide(); end
-		local visual = frame.astinyplatesStyledVisual;
-		local native = visual and FindNameFontString(visual, frame.astinyplatesPlateName);
+		local visual = frame.arcanePlatesStyledVisual;
+		local native = visual and FindNameFontString(visual, frame.arcanePlatesPlateName);
 		if ( native ) then native:SetAlpha(0); native:Hide(); end
-		HideMatchingNameText(frame, frame.astinyplatesPlateName, nil);
+		HideMatchingNameText(frame, frame.arcanePlatesPlateName, nil);
 		return;
 	end
-	local visual = frame.astinyplatesStyledVisual;
-	local native = visual and FindNameFontString(visual, frame.astinyplatesPlateName);
-	if ( native and NormalizeName(native:GetText()) == frame.astinyplatesPlateName ) then
+	local visual = frame.arcanePlatesStyledVisual;
+	local native = visual and FindNameFontString(visual, frame.arcanePlatesPlateName);
+	if ( native and NormalizeName(native:GetText()) == frame.arcanePlatesPlateName ) then
 		-- Let the replacement UI draw its own name where it expects it; our label
 		-- sits behind its child frames and was not visible.
 		native:SetAlpha(1);
@@ -752,14 +752,14 @@ local function UpdateNamePlaceholder(frame)
 	end
 	UpdateBossGuardianLabel(frame);
 	ApplyBossGuardianLabelFont(frame);
-	HideMatchingNameText(frame, frame.astinyplatesPlateName,
-		frame.astinyplatesBossGuardianLabel);
+	HideMatchingNameText(frame, frame.arcanePlatesPlateName,
+		frame.arcanePlatesBossGuardianLabel);
 end
 
 -- Custom bar colors. The color the game/SDUI last set is remembered per bar so it can be restored
 -- when the override is turned off or a recycled plate changes category.
 local function BarColor(category)
-	if ( ASTinyPlatesBarColor ) then return ASTinyPlatesBarColor(category); end
+	if ( ArcanePlatesBarColor ) then return ArcanePlatesBarColor(category); end
 	return nil;
 end
 
@@ -772,21 +772,21 @@ local function ApplyBarOverride(bar, color)
 	if not bar or not bar.SetStatusBarColor then return end
 	if color then
 		local r, g, b, a = bar:GetStatusBarColor()
-		local applied = bar.astinyplatesAppliedColor
+		local applied = bar.arcanePlatesAppliedColor
 		if not applied or ColorsDiffer(r, g, b, applied[1], applied[2], applied[3]) then
-			bar.astinyplatesOriginalColor = { r or 1, g or 1, b or 1, a }
+			bar.arcanePlatesOriginalColor = { r or 1, g or 1, b or 1, a }
 		end
 		if ColorsDiffer(r, g, b, color[1], color[2], color[3]) then
 			bar:SetStatusBarColor(color[1], color[2], color[3], a)
 		end
-		bar.astinyplatesAppliedColor = { color[1], color[2], color[3] }
+		bar.arcanePlatesAppliedColor = { color[1], color[2], color[3] }
 	else
-		local original = bar.astinyplatesOriginalColor
-		if bar.astinyplatesAppliedColor and original then
+		local original = bar.arcanePlatesOriginalColor
+		if bar.arcanePlatesAppliedColor and original then
 			bar:SetStatusBarColor(original[1], original[2], original[3], original[4])
 		end
-		bar.astinyplatesAppliedColor = nil
-		bar.astinyplatesOriginalColor = nil
+		bar.arcanePlatesAppliedColor = nil
+		bar.arcanePlatesOriginalColor = nil
 	end
 end
 local function CollectStatusBars(frame, list)
@@ -800,12 +800,12 @@ end
 
 -- Covers SDUI's styled visual and the native health bar; our overlay copies the native bar.
 local function ApplyPlateBarColor(frame, color)
-	local bars = frame.astinyplatesColorBars
+	local bars = frame.arcanePlatesColorBars
 	if not bars then
 		bars = {}
-		local styled = frame.astinyplatesStyledVisual
+		local styled = frame.arcanePlatesStyledVisual
 		if styled then CollectStatusBars(styled, bars) end
-		local source = frame.astinyplatesSourceBar
+		local source = frame.arcanePlatesSourceBar
 		if not source then
 			local children = { frame:GetChildren() }
 			for i = 1, table.getn(children) do
@@ -813,22 +813,22 @@ local function ApplyPlateBarColor(frame, color)
 			end
 		end
 		if source then table.insert(bars, source) end
-		frame.astinyplatesColorBars = bars
+		frame.arcanePlatesColorBars = bars
 	end
-	frame.astinyplatesColoredBars = frame.astinyplatesColoredBars or {}
+	frame.arcanePlatesColoredBars = frame.arcanePlatesColoredBars or {}
 	for i = 1, table.getn(bars) do
 		local bar = bars[i]
 		ApplyBarOverride(bar, color)
-		if color then frame.astinyplatesColoredBars[bar] = true else frame.astinyplatesColoredBars[bar] = nil end
+		if color then frame.arcanePlatesColoredBars[bar] = true else frame.arcanePlatesColoredBars[bar] = nil end
 	end
 end
 
 local function HideShrunkPlate(frame)
-	if ( frame.astinyplatesBossGuardianLabel ) then frame.astinyplatesBossGuardianLabel:Hide(); end
+	if ( frame.arcanePlatesBossGuardianLabel ) then frame.arcanePlatesBossGuardianLabel:Hide(); end
 	HideShrunkNameLabel(frame);
 	HideNameText(frame);
-	if ( frame.astinyplatesStyledVisual ) then frame.astinyplatesStyledVisual:Hide(); end
-	if ( frame.astinyplatesOverlay ) then frame.astinyplatesOverlay:Hide(); end
+	if ( frame.arcanePlatesStyledVisual ) then frame.arcanePlatesStyledVisual:Hide(); end
+	if ( frame.arcanePlatesOverlay ) then frame.arcanePlatesOverlay:Hide(); end
 	HideNativePlate(frame, nil);
 end
 
@@ -840,14 +840,14 @@ local function ApplyPlateStyle(frame)
 		UpdateNamePlaceholder(frame);
 		if ( Opt("showDebuffs") ) then
 			UpdateBossGuardianDebuffs(frame);
-		elseif ( frame.astinyplatesDebuffRow ) then
-			frame.astinyplatesDebuffRow:Hide();
+		elseif ( frame.arcanePlatesDebuffRow ) then
+			frame.arcanePlatesDebuffRow:Hide();
 		end
 		return;
 	end
-	if ( frame.astinyplatesBossGuardianLabel ) then frame.astinyplatesBossGuardianLabel:Hide(); end
-	if ( frame.astinyplatesDebuffRow ) then frame.astinyplatesDebuffRow:Hide(); end
-	frame.astinyplatesNativeRestored = nil;
+	if ( frame.arcanePlatesBossGuardianLabel ) then frame.arcanePlatesBossGuardianLabel:Hide(); end
+	if ( frame.arcanePlatesDebuffRow ) then frame.arcanePlatesDebuffRow:Hide(); end
+	frame.arcanePlatesNativeRestored = nil;
 	if ( Opt("hideShrunkPlates") ) then
 		HideShrunkPlate(frame);
 		return;
@@ -855,61 +855,61 @@ local function ApplyPlateStyle(frame)
 	local visualScale = PLATE_SCALE;
 	ApplyPlateBarColor(frame, BarColor("regular"));
 	HideNameText(frame);
-	local styled = frame.astinyplatesStyledVisual;
+	local styled = frame.arcanePlatesStyledVisual;
 	if ( styled ) then
 		styled:Show();
 		HideFontStrings(styled);
-		local scale = frame.astinyplatesStyledOriginalScale * visualScale;
+		local scale = frame.arcanePlatesStyledOriginalScale * visualScale;
 		if ( styled:GetScale() ~= scale ) then styled:SetScale(scale); end
 		local point, relativeTo, relativePoint, x, y = styled:GetPoint();
 		local offsetX, offsetY = HORIZONTAL_OFFSET, VERTICAL_OFFSET;
 		if ( visualScale == 1 ) then offsetX, offsetY = 0, 0; end
-		local targetX = frame.astinyplatesStyledX + offsetX;
-		local targetY = frame.astinyplatesStyledY + offsetY;
-		if ( point ~= frame.astinyplatesStyledPoint
-				or relativeTo ~= frame.astinyplatesStyledRelativeTo
-				or relativePoint ~= frame.astinyplatesStyledRelativePoint
+		local targetX = frame.arcanePlatesStyledX + offsetX;
+		local targetY = frame.arcanePlatesStyledY + offsetY;
+		if ( point ~= frame.arcanePlatesStyledPoint
+				or relativeTo ~= frame.arcanePlatesStyledRelativeTo
+				or relativePoint ~= frame.arcanePlatesStyledRelativePoint
 				or x ~= targetX or y ~= targetY ) then
 			styled:ClearAllPoints();
-			styled:SetPoint(frame.astinyplatesStyledPoint, frame.astinyplatesStyledRelativeTo,
-				frame.astinyplatesStyledRelativePoint, targetX, targetY);
+			styled:SetPoint(frame.arcanePlatesStyledPoint, frame.arcanePlatesStyledRelativeTo,
+				frame.arcanePlatesStyledRelativePoint, targetX, targetY);
 		end
-		if ( frame.astinyplatesOverlay ) then frame.astinyplatesOverlay:Hide(); end
+		if ( frame.arcanePlatesOverlay ) then frame.arcanePlatesOverlay:Hide(); end
 		HideNativePlate(frame, styled);
 		UpdateNamePlaceholder(frame);
 		return;
 	end
-	local source = frame.astinyplatesSourceBar;
-	local overlay = frame.astinyplatesOverlay;
+	local source = frame.arcanePlatesSourceBar;
+	local overlay = frame.arcanePlatesOverlay;
 	if ( not source or not overlay ) then
 		return;
 	end
-	local originalOverlayScale = frame.astinyplatesOverlayOriginalScale or overlay:GetScale();
-	frame.astinyplatesOverlayOriginalScale = originalOverlayScale;
+	local originalOverlayScale = frame.arcanePlatesOverlayOriginalScale or overlay:GetScale();
+	frame.arcanePlatesOverlayOriginalScale = originalOverlayScale;
 	local overlayScale = originalOverlayScale;
 	if ( overlay:GetScale() ~= overlayScale ) then overlay:SetScale(overlayScale); end
 	EnsureOverlayBorder(frame, overlay);
 	if ( not overlay:IsShown() ) then overlay:Show(); end
-	if ( not frame.astinyplatesOverlayBaseWidth ) then
-		frame.astinyplatesOverlayBaseWidth = frame.astinyplatesSourceOriginalWidth
-			or frame.astinyplatesOverlayWidth / PLATE_SCALE;
-		frame.astinyplatesOverlayBaseHeight = frame.astinyplatesSourceOriginalHeight
-			or frame.astinyplatesOverlayHeight / PLATE_SCALE;
-		local baseX, baseY = frame.astinyplatesOverlayX, frame.astinyplatesOverlayY;
-		if ( string.find(frame.astinyplatesOverlayPoint, "LEFT") ) then
-			baseX = baseX - frame.astinyplatesOverlayWidth / 2;
+	if ( not frame.arcanePlatesOverlayBaseWidth ) then
+		frame.arcanePlatesOverlayBaseWidth = frame.arcanePlatesSourceOriginalWidth
+			or frame.arcanePlatesOverlayWidth / PLATE_SCALE;
+		frame.arcanePlatesOverlayBaseHeight = frame.arcanePlatesSourceOriginalHeight
+			or frame.arcanePlatesOverlayHeight / PLATE_SCALE;
+		local baseX, baseY = frame.arcanePlatesOverlayX, frame.arcanePlatesOverlayY;
+		if ( string.find(frame.arcanePlatesOverlayPoint, "LEFT") ) then
+			baseX = baseX - frame.arcanePlatesOverlayWidth / 2;
 		end
-		if ( string.find(frame.astinyplatesOverlayPoint, "BOTTOM") ) then
-			baseY = baseY - frame.astinyplatesOverlayHeight / 2;
+		if ( string.find(frame.arcanePlatesOverlayPoint, "BOTTOM") ) then
+			baseY = baseY - frame.arcanePlatesOverlayHeight / 2;
 		end
-		frame.astinyplatesOverlayBaseX = baseX;
-		frame.astinyplatesOverlayBaseY = baseY;
+		frame.arcanePlatesOverlayBaseX = baseX;
+		frame.arcanePlatesOverlayBaseY = baseY;
 	end
-	local width = frame.astinyplatesOverlayBaseWidth * visualScale;
-	local height = frame.astinyplatesOverlayBaseHeight * visualScale;
-	local baseX, baseY = frame.astinyplatesOverlayBaseX, frame.astinyplatesOverlayBaseY;
-	if ( string.find(frame.astinyplatesOverlayPoint, "LEFT") ) then baseX = baseX + width / 2; end
-	if ( string.find(frame.astinyplatesOverlayPoint, "BOTTOM") ) then baseY = baseY + height / 2; end
+	local width = frame.arcanePlatesOverlayBaseWidth * visualScale;
+	local height = frame.arcanePlatesOverlayBaseHeight * visualScale;
+	local baseX, baseY = frame.arcanePlatesOverlayBaseX, frame.arcanePlatesOverlayBaseY;
+	if ( string.find(frame.arcanePlatesOverlayPoint, "LEFT") ) then baseX = baseX + width / 2; end
+	if ( string.find(frame.arcanePlatesOverlayPoint, "BOTTOM") ) then baseY = baseY + height / 2; end
 	local offsetX, offsetY = HORIZONTAL_OFFSET, VERTICAL_OFFSET;
 	if ( visualScale == 1 ) then offsetX, offsetY = 0, 0; end
 	local x = baseX + offsetX;
@@ -919,12 +919,12 @@ local function ApplyPlateStyle(frame)
 		overlay:SetWidth(width);
 		overlay:SetHeight(height);
 	end
-	if ( point ~= frame.astinyplatesOverlayPoint or relativeTo ~= frame.astinyplatesOverlayRelativeTo
-			or relativePoint ~= frame.astinyplatesOverlayRelativePoint
+	if ( point ~= frame.arcanePlatesOverlayPoint or relativeTo ~= frame.arcanePlatesOverlayRelativeTo
+			or relativePoint ~= frame.arcanePlatesOverlayRelativePoint
 			or currentX ~= x or currentY ~= y ) then
 		overlay:ClearAllPoints();
-		overlay:SetPoint(frame.astinyplatesOverlayPoint, frame.astinyplatesOverlayRelativeTo,
-			frame.astinyplatesOverlayRelativePoint, x, y);
+		overlay:SetPoint(frame.arcanePlatesOverlayPoint, frame.arcanePlatesOverlayRelativeTo,
+			frame.arcanePlatesOverlayRelativePoint, x, y);
 	end
 	local minValue, maxValue = source:GetMinMaxValues();
 	overlay:SetMinMaxValues(minValue, maxValue);
@@ -938,9 +938,9 @@ local function ApplyPlateStyle(frame)
 			texturePath = statusTexture:GetTexture();
 		end
 		if ( texturePath and texturePath ~= ""
-				and frame.astinyplatesOverlayTexture ~= texturePath ) then
+				and frame.arcanePlatesOverlayTexture ~= texturePath ) then
 			overlay:SetStatusBarTexture(texturePath);
-			frame.astinyplatesOverlayTexture = texturePath;
+			frame.arcanePlatesOverlayTexture = texturePath;
 		end
 	end
 	local r, g, b, a = source:GetStatusBarColor();
@@ -957,106 +957,106 @@ local function ApplyPlateStyle(frame)
 	local children = { frame:GetChildren() };
 	for i = 1, table.getn(children) do
 		local child = children[i];
-		if ( child ~= overlay and child ~= frame.astinyplatesShrunkLabelHolder ) then child:Hide(); end
+		if ( child ~= overlay and child ~= frame.arcanePlatesShrunkLabelHolder ) then child:Hide(); end
 	end
 	UpdateNamePlaceholder(frame);
 end
 
 local function CreatePlateOverlay(frame)
-	if ( not frame.astinyplatesStackOriginalWidth ) then
-		frame.astinyplatesStackOriginalWidth = frame:GetWidth();
+	if ( not frame.arcanePlatesStackOriginalWidth ) then
+		frame.arcanePlatesStackOriginalWidth = frame:GetWidth();
 	end
-	if ( not frame.astinyplatesStackOriginalHeight ) then
-		frame.astinyplatesStackOriginalHeight = frame:GetHeight();
+	if ( not frame.arcanePlatesStackOriginalHeight ) then
+		frame.arcanePlatesStackOriginalHeight = frame:GetHeight();
 	end
-	if ( not frame.astinyplatesStackOriginalScale ) then
-		frame.astinyplatesStackOriginalScale = frame.astinyplatesOriginalScale or frame:GetScale();
+	if ( not frame.arcanePlatesStackOriginalScale ) then
+		frame.arcanePlatesStackOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale();
 	end
-	if ( frame:GetWidth() ~= frame.astinyplatesStackOriginalWidth ) then
-		frame:SetWidth(frame.astinyplatesStackOriginalWidth);
+	if ( frame:GetWidth() ~= frame.arcanePlatesStackOriginalWidth ) then
+		frame:SetWidth(frame.arcanePlatesStackOriginalWidth);
 	end
-	if ( frame:GetHeight() ~= frame.astinyplatesStackOriginalHeight ) then
-		frame:SetHeight(frame.astinyplatesStackOriginalHeight);
+	if ( frame:GetHeight() ~= frame.arcanePlatesStackOriginalHeight ) then
+		frame:SetHeight(frame.arcanePlatesStackOriginalHeight);
 	end
-	if ( frame.astinyplatesStackPoint ) then
+	if ( frame.arcanePlatesStackPoint ) then
 		frame:ClearAllPoints();
-		frame:SetPoint(frame.astinyplatesStackPoint,
-			frame.astinyplatesStackRelativeTo or frame:GetParent(),
-			frame.astinyplatesStackRelativePoint,
-			frame.astinyplatesStackX, frame.astinyplatesStackY);
-		frame.astinyplatesStackPoint = nil;
-		frame.astinyplatesStackRelativeTo = nil;
-		frame.astinyplatesStackRelativePoint = nil;
-		frame.astinyplatesStackX = nil;
-		frame.astinyplatesStackY = nil;
+		frame:SetPoint(frame.arcanePlatesStackPoint,
+			frame.arcanePlatesStackRelativeTo or frame:GetParent(),
+			frame.arcanePlatesStackRelativePoint,
+			frame.arcanePlatesStackX, frame.arcanePlatesStackY);
+		frame.arcanePlatesStackPoint = nil;
+		frame.arcanePlatesStackRelativeTo = nil;
+		frame.arcanePlatesStackRelativePoint = nil;
+		frame.arcanePlatesStackX = nil;
+		frame.arcanePlatesStackY = nil;
 	end
-	if ( frame.astinyplatesStackNativePoint ) then
+	if ( frame.arcanePlatesStackNativePoint ) then
 		frame:ClearAllPoints();
-		frame:SetPoint(frame.astinyplatesStackNativePoint,
-			frame.astinyplatesStackNativeRelativeTo or frame:GetParent(),
-			frame.astinyplatesStackNativeRelativePoint,
-			frame.astinyplatesStackNativeX, frame.astinyplatesStackNativeY);
-		frame.astinyplatesStackNativePoint = nil;
-		frame.astinyplatesStackNativeRelativeTo = nil;
-		frame.astinyplatesStackNativeRelativePoint = nil;
-		frame.astinyplatesStackNativeX = nil;
-		frame.astinyplatesStackNativeY = nil;
+		frame:SetPoint(frame.arcanePlatesStackNativePoint,
+			frame.arcanePlatesStackNativeRelativeTo or frame:GetParent(),
+			frame.arcanePlatesStackNativeRelativePoint,
+			frame.arcanePlatesStackNativeX, frame.arcanePlatesStackNativeY);
+		frame.arcanePlatesStackNativePoint = nil;
+		frame.arcanePlatesStackNativeRelativeTo = nil;
+		frame.arcanePlatesStackNativeRelativePoint = nil;
+		frame.arcanePlatesStackNativeX = nil;
+		frame.arcanePlatesStackNativeY = nil;
 	end
-	frame.astinyplatesStackScaleApplied = nil;
-	frame.astinyplatesStackCorrectionPending = nil;
-	frame.astinyplatesVisualCorrectionX = nil;
-	frame.astinyplatesVisualCorrectionY = nil;
-	if ( frame:GetScale() ~= frame.astinyplatesStackOriginalScale ) then
-		frame:SetScale(frame.astinyplatesStackOriginalScale);
+	frame.arcanePlatesStackScaleApplied = nil;
+	frame.arcanePlatesStackCorrectionPending = nil;
+	frame.arcanePlatesVisualCorrectionX = nil;
+	frame.arcanePlatesVisualCorrectionY = nil;
+	if ( frame:GetScale() ~= frame.arcanePlatesStackOriginalScale ) then
+		frame:SetScale(frame.arcanePlatesStackOriginalScale);
 	end
-	if ( not frame.astinyplatesSourceBar ) then
+	if ( not frame.arcanePlatesSourceBar ) then
 		local children = { frame:GetChildren() };
 		for i = 1, table.getn(children) do
 			if ( children[i]:GetObjectType() == "StatusBar" ) then
-				frame.astinyplatesSourceBar = children[i];
-				frame.astinyplatesSourceOriginalWidth = children[i]:GetWidth();
-				frame.astinyplatesSourceOriginalHeight = children[i]:GetHeight();
+				frame.arcanePlatesSourceBar = children[i];
+				frame.arcanePlatesSourceOriginalWidth = children[i]:GetWidth();
+				frame.arcanePlatesSourceOriginalHeight = children[i]:GetHeight();
 				break;
 			end
 		end
 	end
-	local sourceBar = frame.astinyplatesSourceBar;
+	local sourceBar = frame.arcanePlatesSourceBar;
 	if ( sourceBar ) then
-		if ( not frame.astinyplatesSourceOriginalWidth ) then
-			frame.astinyplatesSourceOriginalWidth = sourceBar:GetWidth();
+		if ( not frame.arcanePlatesSourceOriginalWidth ) then
+			frame.arcanePlatesSourceOriginalWidth = sourceBar:GetWidth();
 		end
-		if ( not frame.astinyplatesSourceOriginalHeight ) then
-			frame.astinyplatesSourceOriginalHeight = sourceBar:GetHeight();
+		if ( not frame.arcanePlatesSourceOriginalHeight ) then
+			frame.arcanePlatesSourceOriginalHeight = sourceBar:GetHeight();
 		end
-		if ( sourceBar:GetWidth() ~= frame.astinyplatesSourceOriginalWidth ) then
-			sourceBar:SetWidth(frame.astinyplatesSourceOriginalWidth);
+		if ( sourceBar:GetWidth() ~= frame.arcanePlatesSourceOriginalWidth ) then
+			sourceBar:SetWidth(frame.arcanePlatesSourceOriginalWidth);
 		end
-		if ( sourceBar:GetHeight() ~= frame.astinyplatesSourceOriginalHeight ) then
-			sourceBar:SetHeight(frame.astinyplatesSourceOriginalHeight);
+		if ( sourceBar:GetHeight() ~= frame.arcanePlatesSourceOriginalHeight ) then
+			sourceBar:SetHeight(frame.arcanePlatesSourceOriginalHeight);
 		end
 	end
-	if ( not frame.astinyplatesStyledVisual ) then
-		frame.astinyplatesStyledVisual = FindStyledVisual(frame, frame.astinyplatesSourceBar);
-		if ( frame.astinyplatesStyledVisual ) then
-			local styled = frame.astinyplatesStyledVisual;
-			frame.astinyplatesStyledOriginalScale = styled:GetScale();
+	if ( not frame.arcanePlatesStyledVisual ) then
+		frame.arcanePlatesStyledVisual = FindStyledVisual(frame, frame.arcanePlatesSourceBar);
+		if ( frame.arcanePlatesStyledVisual ) then
+			local styled = frame.arcanePlatesStyledVisual;
+			frame.arcanePlatesStyledOriginalScale = styled:GetScale();
 			local point, relativeTo, relativePoint, x, y = styled:GetPoint();
-			frame.astinyplatesStyledPoint = point or "CENTER";
-			frame.astinyplatesStyledRelativeTo = relativeTo or frame;
-			frame.astinyplatesStyledRelativePoint = relativePoint or frame.astinyplatesStyledPoint;
-			frame.astinyplatesStyledX = x or 0;
-			frame.astinyplatesStyledY = y or 0;
+			frame.arcanePlatesStyledPoint = point or "CENTER";
+			frame.arcanePlatesStyledRelativeTo = relativeTo or frame;
+			frame.arcanePlatesStyledRelativePoint = relativePoint or frame.arcanePlatesStyledPoint;
+			frame.arcanePlatesStyledX = x or 0;
+			frame.arcanePlatesStyledY = y or 0;
 			return true;
 		end
 	end
-	if ( frame.astinyplatesOverlay ) then
-		local source = frame.astinyplatesSourceBar;
-		if ( source and ( not frame.astinyplatesOverlayWidth
-				or not frame.astinyplatesOverlayPoint ) ) then
+	if ( frame.arcanePlatesOverlay ) then
+		local source = frame.arcanePlatesSourceBar;
+		if ( source and ( not frame.arcanePlatesOverlayWidth
+				or not frame.arcanePlatesOverlayPoint ) ) then
 			local point, relativeTo, relativePoint, x, y = source:GetPoint();
-			local originalWidth = frame.astinyplatesSourceOriginalWidth or source:GetWidth();
-			local originalHeight = frame.astinyplatesSourceOriginalHeight or source:GetHeight();
-			local oldVisuals = frame.astinyplatesVisuals or {};
+			local originalWidth = frame.arcanePlatesSourceOriginalWidth or source:GetWidth();
+			local originalHeight = frame.arcanePlatesSourceOriginalHeight or source:GetHeight();
+			local oldVisuals = frame.arcanePlatesVisuals or {};
 			for j = 1, table.getn(oldVisuals) do
 				if ( oldVisuals[j].region == source ) then
 					originalWidth, originalHeight = oldVisuals[j].width, oldVisuals[j].height;
@@ -1073,21 +1073,21 @@ local function CreatePlateOverlay(frame)
 				local adjustedX, adjustedY = x or 0, y or 0;
 				if ( string.find(point, "LEFT") ) then adjustedX = adjustedX + width / 2; end
 				if ( string.find(point, "BOTTOM") ) then adjustedY = adjustedY + height / 2; end
-				frame.astinyplatesOverlayPoint = point;
-				frame.astinyplatesOverlayRelativeTo = relativeTo or frame;
-				frame.astinyplatesOverlayRelativePoint = relativePoint or point;
-				frame.astinyplatesOverlayX = adjustedX;
-				frame.astinyplatesOverlayY = adjustedY;
-				frame.astinyplatesOverlayWidth = width;
-				frame.astinyplatesOverlayHeight = height;
-				frame.astinyplatesOverlayBaseX = x or 0;
-				frame.astinyplatesOverlayBaseY = y or 0;
-				frame.astinyplatesOverlayBaseWidth = originalWidth;
-				frame.astinyplatesOverlayBaseHeight = originalHeight;
-				frame.astinyplatesOverlay:SetWidth(width);
-				frame.astinyplatesOverlay:SetHeight(height);
-				frame.astinyplatesOverlay:ClearAllPoints();
-				frame.astinyplatesOverlay:SetPoint(point, relativeTo or frame,
+				frame.arcanePlatesOverlayPoint = point;
+				frame.arcanePlatesOverlayRelativeTo = relativeTo or frame;
+				frame.arcanePlatesOverlayRelativePoint = relativePoint or point;
+				frame.arcanePlatesOverlayX = adjustedX;
+				frame.arcanePlatesOverlayY = adjustedY;
+				frame.arcanePlatesOverlayWidth = width;
+				frame.arcanePlatesOverlayHeight = height;
+				frame.arcanePlatesOverlayBaseX = x or 0;
+				frame.arcanePlatesOverlayBaseY = y or 0;
+				frame.arcanePlatesOverlayBaseWidth = originalWidth;
+				frame.arcanePlatesOverlayBaseHeight = originalHeight;
+				frame.arcanePlatesOverlay:SetWidth(width);
+				frame.arcanePlatesOverlay:SetHeight(height);
+				frame.arcanePlatesOverlay:ClearAllPoints();
+				frame.arcanePlatesOverlay:SetPoint(point, relativeTo or frame,
 					relativePoint or point,
 					adjustedX + HORIZONTAL_OFFSET,
 					adjustedY + VERTICAL_OFFSET);
@@ -1102,10 +1102,10 @@ local function CreatePlateOverlay(frame)
 				and child:GetWidth() > 0 and child:GetHeight() > 0 ) then
 			local point, relativeTo, relativePoint, x, y = child:GetPoint();
 			if ( not point ) then return false; end
-			local originalWidth = frame.astinyplatesSourceOriginalWidth or child:GetWidth();
-			local originalHeight = frame.astinyplatesSourceOriginalHeight or child:GetHeight();
+			local originalWidth = frame.arcanePlatesSourceOriginalWidth or child:GetWidth();
+			local originalHeight = frame.arcanePlatesSourceOriginalHeight or child:GetHeight();
 			-- A previous addon revision may already have resized the native bar.
-			local oldVisuals = frame.astinyplatesVisuals or {};
+			local oldVisuals = frame.arcanePlatesVisuals or {};
 			for j = 1, table.getn(oldVisuals) do
 				if ( oldVisuals[j].region == child ) then
 					originalWidth, originalHeight = oldVisuals[j].width, oldVisuals[j].height;
@@ -1121,17 +1121,17 @@ local function CreatePlateOverlay(frame)
 			local adjustedX, adjustedY = x or 0, y or 0;
 			if ( string.find(point, "LEFT") ) then adjustedX = adjustedX + width / 2; end
 			if ( string.find(point, "BOTTOM") ) then adjustedY = adjustedY + height / 2; end
-			frame.astinyplatesOverlayPoint = point;
-			frame.astinyplatesOverlayRelativeTo = relativeTo or frame;
-			frame.astinyplatesOverlayRelativePoint = relativePoint or point;
-			frame.astinyplatesOverlayX = adjustedX;
-			frame.astinyplatesOverlayY = adjustedY;
-			frame.astinyplatesOverlayWidth = width;
-			frame.astinyplatesOverlayHeight = height;
-			frame.astinyplatesOverlayBaseX = x or 0;
-			frame.astinyplatesOverlayBaseY = y or 0;
-			frame.astinyplatesOverlayBaseWidth = originalWidth;
-			frame.astinyplatesOverlayBaseHeight = originalHeight;
+			frame.arcanePlatesOverlayPoint = point;
+			frame.arcanePlatesOverlayRelativeTo = relativeTo or frame;
+			frame.arcanePlatesOverlayRelativePoint = relativePoint or point;
+			frame.arcanePlatesOverlayX = adjustedX;
+			frame.arcanePlatesOverlayY = adjustedY;
+			frame.arcanePlatesOverlayWidth = width;
+			frame.arcanePlatesOverlayHeight = height;
+			frame.arcanePlatesOverlayBaseX = x or 0;
+			frame.arcanePlatesOverlayBaseY = y or 0;
+			frame.arcanePlatesOverlayBaseWidth = originalWidth;
+			frame.arcanePlatesOverlayBaseHeight = originalHeight;
 			local overlay = CreateFrame("StatusBar", nil, frame);
 			overlay:SetWidth(width);
 			overlay:SetHeight(height);
@@ -1144,9 +1144,9 @@ local function CreatePlateOverlay(frame)
 			background:SetAllPoints(overlay);
 			background:SetTexture("Interface\\Buttons\\WHITE8X8");
 			background:SetVertexColor(0, 0, 0, 0.9);
-			frame.astinyplatesSourceBar = child;
-			frame.astinyplatesOverlay = overlay;
-			frame.astinyplatesOverlayOriginalScale = overlay:GetScale();
+			frame.arcanePlatesSourceBar = child;
+			frame.arcanePlatesOverlay = overlay;
+			frame.arcanePlatesOverlayOriginalScale = overlay:GetScale();
 			child:Hide();
 			return true;
 		end
@@ -1159,30 +1159,30 @@ local function RegisterPlate(frame)
 	knownPlates[frame] = true
 	table.insert(orderedPlates, frame)
 	CaptureNativeState(frame)
-	frame.astinyplatesOriginalScale = frame.astinyplatesOriginalScale or frame:GetScale() or 1
+	frame.arcanePlatesOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale() or 1
 	return true
 end
 
 local function SyncOverlayValues()
 	for i = 1, table.getn(orderedPlates) do
 		local frame = orderedPlates[i]
-		local overlay, source = frame.astinyplatesOverlay, frame.astinyplatesSourceBar
+		local overlay, source = frame.arcanePlatesOverlay, frame.arcanePlatesSourceBar
 		if overlay and source and frame:IsVisible() and overlay:IsShown() then
 			local minimum, maximum = source:GetMinMaxValues()
-			if minimum ~= frame.astinyplatesLastMin or maximum ~= frame.astinyplatesLastMax then
-				frame.astinyplatesLastMin, frame.astinyplatesLastMax = minimum, maximum
+			if minimum ~= frame.arcanePlatesLastMin or maximum ~= frame.arcanePlatesLastMax then
+				frame.arcanePlatesLastMin, frame.arcanePlatesLastMax = minimum, maximum
 				overlay:SetMinMaxValues(minimum, maximum)
 			end
 			local value = source:GetValue()
-			if value ~= frame.astinyplatesLastValue then
-				frame.astinyplatesLastValue = value
+			if value ~= frame.arcanePlatesLastValue then
+				frame.arcanePlatesLastValue = value
 				overlay:SetValue(value)
 			end
 			local r, g, b, a = source:GetStatusBarColor()
-			if r ~= frame.astinyplatesLastR or g ~= frame.astinyplatesLastG
-					or b ~= frame.astinyplatesLastB or a ~= frame.astinyplatesLastA then
-				frame.astinyplatesLastR, frame.astinyplatesLastG = r, g
-				frame.astinyplatesLastB, frame.astinyplatesLastA = b, a
+			if r ~= frame.arcanePlatesLastR or g ~= frame.arcanePlatesLastG
+					or b ~= frame.arcanePlatesLastB or a ~= frame.arcanePlatesLastA then
+				frame.arcanePlatesLastR, frame.arcanePlatesLastG = r, g
+				frame.arcanePlatesLastB, frame.arcanePlatesLastA = b, a
 				overlay:SetStatusBarColor(r, g, b, a)
 			end
 		end
@@ -1195,35 +1195,35 @@ local function UpdateKnownPlates()
 	for i = 1, count do
 		local frame = orderedPlates[i]
 		if frame and frame.GetObjectType and frame:GetObjectType() == "Frame" and frame:IsVisible() then
-			local oldName = frame.astinyplatesPlateName
+			local oldName = frame.arcanePlatesPlateName
 			local currentName = GetPlateName(frame)
 			if currentName ~= oldName then
-				frame.astinyplatesPlateName = currentName
-				frame.astinyplatesDebuffUnitID = nil
-				frame.astinyplatesDebuffSignature = nil
-				frame.astinyplatesNativeRestored = false
+				frame.arcanePlatesPlateName = currentName
+				frame.arcanePlatesDebuffUnitID = nil
+				frame.arcanePlatesDebuffSignature = nil
+				frame.arcanePlatesNativeRestored = false
 			end
 			local special = IsBossOrGuardianPlate(frame)
 			local category = special and "boss" or "regular"
-			if frame.astinyplatesAppliedCategory ~= category
-					or frame.astinyplatesStyleRevision ~= styleRevision then
-				frame.astinyplatesAppliedCategory = category
-				frame.astinyplatesStyleRevision = styleRevision
+			if frame.arcanePlatesAppliedCategory ~= category
+					or frame.arcanePlatesStyleRevision ~= styleRevision then
+				frame.arcanePlatesAppliedCategory = category
+				frame.arcanePlatesStyleRevision = styleRevision
 				if special then
-					if not frame.astinyplatesNativeRestored then RestoreNativeState(frame) end
+					if not frame.arcanePlatesNativeRestored then RestoreNativeState(frame) end
 					ApplyPlateBarColor(frame, BarColor("boss"))
 					HideNameText(frame)
 					UpdateNamePlaceholder(frame)
 				else
-					if frame.astinyplatesNativeRestored then frame.astinyplatesNativeRestored = false end
+					if frame.arcanePlatesNativeRestored then frame.arcanePlatesNativeRestored = false end
 					if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
 				end
 			end
 			if special then
 				if Opt("showDebuffs") then
 					UpdateBossGuardianDebuffs(frame)
-				elseif frame.astinyplatesDebuffRow and frame.astinyplatesDebuffRow:IsShown() then
-					frame.astinyplatesDebuffRow:Hide()
+				elseif frame.arcanePlatesDebuffRow and frame.arcanePlatesDebuffRow:IsShown() then
+					frame.arcanePlatesDebuffRow:Hide()
 				end
 			end
 		end
@@ -1249,11 +1249,11 @@ local function RestoreAll()
 		local frame = orderedPlates[i]
 		if frame then
 			RestoreNativeState(frame)
-			if frame.astinyplatesOverlay then frame.astinyplatesOverlay:Hide() end
-			if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
-			if frame.astinyplatesBossGuardianLabel then frame.astinyplatesBossGuardianLabel:Hide() end
-			if frame.astinyplatesShrunkLabelHolder then frame.astinyplatesShrunkLabelHolder:Hide() end
-			frame.astinyplatesNativeRestored = true
+			if frame.arcanePlatesOverlay then frame.arcanePlatesOverlay:Hide() end
+			if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+			if frame.arcanePlatesBossGuardianLabel then frame.arcanePlatesBossGuardianLabel:Hide() end
+			if frame.arcanePlatesShrunkLabelHolder then frame.arcanePlatesShrunkLabelHolder:Hide() end
+			frame.arcanePlatesNativeRestored = true
 		end
 	end
 end
