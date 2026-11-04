@@ -197,13 +197,8 @@ local function CaptureNativeState(frame)
 end
 
 local function RestoreNativeState(frame)
-	if frame.arcanePlatesNativeRestored then return end
-	local wasModified = frame.arcanePlatesOverlay or frame.arcanePlatesStyledVisual
-		or frame.arcanePlatesNativeState or frame.arcanePlatesSourceBar
-	if not wasModified then
-		frame.arcanePlatesNativeRestored = true
-		return
-	end
+	-- Always reapply the captured native state: the boss-name path can hide name
+	-- text after its first restore, and turning Tiny Plates off must undo that too.
 	if frame.arcanePlatesOverlay then frame.arcanePlatesOverlay:Hide() end
 	if frame.arcanePlatesNativeState then
 		for i = 1, table.getn(frame.arcanePlatesNativeState) do
@@ -777,7 +772,8 @@ local function ApplyBarOverride(bar, color)
 			bar.arcanePlatesOriginalColor = { r or 1, g or 1, b or 1, a }
 		end
 		if ColorsDiffer(r, g, b, color[1], color[2], color[3]) then
-			bar:SetStatusBarColor(color[1], color[2], color[3], a)
+			if a ~= nil then bar:SetStatusBarColor(color[1], color[2], color[3], a)
+			else bar:SetStatusBarColor(color[1], color[2], color[3]) end
 		end
 		bar.arcanePlatesAppliedColor = { color[1], color[2], color[3] }
 	else
