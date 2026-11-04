@@ -159,7 +159,7 @@ local function Build()
 		root.close.text:SetTextColor(1, 0.9, 0.6)
 		if GameTooltip then
 			GameTooltip:SetOwner(root.close, "ANCHOR_LEFT")
-			GameTooltip:AddLine(C.L("Hide the luck window; use the Luck toggle in Arcane Options to show it again"), 1, 1, 1, 1)
+			GameTooltip:AddLine(C.L("Click to show or hide it."), 1, 1, 1, 1)
 			C.ShowTip()
 		end
 	end)
