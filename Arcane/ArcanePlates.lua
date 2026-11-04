@@ -470,8 +470,12 @@ local function ApplyBossGuardianLabelFont(frame)
 	if ( font and height ) then label:SetFont(font, height, flags); end
 	if ( source.GetTextColor ) then
 		local r, g, b, a = source:GetTextColor();
-		if ( a ) then label:SetTextColor(r, g, b, a);
-		else label:SetTextColor(r, g, b); end
+		-- A newly created source FontString may not have a color yet; do not pass nils
+		-- into SetTextColor while copying its style to the boss/guardian label.
+		if ( r and g and b ) then
+			if ( a ) then label:SetTextColor(r, g, b, a);
+			else label:SetTextColor(r, g, b); end
+		end
 	end
 	if ( source.GetShadowColor and label.SetShadowColor ) then
 		local r, g, b, a = source:GetShadowColor();
