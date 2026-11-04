@@ -759,7 +759,7 @@ local function Build()
 		db.shown = false
 		ShowMenu(false)
 		if C.RefreshHub then C.RefreshHub() end
-	end, "Hide the meter; use the Damage meter toggle in Arcane Options to show it again")
+	end, "Click to show or hide it.")
 	root.close:SetPoint("RIGHT", root, "TOPRIGHT", -4, -HEAD * 0.5)
 	root.fold = TextButton(root, "^", 16, function()
 		db.collapsed = not db.collapsed
