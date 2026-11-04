@@ -1,7 +1,7 @@
 -- in each language: words wider than the box they sit in (a font string's own width, or its button's)
 MOCK_SCRATCH = arg[1]
 local DIR = arg[2]
-dofile(MOCK_SCRATCH .. "/AUI/mock_cui.lua")
+dofile(MOCK_SCRATCH .. "/arcane/mock_arcane.lua")
 dofile(MOCK_SCRATCH .. "/bt/sim.lua")
 local M = MOCK
 M.InstallAPI()
