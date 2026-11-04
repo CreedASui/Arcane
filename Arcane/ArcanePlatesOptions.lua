@@ -194,10 +194,10 @@ end
 
 local function BuildPanel(parent)
 	if panel then return end
-	panel = CreateFrame("Frame", "ArcanePlatesOptions", UIParent)
+	panel = CreateFrame("Frame", "ArcanePlatesOptions", parent or UIParent)
 	panel:SetWidth(310)
 	panel:SetHeight(380)
-	panel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	panel:SetPoint("TOPLEFT", parent or UIParent, "TOPLEFT", 324, -62)
 	panel:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
 	panel:SetBackdropColor(0.05, 0.05, 0.07, 0.98)
 	panel:SetBackdropBorderColor(0.91, 0.70, 0.30, 0.8)
@@ -228,9 +228,10 @@ function C.ArcanePlatesRefreshOptions()
 	UpdateControls()
 end
 
-function C.ArcanePlatesToggleOptions()
-	if not panel then BuildPanel() end
+function C.ArcanePlatesToggleOptions(parent)
+	if not panel then BuildPanel(parent) end
 	if panel:IsShown() then panel:Hide() else
+		if parent and panel:GetParent() ~= parent then panel:SetParent(parent) end
 		C.AboveHub(panel)
 		UpdateControls()
 		panel:Show()
