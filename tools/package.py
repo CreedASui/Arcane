@@ -57,6 +57,9 @@ def validate_addon() -> tuple[str, list[Path]]:
     files = sorted(path for path in ADDON_DIR.rglob("*") if path.is_file())
     if not files:
         fail("Arcane addon folder is empty")
+    duplicate_root = sorted({path.name for path in files if (ROOT / path.name).is_file()})
+    if duplicate_root:
+        fail("stale root-level copies of addon files remain: " + ", ".join(duplicate_root))
 
     branded = []
     for path in files:
