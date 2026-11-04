@@ -721,6 +721,7 @@ do
 		end
 	end
 	local function partRow(key)
+		if not ArcaneOptions then M.Slash("") end
 		for _, row in ipairs(ArcaneOptions.rows or {}) do
 			if row.info and row.info.key == key then return row end
 		end
