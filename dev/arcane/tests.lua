@@ -2,7 +2,7 @@
 -- usage: lua50 tests.lua <scratch> <addon dir>
 MOCK_SCRATCH = arg[1]
 local DIR = arg[2]
-dofile(MOCK_SCRATCH .. "/AUI/mock_cui.lua")
+dofile(MOCK_SCRATCH .. "/arcane/mock_arcane.lua")
 dofile(MOCK_SCRATCH .. "/bt/sim.lua")
 local M = MOCK
 
