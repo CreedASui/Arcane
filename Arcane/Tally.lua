@@ -296,7 +296,7 @@ local function Dock(mover, dt)
 		local docked = Dockable()
 		if docked ~= S.docked then
 			S.docked = docked
-			root.creedDocked = docked or nil
+			root.arcaneDocked = docked or nil
 			for _, t in ipairs({ root.glass, root.lineT, root.lineB, root.gemL, root.gemR }) do C.Vis(t, not docked) end
 			if docked then root:SetFrameLevel(ArcaneBar:GetFrameLevel() + 3) end
 			C.ApplyPos(mover)
