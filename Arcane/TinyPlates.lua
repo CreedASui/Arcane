@@ -6,8 +6,11 @@ local knownPlates = {}
 local orderedPlates = {}
 local active = true
 local scanClock = 0
-local SCAN_INTERVAL = 0.10
+local SCAN_INTERVAL = 0.50
+local OVERLAY_INTERVAL = 0.10
+local overlayClock = 0
 local refreshPending = true
+local styleRevision = 0
 local scanFrame
 
 local function Opt(key)
@@ -608,7 +611,7 @@ local function UpdateBossGuardianDebuffs(frame)
 		local d = debuffs[i]
 		if d then
 			signatureParts[i] = tostring(d.icon or "") .. ":" .. tostring(d.stacks or 0)
-				.. ":" .. tostring(d.permanent and 1 or 0) .. ":" .. tostring(d.ends or d.remaining or "")
+				.. ":" .. tostring(d.permanent and 1 or 0) .. ":" .. tostring(d.ends or "")
 		end
 	end
 	local signature = table.concat(signatureParts, "|")
@@ -1185,26 +1188,68 @@ local function RegisterPlate(frame)
 	return true
 end
 
+local function SyncOverlayValues()
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		local overlay, source = frame.astinyplatesOverlay, frame.astinyplatesSourceBar
+		if overlay and source and frame:IsVisible() and overlay:IsShown() then
+			local minimum, maximum = source:GetMinMaxValues()
+			if minimum ~= frame.astinyplatesLastMin or maximum ~= frame.astinyplatesLastMax then
+				frame.astinyplatesLastMin, frame.astinyplatesLastMax = minimum, maximum
+				overlay:SetMinMaxValues(minimum, maximum)
+			end
+			local value = source:GetValue()
+			if value ~= frame.astinyplatesLastValue then
+				frame.astinyplatesLastValue = value
+				overlay:SetValue(value)
+			end
+			local r, g, b, a = source:GetStatusBarColor()
+			if r ~= frame.astinyplatesLastR or g ~= frame.astinyplatesLastG
+					or b ~= frame.astinyplatesLastB or a ~= frame.astinyplatesLastA then
+				frame.astinyplatesLastR, frame.astinyplatesLastG = r, g
+				frame.astinyplatesLastB, frame.astinyplatesLastA = b, a
+				overlay:SetStatusBarColor(r, g, b, a)
+			end
+		end
+	end
+end
+
 local function UpdateKnownPlates()
 	RefreshBossGuardianNames()
 	local count = table.getn(orderedPlates)
 	for i = 1, count do
 		local frame = orderedPlates[i]
-		if frame and frame.GetObjectType and frame:GetObjectType() == "Frame" then
+		if frame and frame.GetObjectType and frame:GetObjectType() == "Frame" and frame:IsVisible() then
+			local oldName = frame.astinyplatesPlateName
+			local currentName = GetPlateName(frame)
+			if currentName ~= oldName then
+				frame.astinyplatesPlateName = currentName
+				frame.astinyplatesDebuffUnitID = nil
+				frame.astinyplatesDebuffSignature = nil
+				frame.astinyplatesNativeRestored = false
+			end
 			local special = IsBossOrGuardianPlate(frame)
+			local category = special and "boss" or "regular"
+			if frame.astinyplatesAppliedCategory ~= category
+					or frame.astinyplatesStyleRevision ~= styleRevision then
+				frame.astinyplatesAppliedCategory = category
+				frame.astinyplatesStyleRevision = styleRevision
+				if special then
+					if not frame.astinyplatesNativeRestored then RestoreNativeState(frame) end
+					ApplyPlateBarColor(frame, BarColor("boss"))
+					HideNameText(frame)
+					UpdateNamePlaceholder(frame)
+				else
+					if frame.astinyplatesNativeRestored then frame.astinyplatesNativeRestored = false end
+					if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
+				end
+			end
 			if special then
-				if not frame.astinyplatesNativeRestored then RestoreNativeState(frame) end
-				ApplyPlateBarColor(frame, BarColor("boss"))
-				HideNameText(frame)
-				UpdateNamePlaceholder(frame)
 				if Opt("showDebuffs") then
 					UpdateBossGuardianDebuffs(frame)
 				elseif frame.astinyplatesDebuffRow and frame.astinyplatesDebuffRow:IsShown() then
 					frame.astinyplatesDebuffRow:Hide()
 				end
-			else
-				if frame.astinyplatesNativeRestored then frame.astinyplatesNativeRestored = false end
-				if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
 			end
 		end
 	end
@@ -1256,6 +1301,7 @@ local function SetEnabled(on)
 end
 
 C.TinyPlatesRefresh = function(force)
+	styleRevision = styleRevision + 1
 	if force then RefreshAll() else refreshPending = true end
 end
 
@@ -1284,6 +1330,11 @@ C.OnInit(function()
 			scanClock = SCAN_INTERVAL
 			ScanNameplates()
 			refreshPending = true
+		end
+		overlayClock = overlayClock - dt
+		if overlayClock <= 0 then
+			overlayClock = OVERLAY_INTERVAL
+			SyncOverlayValues()
 		end
 		if refreshPending then
 			refreshPending = false
