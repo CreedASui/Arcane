@@ -1320,10 +1320,6 @@ local function BuildHub()
 	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
 	y = y - 30
 	-- the language: a button that opens the list of them, each in its own words
-	o.lang = C.Button(o, 302, 24, "", function()
-		if o.langMenu:IsShown() then o.langMenu:Hide() else o.langMenu:Show() end
-		RefreshHub()
-	end)
 	-- the language control now shares a row with the Tiny Plates submenu
 	o.lang = langButton
 	local menu = CreateFrame("Frame", "ArcaneLanguageMenu", o)
