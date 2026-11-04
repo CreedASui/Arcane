@@ -1308,7 +1308,7 @@ local function BuildHub()
 	end)
 	o.lock:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + COL_W, y)
 	local platesButton = C.Button(o, 148, 24, "", function()
-		if C.arcanePlatesOptions then C.tinyPlatesOptions() end
+		if C.arcanePlatesOptions then C.arcanePlatesOptions() end
 	end)
 	C.LText(platesButton.text, "Tiny Plates settings")
 	platesButton:SetPoint("TOPLEFT", o, "TOPLEFT", 14, y)
