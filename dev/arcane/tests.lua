@@ -1434,7 +1434,7 @@ do
 		return r
 	end
 	local w0 = right()
-	check(ArcaneTally.creedDocked == true and Arcane.tallyDock.on, "the kills, gold and cache sit in the panel")
+	check(ArcaneTally.arcaneDocked == true and Arcane.tallyDock.on, "the kills, gold and cache sit in the panel")
 	local lo, hi, undocked = w0, w0, false
 	local function watch(n)
 		for i = 1, n do
@@ -1442,7 +1442,7 @@ do
 			local r = right()
 			if r < lo then lo = r end
 			if r > hi then hi = r end
-			if not ArcaneTally.creedDocked then undocked = true end
+			if not ArcaneTally.arcaneDocked then undocked = true end
 		end
 	end
 	M.phase = "choosing"
@@ -1458,7 +1458,7 @@ do
 	ArcaneDB.pos.tally = { x = 500, y = 300 }
 	frames(45)
 	local away = right()
-	check(not ArcaneTally.creedDocked and away < w0 - 20, string.format("dragged away, the panel closes up (%.1f -> %.1f)", w0, away))
+	check(not ArcaneTally.arcaneDocked and away < w0 - 20, string.format("dragged away, the panel closes up (%.1f -> %.1f)", w0, away))
 	ArcaneDB.pos.tally = nil
 	local peak = away
 	for i = 1, 60 do
