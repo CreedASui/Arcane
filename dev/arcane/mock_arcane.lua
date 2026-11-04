@@ -644,21 +644,20 @@ STANDARD_TEXT_FONT = M.nativeFace
 M.tip = { lines = {}, shown = false }
 -- Native 1.12 ColorSelect methods on the global ColorPickerFrame.
 M.pickerColor = { 0.8, 0.8, 0.8 }
-ColorPickerFrame = {
-	shown = false,
-	Hide = function(self) self.shown = false end,
-	Show = function(self) self.shown = true end,
-	SetColorRGB = function(self, r, g, b)
-		M.pickerColor = { r, g, b }
-		if self.func then self.func() end -- 1.12 OnColorSelect invokes func
-	end,
-	GetColorRGB = function(self)
-		return M.pickerColor[1], M.pickerColor[2], M.pickerColor[3]
-	end,
-}
+ColorPickerFrame = NewObject("ColorSelect", UIParent)
+ColorPickerFrame.__name = "ColorPickerFrame"
+setglobal("ColorPickerFrame", ColorPickerFrame)
+ColorPickerFrame.__color = { 0.8, 0.8, 0.8 }
+ColorPickerFrame.shown = false
+function IMPL.SetColorRGB(self, r, g, b)
+	self.__color = { r, g, b }
+	if self.func then self.func() end -- 1.12 OnColorSelect invokes func
+end
+function IMPL.GetColorRGB(self)
+	return self.__color[1], self.__color[2], self.__color[3]
+end
 function M.PickColor(r, g, b)
-	M.pickerColor = { r, g, b }
-	if ColorPickerFrame.func then ColorPickerFrame.func() end
+	ColorPickerFrame:SetColorRGB(r, g, b)
 	ColorPickerFrame.shown = false
 end
 function M.CancelColor()
