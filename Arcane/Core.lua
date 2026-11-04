@@ -1222,7 +1222,7 @@ local function BuildHub()
 	hub = o
 	o:SetWidth(HUB_W)
 	local perColumn = math.ceil(table.getn(C.parts) / 2)
-	o:SetHeight(62 + perColumn * 26 + 14 + 60 + 24 + 12 + 30) -- rows, panels and three lines of buttons
+	o:SetHeight(62 + perColumn * 26 + 14 + 60 + 24 + 12 + 60) -- rows, panels and three lines of buttons
 	o:SetPoint("CENTER", UIParent, "CENTER", 0, 10)
 	o:SetFrameStrata("DIALOG")
 	o:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
