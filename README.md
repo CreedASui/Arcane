@@ -24,6 +24,10 @@ Every part can be turned on or off, sized and moved.
 
 **Languages:** English, French, German, Spanish, Portuguese, Chinese, Russian, Japanese, Korean, Polish and Turkish, picked from the options or with `/Arcane language`.
 
+## Build
+
+From the repository root, run `python3 tools/package.py`. The script validates the addon TOC, required assets, saved-variable name and Arcane branding, then creates `dist/Arcane-<version>.zip`. The ZIP contains only the installable `Arcane/` addon folder, not the development tools.
+
 ## Install
 
 1. Download the latest `Arcane-<version>.zip` from [Releases](../../releases).
