@@ -1163,11 +1163,27 @@ local function CreatePlateOverlay(frame)
 end
 
 local function RegisterPlate(frame)
-	if knownPlates[frame] or not IdentifyNameplate(frame) then return false end
-	knownPlates[frame] = true
-	table.insert(orderedPlates, frame)
-	CaptureNativeState(frame)
-	frame.arcanePlatesOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale() or 1
+	if not frame or not frame.IsVisible or not frame:IsVisible()
+			or not frame.GetWidth or frame:GetWidth() <= 0
+			or not frame.GetHeight or frame:GetHeight() <= 0 then return false end
+	if not knownPlates[frame] then
+		if not IdentifyNameplate(frame) then return false end
+		knownPlates[frame] = true
+		table.insert(orderedPlates, frame)
+		CaptureNativeState(frame)
+		frame.arcanePlatesOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale() or 1
+	end
+	local currentName = GetPlateName(frame)
+	if currentName ~= frame.arcanePlatesPlateName then
+		local oldName = frame.arcanePlatesPlateName
+		if oldName ~= nil then RestoreNativeState(frame) end
+		frame.arcanePlatesPlateName = currentName
+		frame.arcanePlatesDebuffUnitID = nil
+		frame.arcanePlatesDebuffSignature = nil
+		frame.arcanePlatesAppliedCategory = nil
+		frame.arcanePlatesStyleRevision = -1
+		frame.arcanePlatesNativeRestored = false
+	end
 	return true
 end
 
@@ -1197,50 +1213,36 @@ local function SyncOverlayValues()
 	end
 end
 
-local function UpdateKnownPlates()
-	RefreshBossGuardianNames()
-	local count = table.getn(orderedPlates)
-	for i = 1, count do
-		local frame = orderedPlates[i]
-		if frame and frame.GetObjectType and frame:GetObjectType() == "Frame" and frame:IsVisible() then
-			local oldName = frame.arcanePlatesPlateName
-			local currentName = GetPlateName(frame)
-			if currentName ~= oldName then
-				-- Blizzard recycles nameplate frames. Restore the old unit's native
-				-- visuals before snapshotting or classifying the new unit.
-				if oldName ~= nil then RestoreNativeState(frame) end
-				frame.arcanePlatesPlateName = currentName
-				frame.arcanePlatesDebuffUnitID = nil
-				frame.arcanePlatesDebuffSignature = nil
-				frame.arcanePlatesAppliedCategory = nil
-				frame.arcanePlatesStyleRevision = -1
-				frame.arcanePlatesNativeRestored = false
-			end
-			local special = IsBossOrGuardianPlate(frame)
-			local category = special and "boss" or "regular"
-			if frame.arcanePlatesAppliedCategory ~= category
-					or frame.arcanePlatesStyleRevision ~= styleRevision then
-				frame.arcanePlatesAppliedCategory = category
-				frame.arcanePlatesStyleRevision = styleRevision
-				if special then
-					if not frame.arcanePlatesNativeRestored then RestoreNativeState(frame) end
-					ApplyPlateBarColor(frame, BarColor("boss"))
-					HideNameText(frame)
-					UpdateNamePlaceholder(frame)
-				else
-					if frame.arcanePlatesNativeRestored then frame.arcanePlatesNativeRestored = false end
-					if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
-				end
-			end
-			if special then
-				if Opt("showDebuffs") then
-					UpdateBossGuardianDebuffs(frame)
-				elseif frame.arcanePlatesDebuffRow and frame.arcanePlatesDebuffRow:IsShown() then
-					frame.arcanePlatesDebuffRow:Hide()
-				end
-			end
+local function ApplyKnownPlate(frame)
+	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Frame" or not frame:IsVisible() then return end
+	local special = IsBossOrGuardianPlate(frame)
+	local category = special and "boss" or "regular"
+	if frame.arcanePlatesAppliedCategory ~= category
+			or frame.arcanePlatesStyleRevision ~= styleRevision then
+		frame.arcanePlatesAppliedCategory = category
+		frame.arcanePlatesStyleRevision = styleRevision
+		if special then
+			if not frame.arcanePlatesNativeRestored then RestoreNativeState(frame) end
+			ApplyPlateBarColor(frame, BarColor("boss"))
+			HideNameText(frame)
+			UpdateNamePlaceholder(frame)
+		else
+			if frame.arcanePlatesNativeRestored then frame.arcanePlatesNativeRestored = false end
+			if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
 		end
 	end
+	if special then
+		if Opt("showDebuffs") then
+			UpdateBossGuardianDebuffs(frame)
+		elseif frame.arcanePlatesDebuffRow and frame.arcanePlatesDebuffRow:IsShown() then
+			frame.arcanePlatesDebuffRow:Hide()
+		end
+	end
+end
+
+local function StyleKnownPlates()
+	RefreshBossGuardianNames()
+	for i = 1, table.getn(orderedPlates) do ApplyKnownPlate(orderedPlates[i]) end
 end
 
 local function ScanNameplates()
@@ -1338,7 +1340,7 @@ C.OnInit(function()
 		end
 		if refreshPending then
 			refreshPending = false
-			local ok, err = pcall(UpdateKnownPlates)
+			local ok, err = pcall(StyleKnownPlates)
 			if not ok then
 				C.Print(C.L("Arcane nameplates stopped after an error: ") .. tostring(err))
 				SetEnabled(false)
