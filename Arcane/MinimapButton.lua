@@ -157,7 +157,7 @@ function C.EdgeButton(spec)
 	return b
 end
 
------------------------------------------------------------------------- Arcane's C: the options
+------------------------------------------------------------------------ Arcane's A: the options
 local db, button
 
 local function Click()
