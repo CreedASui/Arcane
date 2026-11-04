@@ -1174,138 +1174,136 @@ local function CreatePlateOverlay(frame)
 	return false;
 end
 
-local function UpdateNameplates()
-	RefreshBossGuardianNames();
-	local children = { WorldFrame:GetChildren() };
-	for i = 1, table.getn(children) do
-		local frame = children[i];
-		if ( not knownPlates[frame] and IdentifyNameplate(frame) ) then
-			knownPlates[frame] = true;
-			table.insert(debugPlates, frame);
-			local specialPlate = IsBossOrGuardianPlate(frame);
-			CaptureNativeState(frame);
-			if ( not specialPlate ) then
-				-- Restore cached scale only for plates TinyPlates will style.
-				local originalScale = frame.astinyplatesOriginalScale or 1;
-				frame:SetScale(originalScale);
-				frame.astinyplatesOriginalScale = originalScale;
-			end
-		end
-		if ( knownPlates[frame] ) then
-			if ( IsBossOrGuardianPlate(frame) ) then
-				ApplyPlateStyle(frame);
-			elseif ( CreatePlateOverlay(frame) ) then
-				ApplyPlateStyle(frame);
-			end
-		end
-	end
+local function RegisterPlate(frame)
+	if knownPlates[frame] or not IdentifyNameplate(frame) then return false end
+	knownPlates[frame] = true
+	table.insert(orderedPlates, frame)
+	CaptureNativeState(frame)
+	frame.astinyplatesOriginalScale = frame.astinyplatesOriginalScale or frame:GetScale() or 1
+	return true
 end
 
-SLASH_ASTINYPLATESDEBUG1 = "/astpdebug";
-local function DumpBossPlates()
-	local found = 0;
-	for i = 1, table.getn(debugPlates) do
-		local frame = debugPlates[i];
-		if ( ( frame.astinyplatesBossGuardian or not frame.astinyplatesPlateName ) and frame:IsVisible() ) then
-			found = found + 1;
-			local label = frame.astinyplatesBossGuardianLabel;
-			local lines = {};
-			local function Dump(obj, depth)
-				local regs = { obj:GetRegions() };
-				for r = 1, table.getn(regs) do
-					if ( regs[r]:GetObjectType() == "FontString" ) then
-						table.insert(lines, string.rep(" ", depth) .. "fs"
-							.. (regs[r] == label and "(LABEL)" or "") .. " '"
-							.. tostring(regs[r]:GetText()) .. "' a=" .. tostring(regs[r]:GetAlpha())
-							.. " shown=" .. tostring(regs[r]:IsShown())
-							.. " visible=" .. tostring(regs[r]:IsVisible()));
-					end
+local function UpdateKnownPlates()
+	RefreshBossGuardianNames()
+	local count = table.getn(orderedPlates)
+	for i = 1, count do
+		local frame = orderedPlates[i]
+		if frame and frame.GetObjectType and frame:GetObjectType() == "Frame" then
+			local special = IsBossOrGuardianPlate(frame)
+			if special then
+				if not frame.astinyplatesNativeRestored then RestoreNativeState(frame) end
+				ApplyPlateBarColor(frame, BarColor("boss"))
+				HideNameText(frame)
+				UpdateNamePlaceholder(frame)
+				if Opt("showDebuffs") then
+					UpdateBossGuardianDebuffs(frame)
+				elseif frame.astinyplatesDebuffRow and frame.astinyplatesDebuffRow:IsShown() then
+					frame.astinyplatesDebuffRow:Hide()
 				end
-				local kids = { obj:GetChildren() };
-				for k = 1, table.getn(kids) do
-					table.insert(lines, string.rep(" ", depth) .. "child " .. kids[k]:GetObjectType()
-						.. " shown=" .. tostring(kids[k]:IsShown()) .. " scale=" .. tostring(kids[k]:GetScale()));
-					Dump(kids[k], depth + 1);
-				end
+			elseif CreatePlateOverlay(frame) then
+				ApplyPlateStyle(frame)
 			end
-			Dump(frame, 1);
-			DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates boss " .. found .. ": name="
-				.. tostring(frame.astinyplatesPlateName)
-				.. " alpha=" .. tostring(frame:GetAlpha())
-				.. " shrunk=" .. tostring(IsPlaceholderShrunk(frame))
-				.. " styled=" .. tostring(frame.astinyplatesStyledVisual ~= nil)
-				.. " overlay=" .. tostring(frame.astinyplatesOverlay ~= nil));
-			for l = 1, table.getn(lines) do DEFAULT_CHAT_FRAME:AddMessage(lines[l]); end
-		end
-	end
-	if ( found == 0 ) then
-		DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates: no visible boss/guardian plates");
-	end
-end
-
-SlashCmdList["ASTINYPLATESDEBUG"] = function(msg)
-	if ( msg and string.lower(msg) == "boss" ) then
-		DumpBossPlates();
-		return;
-	end
-	DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates: " .. table.getn(debugPlates) .. " plates detected");
-	for i = 1, table.getn(debugPlates) do
-		local frame = debugPlates[i];
-		local bars = { frame:GetChildren() };
-		local point, relativeTo, relativePoint, x, y = frame:GetPoint();
-		local centerX, centerY = frame:GetCenter();
-		local relativeName = relativeTo and relativeTo.GetName and relativeTo:GetName() or "nil";
-		local details = "plate=" .. tostring(frame:GetScale()) .. "x "
-			.. tostring(frame:GetWidth()) .. "x" .. tostring(frame:GetHeight())
-			.. " anchor=" .. tostring(point) .. "/" .. tostring(relativePoint)
-			.. " to=" .. tostring(relativeName) .. " " .. tostring(x) .. "," .. tostring(y)
-			.. " center=" .. tostring(centerX) .. "," .. tostring(centerY)
-			.. " styled=" .. tostring(frame.astinyplatesStyledVisual ~= nil)
-			.. " overlay=" .. tostring(frame.astinyplatesOverlay ~= nil);
-		for j = 1, table.getn(bars) do
-			if ( bars[j]:GetObjectType() == "StatusBar" ) then
-				details = details .. " bar=" .. tostring(bars[j]:GetWidth()) .. "x"
-					.. tostring(bars[j]:GetHeight()) .. " scale=" .. tostring(bars[j]:GetScale());
-				break;
-			end
-		end
-		DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates " .. i .. ": " .. details);
-		if ( frame.astinyplatesOverlay ) then
-			local overlayX, overlayY = frame.astinyplatesOverlay:GetCenter();
-			local overlayPoint, overlayRelativeTo, overlayRelativePoint, overlayOffsetX, overlayOffsetY =
-				frame.astinyplatesOverlay:GetPoint();
-			local overlayRelativeName = overlayRelativeTo and overlayRelativeTo.GetName
-				and overlayRelativeTo:GetName() or "nil";
-			DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates overlay: "
-				.. frame.astinyplatesOverlay:GetWidth() .. "x"
-				.. frame.astinyplatesOverlay:GetHeight()
-				.. " scale=" .. tostring(frame.astinyplatesOverlay:GetScale())
-				.. " anchor=" .. tostring(overlayPoint) .. "/" .. tostring(overlayRelativePoint)
-				.. " to=" .. tostring(overlayRelativeName) .. " "
-				.. tostring(overlayOffsetX) .. "," .. tostring(overlayOffsetY)
-				.. " center=" .. tostring(overlayX) .. "," .. tostring(overlayY)
-				.. " shown=" .. tostring(frame.astinyplatesOverlay:IsShown()));
-			DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates source shown="
-				.. tostring(frame.astinyplatesSourceBar:IsShown()));
-		end
-		if ( frame.astinyplatesStyledVisual ) then
-			DEFAULT_CHAT_FRAME:AddMessage("ASTinyPlates styled visual shown="
-				.. tostring(frame.astinyplatesStyledVisual:IsShown()));
 		end
 	end
 end
 
-local updater = CreateFrame("Frame");
-updater:SetScript("OnUpdate", function()
-	UpdateNameplates();
-end);
-updater:RegisterEvent("PLAYER_ENTERING_WORLD");
-updater:RegisterEvent("VARIABLES_LOADED");
-updater:RegisterEvent("CHAT_MSG_ADDON");
-updater:SetScript("OnEvent", function()
-    if ( event == "PLAYER_ENTERING_WORLD" or event == "VARIABLES_LOADED"
-            or arg1 == "AZSUNITS" ) then
-        RefreshBossGuardianNames(true);
-    end
-	UpdateNameplates();
-end);
+local function ScanNameplates()
+	if type(WorldFrame) ~= "table" or type(WorldFrame.GetChildren) ~= "function" then return end
+	local children = { WorldFrame:GetChildren() }
+	for i = 1, table.getn(children) do RegisterPlate(children[i]) end
+end
+
+local function RefreshAll()
+	refreshPending = true
+	if scanFrame then
+		scanClock = 0
+	end
+end
+
+local function RestoreAll()
+	active = false
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		if frame then
+			RestoreNativeState(frame)
+			if frame.astinyplatesOverlay then frame.astinyplatesOverlay:Hide() end
+			if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
+			if frame.astinyplatesBossGuardianLabel then frame.astinyplatesBossGuardianLabel:Hide() end
+			if frame.astinyplatesShrunkLabelHolder then frame.astinyplatesShrunkLabelHolder:Hide() end
+		end
+	end
+end
+
+local function SetEnabled(on)
+	on = on and true or false
+	if active == on then RefreshAll(); return end
+	active = on
+	if active then
+		scanClock = 0
+		refreshPending = true
+		if scanFrame then scanFrame:Show() end
+	else
+		RestoreAll()
+		if scanFrame then scanFrame:Hide() end
+	end
+end
+
+C.TinyPlatesRefresh = function(force)
+	if force then RefreshAll() else refreshPending = true end
+end
+
+C.OnInit(function()
+	local d = C.DB("tinyPlates", {
+		showDebuffs = true, hideShrunkPlates = false, hideBossName = false,
+		showShrunkName = false, enabled = true,
+	})
+	active = d.enabled ~= false
+	scanFrame = CreateFrame("Frame", "ArcaneTinyPlatesDriver")
+	scanFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	scanFrame:RegisterEvent("CHAT_MSG_ADDON")
+	scanFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+	scanFrame:RegisterEvent("UNIT_HEALTH")
+	scanFrame:RegisterEvent("UNIT_MAXHEALTH")
+	scanFrame:SetScript("OnEvent", function()
+		if event == "CHAT_MSG_ADDON" and arg1 ~= "AZSUNITS" then return end
+		RefreshAll()
+	end)
+	scanFrame:SetScript("OnUpdate", function()
+		if not active then return end
+		local dt = arg1 or 0
+		if dt > 0.1 then dt = 0.1 end
+		scanClock = scanClock - dt
+		if scanClock <= 0 then
+			scanClock = SCAN_INTERVAL
+			ScanNameplates()
+			refreshPending = true
+		end
+		if refreshPending then
+			refreshPending = false
+			local ok, err = pcall(UpdateKnownPlates)
+			if not ok then
+				C.Print(C.L("Tiny Plates stopped after an error: ") .. tostring(err))
+				SetEnabled(false)
+			end
+		end
+	end)
+	if not active then scanFrame:Hide() end
+end)
+
+C.OnWorld(function()
+	if active and scanFrame then RefreshAll(); scanFrame:Show() end
+end)
+
+C.OnLogout(function() RestoreAll() end)
+
+C.RegisterPart({
+	key = "tinyplates", name = "Tiny Plates",
+	note = "Half-size regular nameplates, with full-size boss and guardian plates.",
+	get = function() return active end,
+	set = function(on)
+		local d = C.DB("tinyPlates")
+		d.enabled = on and true or false
+		SetEnabled(on)
+	end,
+})
+
