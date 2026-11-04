@@ -1493,7 +1493,7 @@ function C.KeepOverCards(force)
 	for i = 1, table.getn(C.overCards) do
 		local o = C.overCards[i]
 		local clear = ClearOfCards(o.frame)
-		if o.frame.creedDocked then clear = true end -- riding on a frame that's on top
+		if o.frame.arcaneDocked then clear = true end -- riding on a frame that's on top
 		if clear == nil then clear = o.on ~= false end
 		if force or o.on ~= clear then
 			o.on = clear
