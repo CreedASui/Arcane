@@ -192,8 +192,8 @@ end
 local function Clear(f, d, bar)
 	if not (f.GetWidth and f:IsShown() and f:GetLeft()) then return end
 	local own = f:GetWidth()
-	if f.creedSetW and math.abs(own - f.creedSetW) > 1 then f.creedW, f.creedSetW = nil, nil end -- sized by hand
-	local natural = f.creedW or own
+	if f.arcaneSetW and math.abs(own - f.arcaneSetW) > 1 then f.arcaneW, f.arcaneSetW = nil, nil end -- sized by hand
+	local natural = f.arcaneW or own
 	local want = natural
 	if d then
 		local k = bar:GetEffectiveScale() / f:GetEffectiveScale() -- a texture is in its frame's scale
@@ -204,13 +204,13 @@ local function Clear(f, d, bar)
 		end
 	end
 	if math.abs(want - natural) < 0.5 then
-		if f.creedW then
-			f:SetWidth(f.creedW)
-			f.creedW, f.creedSetW = nil, nil
+		if f.arcaneW then
+			f:SetWidth(f.arcaneW)
+			f.arcaneW, f.arcaneSetW = nil, nil
 		end
-	elseif not f.creedSetW or math.abs(f.creedSetW - want) > 0.5 then
-		f.creedW = natural
-		f.creedSetW = want
+	elseif not f.arcaneSetW or math.abs(f.arcaneSetW - want) > 0.5 then
+		f.arcaneW = natural
+		f.arcaneSetW = want
 		f:SetWidth(want)
 	end
 end
@@ -223,9 +223,9 @@ local function ClearAll(on)
 		local f = frames[i]
 		if on then
 			Clear(f, d, bar)
-		elseif f.creedW then
-			f:SetWidth(f.creedW)
-			f.creedW, f.creedSetW = nil, nil
+		elseif f.arcaneW then
+			f:SetWidth(f.arcaneW)
+			f.arcaneW, f.arcaneSetW = nil, nil
 		end
 	end
 end
