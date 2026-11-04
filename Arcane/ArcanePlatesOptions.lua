@@ -126,8 +126,12 @@ local function Swatch(parent, category, color, x, y)
 			C.ArcanePlatesRefresh(true)
 			C.ArcanePlatesRefreshOptions()
 		end
-		local function Cancel()
-			d[category .. "BarColor"] = old
+		local function Cancel(previous)
+			if type(previous) == "table" then
+				d[category .. "BarColor"] = { previous[1], previous[2], previous[3] }
+			else
+				d[category .. "BarColor"] = old
+			end
 			C.ArcanePlatesRefresh(true)
 			C.ArcanePlatesRefreshOptions()
 		end
@@ -136,7 +140,11 @@ local function Swatch(parent, category, color, x, y)
 		picker.opacityFunc = nil
 		picker.func = Apply
 		picker.cancelFunc = Cancel
-		picker:SetColorRGB(r, g, blue)
+		if picker.SetColorRGB then
+			picker:SetColorRGB(r, g, blue)
+		elseif picker.swatchFunc then
+			picker.swatchFunc(r, g, blue)
+		end
 		picker:Show()
 	end)
 	return b
