@@ -1,10 +1,5 @@
--- Arcane UI: buttons on the minimap's edge. Each a round bezel in the ring's metal with a crest in
--- it, sliding along the edge wherever it's dragged (its place kept). Three of them: Arcane's C opens
--- the options (a right click frees the frames to move, or locks them again), the crossed swords show
--- or hide the damage meter, the clover the luck window. The C is a part of its own: with the minimap
--- left as the game's it still sits on the edge. Where they start: the meter's and the luck window's
--- on the left (where their gems were), the C on the lower right, all clear of the buffs on the upper
--- left, the north mark and the clock.
+-- Arcane UI: three round minimap-edge buttons. The A opens Arcane options; the crossed
+-- swords toggle the damage meter; the clover toggles the luck window.
 
 local C = Arcane
 local DEFAULTS = { enabled = true, angle = 315 }
@@ -174,7 +169,7 @@ local function Apply()
 	if type(Minimap) ~= "table" then return end
 	if not button then
 		button = C.EdgeButton({
-			frame = "ArcaneMinimapButton", crest = "MapCrest", store = db, field = "angle", angle = DEFAULTS.angle,
+			frame = "ArcaneMinimapButton", crest = "MapA", store = db, field = "angle", angle = DEFAULTS.angle,
 			tint = function(pal) return pal.title[1], pal.title[2], pal.title[3] end,
 			held = function() return ArcaneOptions and ArcaneOptions:IsShown() end,
 			tip = Tip, click = Click,
