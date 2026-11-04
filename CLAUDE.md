@@ -18,10 +18,10 @@ picture of the change.
 
 ## 2. Releases
 
-The repository holds everything since 1.8.3. Claude Code sessions here may push only their own
-branch and can't make tags or GitHub releases: the user makes each release on GitHub's website
-(tag `v<version>`, title **Arcane UI <version>**, the version's `CHANGELOG.md` entry as text, and
-`Arcane-<version>.zip` attached). Give them those steps and the zip.
+The repository retains the inherited development history and tools. Build the installable package
+from the repository root with `python3 tools/package.py`; it validates the TOC and assets and writes
+`dist/Arcane-<version>.zip`. Releases use tag `v<version>`, title **Arcane UI <version>**, the
+version's `CHANGELOG.md` entry as the release notes, and that ZIP as the attachment.
 
 ## 3. Layout
 
