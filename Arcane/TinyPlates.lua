@@ -216,6 +216,18 @@ local function RestoreNativeState(frame)
 				if state.shown then object:Show() else object:Hide() end
 			end
 		end
+	else
+		-- Recover plates left modified by an older TinyPlates revision that did not
+		-- store a native visibility snapshot.
+		local regions = { frame:GetRegions() }
+		for i = 1, table.getn(regions) do
+			if regions[i]:GetObjectType() == "FontString" then regions[i]:SetAlpha(1) end
+			regions[i]:Show()
+		end
+		local children = { frame:GetChildren() }
+		for i = 1, table.getn(children) do
+			if children[i] ~= frame.astinyplatesOverlay then children[i]:Show() end
+		end
 	end
 	if frame.astinyplatesStyledVisual then
 		local styled = frame.astinyplatesStyledVisual
