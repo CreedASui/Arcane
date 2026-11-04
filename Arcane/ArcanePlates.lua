@@ -1261,6 +1261,11 @@ local function SetEnabled(on)
 		return
 	end
 	active = on
+	styleRevision = styleRevision + 1
+	for i = 1, table.getn(orderedPlates) do
+		orderedPlates[i].arcanePlatesAppliedCategory = nil
+		orderedPlates[i].arcanePlatesStyleRevision = -1
+	end
 	if active then
 		scanClock = 0
 		refreshPending = true
@@ -1282,13 +1287,11 @@ C.OnInit(function()
 		showShrunkName = false, enabled = true,
 	})
 	active = d.enabled ~= false
-	scanFrame = CreateFrame("Frame", "ArcaneArcanePlatesDriver")
+	scanFrame = CreateFrame("Frame", "ArcanePlatesDriver")
 	scanFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	scanFrame:RegisterEvent("CHAT_MSG_ADDON")
 	scanFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-	scanFrame:RegisterEvent("UNIT_HEALTH")
-	scanFrame:RegisterEvent("UNIT_MAXHEALTH")
-	scanFrame:SetScript("OnEvent", function()
+		scanFrame:SetScript("OnEvent", function()
 		if event == "CHAT_MSG_ADDON" and arg1 ~= "AZSUNITS" then return end
 		RefreshAll()
 	end)
@@ -1311,7 +1314,7 @@ C.OnInit(function()
 			refreshPending = false
 			local ok, err = pcall(UpdateKnownPlates)
 			if not ok then
-				C.Print(C.L("Tiny Plates stopped after an error: ") .. tostring(err))
+				C.Print(C.L("Arcane nameplates stopped after an error: ") .. tostring(err))
 				SetEnabled(false)
 			end
 		end
@@ -1326,7 +1329,7 @@ end)
 C.OnLogout(function() RestoreAll() end)
 
 C.RegisterPart({
-	key = "tinyplates", name = "Tiny Plates",
+	key = "nameplates", name = "Tiny Plates",
 	note = "Half-size regular nameplates, with full-size boss and guardian plates.",
 	get = function() return active end,
 	set = function(on)
