@@ -69,7 +69,7 @@ for f in sorted(glob.glob(os.path.join(D, "*.lua"))):
     if name.startswith("Locale"):
         continue
     code = open(f, encoding="utf-8").read()
-    for m in re.finditer(r'(?:\bC\.L|\bC\.F|\bCUI\.L|\bCUI\.F|(?<![\w.])L|(?<![\w.])F|LText)\((?:[^,()"]*,\s*)?' + STR, code):
+    for m in re.finditer(r'(?:\bC\.L|\bC\.F|\bAUI\.L|\bAUI\.F|(?<![\w.])L|(?<![\w.])F|LText)\((?:[^,()"]*,\s*)?' + STR, code):
         add(m.group(1), name)
     for m in re.finditer(r'(?:\bname|\bnote|\bempty)\s*=\s*' + STR, code):
         add(m.group(1), name)
