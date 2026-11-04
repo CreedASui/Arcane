@@ -759,8 +759,8 @@ end
 -- Custom bar colors. The color the game/SDUI last set is remembered per bar so it can be restored
 -- when the override is turned off or a recycled plate changes category.
 local function BarColor(category)
-	if ( ArcanePlatesBarColor ) then return ArcanePlatesBarColor(category); end
-	return nil;
+	if type(C.TinyPlatesBarColor) == "function" then return C.TinyPlatesBarColor(category) end
+	return nil
 end
 
 local function ColorsDiffer(r1, g1, b1, r2, g2, b2)
