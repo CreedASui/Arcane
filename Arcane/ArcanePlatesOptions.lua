@@ -155,11 +155,12 @@ local function MakeColorRow(parent, category, title, y)
 	reset:SetPoint("TOPLEFT", parent, "TOPLEFT", 232, y - 19)
 	local picks = {}
 	for i = 1, table.getn(PRESETS) do
-		local p = Swatch(parent, category, PRESETS[i], 18 + (i - 1) * 21, y - 43)
-		p.fill:SetVertexColor(PRESETS[i][1], PRESETS[i][2], PRESETS[i][3], 1)
+		local preset = PRESETS[i]
+		local p = Swatch(parent, category, preset, 18 + (i - 1) * 21, y - 43)
+		p.fill:SetVertexColor(preset[1], preset[2], preset[3], 1)
 		picks[i] = p
 		p:SetScript("OnClick", function()
-			DB()[category .. "BarColor"] = { PRESETS[i][1], PRESETS[i][2], PRESETS[i][3] }
+			DB()[category .. "BarColor"] = { preset[1], preset[2], preset[3] }
 			DB()[category .. "BarColorOn"] = true
 			C.ArcanePlatesRefresh(true)
 			C.ArcanePlatesRefreshOptions()
@@ -186,7 +187,7 @@ end
 
 local function BuildPanel(parent)
 	if panel then return end
-	panel = CreateFrame("Frame", "ArcaneArcanePlatesOptions", UIParent)
+	panel = CreateFrame("Frame", "ArcanePlatesOptions", UIParent)
 	panel:SetWidth(310)
 	panel:SetHeight(380)
 	panel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
@@ -229,6 +230,6 @@ function C.ArcanePlatesToggleOptions()
 	end
 end
 
-C.nameplatesOptions = C.ArcanePlatesToggleOptions
+C.arcanePlatesOptions = C.ArcanePlatesToggleOptions
 
 C.OnInit(function() DB() end)
