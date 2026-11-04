@@ -1,10 +1,9 @@
 # Arcane UI: handoff for Claude Code
 
 Read this first. It's where the work stands, the rules the code depends on, how to check it, and
-what's next. It was written at the end of a long Claude session that built Arcane UI with the
-user (GitHub: **JamieeLee**), who plays the game and publishes the addon. The user is not a
-programmer: they test in game and send screenshots. Ship them a ready-to-install zip and a
-picture of the change.
+what's next. It is the working handoff for developing Arcane UI with JamieeLee (GitHub:
+**JamieeLee**). JamieeLee directs the product and design goals, tests changes in game, and shares
+screenshots. Provide ready-to-install builds and clear summaries of changes.
 
 ## 1. What this is
 
@@ -19,7 +18,8 @@ picture of the change.
 ## 2. Releases
 
 The repository retains the inherited development history and tools. Build the installable package
-from the repository root with `python3 tools/package.py`; it validates the TOC and assets and writes
+from the repository root with `python3 tools/package.py` (requires Python 3 and FontTools); it
+validates the TOC and assets, rebrands bundled font metadata in the staged package, and writes
 `dist/Arcane-<version>.zip`. Releases use tag `v<version>`, title **Arcane UI <version>**, the
 version's `CHANGELOG.md` entry as the release notes, and that ZIP as the attachment.
 
