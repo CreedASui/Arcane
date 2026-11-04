@@ -8,6 +8,7 @@ on:
     paths:
       - 'Arcane/**'
       - 'tools/package.py'
+      - 'dev/arcane/**'
       - '.github/workflows/build-tiny-plates-test.yml'
 
 permissions:
