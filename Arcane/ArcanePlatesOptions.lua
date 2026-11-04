@@ -102,8 +102,9 @@ local function Checkbox(parent, key, label, note, x, y)
 	return b
 end
 
-local function Swatch(parent, category, color, x, y)
+local function Swatch(parent, category, color, x, y, primary)
 	local b = CreateFrame("Button", nil, parent)
+	if primary then b.arcanePlatesPrimarySwatch = category end
 	b:SetWidth(16)
 	b:SetHeight(16)
 	b:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -152,7 +153,7 @@ end
 local function MakeColorRow(parent, category, title, y)
 	PanelText(parent, title, 18, y, 160, 11, { 0.98, 0.85, 0.52 })
 	local enabled = Checkbox(parent, category .. "BarColorOn", "Custom bar color", "Use your own color instead of the game's health-bar color.", 18, y - 19)
-	local swatch = Swatch(parent, category, PRESETS[1], 210, y - 18)
+	local swatch = Swatch(parent, category, PRESETS[1], 210, y - 18, true)
 	local reset = C.Button(parent, 48, 18, "Reset", function()
 		DB()[category .. "BarColorOn"] = false
 		DB()[category .. "BarColor"] = { PRESETS[1][1], PRESETS[1][2], PRESETS[1][3] }
