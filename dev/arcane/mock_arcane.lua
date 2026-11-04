@@ -1,4 +1,4 @@
--- A mock 1.12 client for Smooth Boss Timer, run under real Lua 5.0.
+-- A mock 1.12 client for Arcane UI, run under real Lua 5.0.
 -- Widget methods are checked against the game's own method lists; frames are laid out with
 -- real anchoring so a frame can be dumped and rendered.
 
