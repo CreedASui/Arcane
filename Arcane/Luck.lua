@@ -142,7 +142,7 @@ local function Build()
 	root.title = C.Text(root, C.TITLE_FONT, 14, nil, "LEFT", 120)
 	root.title:SetPoint("LEFT", root.clover, "RIGHT", 4, 0)
 	C.LText(root.title, "Luck")
-	-- x hides it (the clover on the minimap's edge brings it back), as the meter's
+	-- x hides it; the Luck toggle in Arcane Options brings it back, as the meter's
 	root.close = CreateFrame("Button", nil, root)
 	root.close:SetWidth(16)
 	root.close:SetHeight(16)
@@ -151,7 +151,10 @@ local function Build()
 	root.close.text:SetPoint("CENTER", root.close, "CENTER", 0, 0)
 	root.close.text:SetText("x")
 	root.close.text:SetTextColor(0.78, 0.74, 0.66)
-	root.close:SetScript("OnClick", function() db.shown = false end)
+	root.close:SetScript("OnClick", function()
+		db.shown = false
+		if C.RefreshHub then C.RefreshHub() end
+	end)
 	root.close:SetScript("OnEnter", function()
 		root.close.text:SetTextColor(1, 0.9, 0.6)
 		if GameTooltip then
