@@ -19,6 +19,7 @@ OLD_BRANDING = re.compile(
     r"Creed\s*UI|CreedUIDB|SLASH_CREED|creedDocked|creedSetW|creedW|cuiSkill",
     re.IGNORECASE,
 )
+OLD_PLATE_NAMES = re.compile(r"ASTinyPlates|astinyplates|TinyPlatesDB", re.IGNORECASE)
 
 
 def validate_lua50_varargs(path: Path) -> None:
@@ -96,6 +97,20 @@ def validate_addon() -> tuple[str, list[Path]]:
             branded.append(str(path.relative_to(ROOT)))
     if branded:
         fail("old CreedUI identifiers remain in addon files: " + ", ".join(branded))
+
+    old_plate_names = []
+    for path in files:
+        if path.suffix.lower() not in {".lua", ".toc"}:
+            continue
+        if OLD_PLATE_NAMES.search(path.read_text(encoding="utf-8")):
+            old_plate_names.append(str(path.relative_to(ROOT)))
+    if old_plate_names:
+        fail("upstream plate identifiers remain in runtime files: " + ", ".join(old_plate_names))
+
+    if "ArcanePlates.lua" not in listed_files or "ArcanePlatesOptions.lua" not in listed_files:
+        fail("ArcanePlates modules are missing from Arcane.toc")
+    if not (ADDON_DIR / "ArcanePlates-LICENSE.txt").is_file():
+        fail("missing ArcanePlates MIT license notice")
 
     if "## Title: Arcane UI" not in toc_text:
         fail("TOC title is not 'Arcane UI'")
