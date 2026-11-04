@@ -67,33 +67,42 @@ local function ClearBossGuardianPlateFlags()
 end
 
 local function RefreshBossGuardianNames(force)
-	local phase = AZS_GetPhase and AZS_GetPhase() or nil;
-	local unitsUpdate = AZS_UNITS_UPDATED or 0;
-	local debuffsUpdate = AZS_DEBUFFS_UPDATED or 0;
-	local newRun = phase == "playing" and ( lastSpecialPhase == nil
+	local phase
+	if type(AZS_GetPhase) == "function" then
+		local ok, value = pcall(AZS_GetPhase)
+		if ok then phase = value end
+	end
+	local unitsUpdate = AZS_UNITS_UPDATED or 0
+	local debuffsUpdate = AZS_DEBUFFS_UPDATED or 0
+	local newRun = phase == "playing" and (lastSpecialPhase == nil
 		or lastSpecialPhase == "ready" or lastSpecialPhase == "dead"
-		or lastSpecialPhase == "victory" );
-	local resetNames = (phase == "ready" and lastSpecialPhase ~= "ready") or newRun;
-	if ( resetNames ) then
-		bossGuardianNames = {};
-		bossGuardianUnitsByName = {};
-		ClearBossGuardianPlateFlags();
+		or lastSpecialPhase == "victory")
+	local resetNames = (phase == "ready" and lastSpecialPhase ~= "ready") or newRun
+	if resetNames then
+		bossGuardianNames = {}
+		bossGuardianUnitsByName = {}
+		ClearBossGuardianPlateFlags()
 	end
-    local retryCache = phase ~= "ready" and GetTime() - lastSpecialRefreshTime >= 1;
-	if ( phase ~= "ready" and ( force or retryCache or phase ~= lastSpecialPhase
+	local retryCache = phase ~= "ready" and GetTime() - lastSpecialRefreshTime >= 1
+	if phase ~= "ready" and (force or retryCache or phase ~= lastSpecialPhase
 			or unitsUpdate ~= lastSpecialUnitsUpdate
-			or debuffsUpdate ~= lastSpecialDebuffsUpdate or newRun ) ) then
-		bossGuardianUnitsByName = {};
-		AddBossGuardianNames(AZS_UNITS, true);
-		if ( type(AZS_GetBosses) == "function" ) then AddBossGuardianNames(AZS_GetBosses(), false); end
-		if ( type(AZS_GetGuardians) == "function" ) then AddBossGuardianNames(AZS_GetGuardians(), false); end
-		lastSpecialRefreshTime = GetTime();
+			or debuffsUpdate ~= lastSpecialDebuffsUpdate or newRun) then
+		bossGuardianUnitsByName = {}
+		AddBossGuardianNames(AZS_UNITS, true)
+		if type(AZS_GetBosses) == "function" then
+			local ok, units = pcall(AZS_GetBosses)
+			if ok then AddBossGuardianNames(units, false) end
+		end
+		if type(AZS_GetGuardians) == "function" then
+			local ok, units = pcall(AZS_GetGuardians)
+			if ok then AddBossGuardianNames(units, false) end
+		end
+		lastSpecialRefreshTime = GetTime()
 	end
-	lastSpecialPhase = phase;
-	lastSpecialUnitsUpdate = unitsUpdate;
-	lastSpecialDebuffsUpdate = debuffsUpdate;
+	lastSpecialPhase = phase
+	lastSpecialUnitsUpdate = unitsUpdate
+	lastSpecialDebuffsUpdate = debuffsUpdate
 end
-
 local function NormalizeName(text)
 	if ( not text ) then return nil; end
 	text = string.gsub(text, "|c%x%x%x%x%x%x%x%x", "");
