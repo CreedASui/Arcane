@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Render a Arcane UI mock dump (M.Dump) to a picture. Put a 1920x1080 game screenshot at
-dev/AUI/shot.png (or name one in ARCANE_SHOT) to draw over it, its old HUD painted out and its
+dev/arcane/shot.png (or name one in ARCANE_SHOT) to draw over it, its old HUD painted out and its
 action bar icons standing in for the game's; without one, a plain dark backdrop and placeholder icons.
 
-usage: render_cui.py dump.txt out.png [scale] [crop l b r t]"""
+usage: render_arcane.py dump.txt out.png [scale] [crop l b r t]"""
 import os
 import sys
 
