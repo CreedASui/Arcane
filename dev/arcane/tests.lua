@@ -118,13 +118,24 @@ check(ArcanePlatesOptions and ArcanePlatesOptions:IsShown(),
 	"Tiny Plates settings open from the Arcane options hub")
 check(type(ArcaneDB.nameplates) == "table",
 	"Tiny Plates preferences are stored under ArcaneDB.nameplates")
+local bossColorSwatch
+local panelChildren = { ArcanePlatesOptions:GetChildren() }
+for i = 1, table.getn(panelChildren) do
+	if panelChildren[i].arcanePlatesPrimarySwatch == "boss" then bossColorSwatch = panelChildren[i] end
+end
+check(bossColorSwatch ~= nil, "the boss custom-color swatch exists in the Arcane panel")
+if bossColorSwatch then bossColorSwatch:Click() end
 local bossColorPicker = ColorPickerFrame
+check(bossColorPicker:IsShown(), "clicking the custom swatch opens the native ColorSelect picker")
 M.PickColor(0.2, 0.4, 0.8)
 check(ArcaneDB.nameplates.bossBarColorOn == true
 	and ArcaneDB.nameplates.bossBarColor[1] == 0.2,
-	"the legacy color picker saves custom plate colors")
-bossColorPicker.cancelFunc({ 0.8, 0.8, 0.8 })
-bossColorPicker:Hide()
+	"the legacy ColorSelect methods save custom plate colors")
+M.CancelColor()
+check(ArcaneDB.nameplates.bossBarColorOn == false
+	and ArcaneDB.nameplates.bossBarColor[1] == 0
+	and math.abs(ArcaneDB.nameplates.bossBarColor[2] - 0.64) < 0.001,
+	"cancelling the picker restores the original color and disabled state")
 
 local nameplatesPart
 for i = 1, table.getn(Arcane.parts) do
