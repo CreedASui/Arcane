@@ -576,82 +576,92 @@ local function FindBossGuardianUnit(frame, name)
 end
 
 local function UpdateBossGuardianDebuffs(frame)
-	local name = frame.astinyplatesPlateName;
-	local unit = FindBossGuardianUnit(frame, name);
-	local row = frame.astinyplatesDebuffRow;
-	if ( not row ) then
-		row = CreateFrame("Frame", nil, frame);
-		row:SetHeight(DEBUFF_ICON_SIZE);
-		row:SetFrameLevel(frame:GetFrameLevel() + 5);
-		frame.astinyplatesDebuffRow = row;
+	local name = frame.astinyplatesPlateName
+	local unit = FindBossGuardianUnit(frame, name)
+	local row = frame.astinyplatesDebuffRow
+	if not row then
+		row = CreateFrame("Frame", nil, frame)
+		row:SetHeight(DEBUFF_ICON_SIZE)
+		row:SetFrameLevel(frame:GetFrameLevel() + 5)
+		frame.astinyplatesDebuffRow = row
 	end
-	if ( unit and unit.id ) then
-		frame.astinyplatesDebuffUnitID = unit.id;
+	if unit and unit.id then frame.astinyplatesDebuffUnitID = unit.id end
+	local unitID = frame.astinyplatesDebuffUnitID
+	if not unitID then row:Hide(); return end
+	local debuffs
+	if type(AZS_GetDebuffs) == "function" then
+		local ok, value = pcall(AZS_GetDebuffs, unitID)
+		if ok then debuffs = value end
 	end
-	local unitID = frame.astinyplatesDebuffUnitID;
-	if ( not unitID ) then row:Hide(); return; end
-	local debuffs;
-	if ( unitID and type(AZS_GetDebuffs) == "function" ) then debuffs = AZS_GetDebuffs(unitID); end
-	if ( (not debuffs or type(debuffs) ~= "table") and unit
-			and type(unit.debuffs) == "table" ) then
-		debuffs = unit.debuffs;
+	if (not debuffs or type(debuffs) ~= "table") and unit and type(unit.debuffs) == "table" then
+		debuffs = unit.debuffs
 	end
-	-- A nil response is transient/unavailable; retain the last known row.
-	if ( type(debuffs) ~= "table" ) then return; end
-	local iconIndex = 0;
-	for i = 1, table.getn(debuffs) do
-		local debuff = debuffs[i];
-		if ( debuff and iconIndex < MAX_DEBUFF_ICONS ) then
-			iconIndex = iconIndex + 1;
-			local icon = frame.astinyplatesDebuffIcons
-				and frame.astinyplatesDebuffIcons[iconIndex];
-			if ( not icon ) then
-				if ( not frame.astinyplatesDebuffIcons ) then frame.astinyplatesDebuffIcons = {}; end
-				icon = CreateDebuffIcon(row, iconIndex);
-				frame.astinyplatesDebuffIcons[iconIndex] = icon;
-			end
-			local iconTexture = debuff.icon;
-			if ( not iconTexture or iconTexture == "" ) then
-				iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark";
-			end
-			icon.texture:SetTexture(iconTexture);
-			if ( debuff.stacks and debuff.stacks > 1 ) then
-				icon.stacks:SetText(debuff.stacks);
-			else
-				icon.stacks:SetText("");
-			end
-			local remaining = debuff.remaining;
-			if ( not remaining and debuff.ends and type(AZS_GetRunTime) == "function" ) then
-				local runTime = AZS_GetRunTime();
-				if ( runTime and debuff.ends >= 0 ) then remaining = debuff.ends - runTime; end
-			end
-			if ( debuff.permanent ) then
-				icon.duration:SetText("∞");
-			elseif ( type(remaining) == "number" and remaining >= 0 ) then
-				icon.duration:SetText(math.ceil(remaining));
-			else
-				icon.duration:SetText("");
-			end
-			icon:Show();
-			icon.overlay:Show();
+	if type(debuffs) ~= "table" then return end
+
+	-- Debuff structure only changes when the game's revision changes. Reuse icons and
+	-- skip texture/stack writes until the actual content changes; durations tick separately.
+	local signatureParts = {}
+	local count = math.min(table.getn(debuffs), MAX_DEBUFF_ICONS)
+	for i = 1, count do
+		local d = debuffs[i]
+		if d then
+			signatureParts[i] = tostring(d.icon or "") .. ":" .. tostring(d.stacks or 0)
+				.. ":" .. tostring(d.permanent and 1 or 0) .. ":" .. tostring(d.ends or d.remaining or "")
 		end
 	end
-	for i = iconIndex + 1, table.getn(frame.astinyplatesDebuffIcons or {}) do
-		frame.astinyplatesDebuffIcons[i]:Hide();
+	local signature = table.concat(signatureParts, "|")
+	local changed = frame.astinyplatesDebuffSignature ~= signature
+	frame.astinyplatesDebuffSignature = signature
+	local iconIndex = 0
+	for i = 1, count do
+		local debuff = debuffs[i]
+		if debuff then
+			iconIndex = iconIndex + 1
+			local icons = frame.astinyplatesDebuffIcons
+			if not icons then icons = {}; frame.astinyplatesDebuffIcons = icons end
+			local icon = icons[iconIndex]
+			if not icon then
+				icon = CreateDebuffIcon(row, iconIndex)
+				icons[iconIndex] = icon
+				changed = true
+			end
+			if changed then
+				local texture = debuff.icon
+				if not texture or texture == "" then texture = "Interface\\Icons\\INV_Misc_QuestionMark" end
+				icon.texture:SetTexture(texture)
+				if debuff.stacks and debuff.stacks > 1 then icon.stacks:SetText(debuff.stacks)
+				else icon.stacks:SetText("") end
+			end
+			local remaining = debuff.remaining
+			if not remaining and debuff.ends and type(AZS_GetRunTime) == "function" then
+				local ok, runTime = pcall(AZS_GetRunTime)
+				if ok and runTime and debuff.ends >= 0 then remaining = debuff.ends - runTime end
+			end
+			local durationText
+			if debuff.permanent then durationText = "∞"
+			elseif type(remaining) == "number" and remaining >= 0 then durationText = math.ceil(remaining)
+			else durationText = "" end
+			if icon.duration.arcaneText ~= durationText then
+				icon.duration.arcaneText = durationText
+				icon.duration:SetText(durationText)
+			end
+			if not icon:IsShown() then icon:Show() end
+			if not icon.overlay:IsShown() then icon.overlay:Show() end
+		end
 	end
-	if ( iconIndex == 0 ) then row:Hide(); return; end
-	row:SetWidth(iconIndex * DEBUFF_ICON_SIZE + (iconIndex - 1) * DEBUFF_ICON_GAP);
-	row:ClearAllPoints();
-	local bar = frame.astinyplatesStyledVisual or frame.astinyplatesBossGuardianBar
-		or frame.astinyplatesOverlay;
-	if ( bar ) then
-		row:SetPoint("TOP", bar, "BOTTOM", 0, -3);
-	else
-		row:SetPoint("TOP", frame, "BOTTOM", 0, -3);
+	local icons = frame.astinyplatesDebuffIcons or {}
+	for i = iconIndex + 1, table.getn(icons) do if icons[i]:IsShown() then icons[i]:Hide() end end
+	if iconIndex == 0 then row:Hide(); return end
+	local width = iconIndex * DEBUFF_ICON_SIZE + (iconIndex - 1) * DEBUFF_ICON_GAP
+	if row:GetWidth() ~= width then row:SetWidth(width) end
+	local bar = frame.astinyplatesStyledVisual or frame.astinyplatesBossGuardianBar or frame.astinyplatesOverlay or frame
+	local point, relativeTo, relativePoint, x, y = row:GetPoint()
+	if point ~= "TOP" or relativeTo ~= bar or relativePoint ~= "BOTTOM" or x ~= 0 or y ~= -3 then
+		row:ClearAllPoints()
+		row:SetPoint("TOP", bar, "BOTTOM", 0, -3)
 	end
-	row:Show();
+	if not row:IsShown() then row:Show() end
 end
-
 local function EnsureOverlayBorder(frame, overlay)
 	if ( frame.astinyplatesOverlayBorder ) then return; end
 	local border = CreateFrame("Frame", nil, overlay);
