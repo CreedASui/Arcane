@@ -24,6 +24,7 @@ LevelUps.lua
 Minimap.lua
 MinimapButton.lua
 TinyPlates.lua
+TinyPlatesOptions.lua
 Chests.lua
 Meter.lua
 Luck.lua
