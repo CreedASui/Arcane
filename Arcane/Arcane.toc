@@ -23,6 +23,7 @@ Tally.lua
 LevelUps.lua
 Minimap.lua
 MinimapButton.lua
+TinyPlates.lua
 Chests.lua
 Meter.lua
 Luck.lua
