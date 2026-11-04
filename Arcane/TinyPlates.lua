@@ -17,7 +17,6 @@ local function Opt(key)
 	if type(C.TinyPlatesOption) == "function" then return C.TinyPlatesOption(key) end
 	return false
 end
-local debugPlates = orderedPlates;
 local BORDER = "Interface\\Tooltips\\Nameplate-Border";
 local PLATE_SCALE = 0.5;
 local HORIZONTAL_OFFSET = 10;
@@ -136,66 +135,30 @@ local function GetPlateName(frame, root)
 	return nil;
 end
 
-local function CachePlateName(frame)
-	-- Plates are recycled for other units, so a stale name must never survive
-	-- a failed lookup.
-	frame.astinyplatesPlateName = GetPlateName(frame);
-end
-
 local function IsBossOrGuardianName(name)
-	return name and bossGuardianNames[name] or false;
-end
-
-local function FindBossGuardianName(frame)
-	local regions = { frame:GetRegions() };
-	for i = 1, table.getn(regions) do
-		local region = regions[i];
-		if ( region and region ~= frame.astinyplatesBossGuardianLabel
-				and region:GetObjectType() == "FontString" ) then
-			local name = NormalizeName(region:GetText());
-			if ( name and IsBossOrGuardianName(name) ) then
-				frame.astinyplatesNameRegion = region;
-				return name;
-			end
-		end
-	end
-	local children = { frame:GetChildren() };
-	for i = 1, table.getn(children) do
-		local name = FindBossGuardianName(children[i]);
-		if ( name ) then return name; end
-	end
-	return nil;
+	return name and bossGuardianNames[name] or false
 end
 
 local function IsBossOrGuardianPlate(frame)
-	local matchedName = FindBossGuardianName(frame);
-	if ( matchedName ) then
-		frame.astinyplatesPlateName = matchedName;
-	else
-		CachePlateName(frame);
+	local name = frame.astinyplatesPlateName
+	if not name then
+		frame.astinyplatesBossGuardian = false
+		frame.astinyplatesBossGuardianName = nil
+		return false
 	end
-	local name = frame.astinyplatesPlateName;
-	if ( not name ) then
-		frame.astinyplatesBossGuardian = false;
-		frame.astinyplatesBossGuardianName = nil;
-		return false;
+	if frame.astinyplatesBossGuardianName ~= name then
+		frame.astinyplatesDebuffUnitID = nil
+		frame.astinyplatesDebuffSignature = nil
+		if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
 	end
-	if ( frame.astinyplatesBossGuardianName
-			and frame.astinyplatesBossGuardianName ~= name ) then
-		frame.astinyplatesDebuffUnitID = nil;
-		if ( frame.astinyplatesDebuffRow ) then frame.astinyplatesDebuffRow:Hide(); end
+	if IsBossOrGuardianName(name) then
+		frame.astinyplatesBossGuardian = true
+		frame.astinyplatesBossGuardianName = name
+		return true
 	end
-	if ( IsBossOrGuardianName(name) ) then
-		frame.astinyplatesBossGuardian = true;
-		frame.astinyplatesBossGuardianName = name;
-		return true;
-	end
-	if ( frame.astinyplatesBossGuardian and frame.astinyplatesBossGuardianName == name ) then
-		return true;
-	end
-	frame.astinyplatesBossGuardian = false;
-	frame.astinyplatesBossGuardianName = nil;
-	return false;
+	frame.astinyplatesBossGuardian = false
+	frame.astinyplatesBossGuardianName = nil
+	return false
 end
 
 local function SaveObjectState(object, states)
