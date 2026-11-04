@@ -1,6 +1,8 @@
 # Changelog
 
 ## 1.14.1
+- **Lua 5.0 packaging guard:** reject Lua 5.1-style vararg expressions before producing an addon ZIP, so stale or incompatible source cannot silently ship.
+- **Repository cleanup:** remove duplicate root-level addon sources and assets; the installable source lives only under `Arcane/`, and the package builder checks that duplicates do not return.
 - **Bronze gold everywhere:** every frame's metal (your frame, your target and party, the boss bars, the minimap ring, the meter, the luck window and the rest) is the skill bar's bronze gold in every zone, instead of taking the zone's colors. The boss timer keeps its own.
 - **Dragons:** both face out now, perched on the bar's ends with the end rail behind them.
 - **The skill bar keeps one size:** it no longer grows when a run starts and the kills, gold and cache show up, or as their numbers get longer.
