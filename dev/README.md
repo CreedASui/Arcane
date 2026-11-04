@@ -25,7 +25,7 @@ on it: bosses, guardians, cards, deaths, victory.
 | `lua50 arcane/globals.lua . ../Arcane` | No stray globals (`this`, `event` and `arg1` are the game's) |
 | `lua50 arcane/overflow.lua . ../Arcane` | No text spilling out of its place, in all 11 languages |
 | `python3 arcane/locale_check.py ../Arcane` | Every phrase translated, its `{1}` slots kept |
-| `python3 ../tools/package.py --output /tmp/Arcane-test.zip` | TOC/assets, no duplicate root sources, Lua 5.0 vararg syntax and ZIP integrity |
+| `python3 ../tools/package.py --output /tmp/Arcane-test.zip` | TOC/assets, no duplicate root sources, Lua 5.0 varargs, Arcane namespace, ColorSelect API and ZIP integrity |
 
 ## Pictures of it
 

@@ -1,0 +1,37 @@
+name: Build Arcane Tiny Plates test ZIP
+
+on:
+  push:
+    branches:
+      - feature/tiny-plates-integration
+    paths:
+      - 'Arcane/**'
+      - 'tools/package.py'
+      - '.github/workflows/build-tiny-plates-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/tiny-plates-integration
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install font tooling
+        run: python -m pip install fonttools
+      - name: Validate and package addon
+        run: python tools/package.py --output dist/Arcane-Tiny-Plates-test.zip
+      - name: Upload installable test ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Arcane-Tiny-Plates-test
+          path: dist/Arcane-Tiny-Plates-test.zip
+          if-no-files-found: error
+          retention-days: 7

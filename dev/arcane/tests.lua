@@ -76,6 +76,23 @@ check(ArcaneBar.__shown, "the skill bar shows out of a run")
 check(not ArcaneTimerFrame.__shown, "the timer waits for a run")
 problems("load")
 
+------------------------------------------------------------------ Tiny Plates: V and native restoration
+M.cvars.nameplateShowEnemies = "1"
+local tinyPlate, tinyBar, tinyName = M.MakeNameplate("Test Ghoul")
+frames(30)
+check(tinyPlate.arcanePlatesOverlay and tinyPlate.arcanePlatesOverlay:IsShown(),
+	"V-visible regular nameplates receive the half-size Arcane overlay")
+check(not tinyBar:IsShown() and not tinyName:IsShown(),
+	"regular plates use the compact bar and hide the stock name")
+check(tinyPlate:IsVisible(), "Tiny Plates does not hide the game's nameplate frame")
+tinyPlate:Hide()
+frames(5)
+check(not tinyPlate:IsVisible(), "the game's V visibility toggle remains authoritative")
+tinyPlate:Show()
+frames(20)
+check(tinyPlate.arcanePlatesOverlay:IsShown(), "a nameplate shown again by V is styled again")
+check(M.cvars.nameplateShowEnemies == "1", "Tiny Plates never changes the game's nameplate CVar")
+
 ------------------------------------------------------------------ 2. a run with bosses and a guardian
 SIM.StartRun("naxx", { killAfter = 40 })
 local b = SIM.run.bosses
@@ -83,7 +100,63 @@ M.runTime = b[2].at + 4
 b[1].state = "dead"
 SIM.Publish()
 M.guardians = { { id = 77, name = "Sir Zeliek", hp = 21500, hpm = 36000, awake = true } }
+M.debuffs = { ["Sir Zeliek"] = { { name = "Curse", icon = "Interface\\\\Icons\\\\Spell_Shadow_CurseOfMannoroth", stacks = 2, ends = (M.runTime or 0) + 12 } } }
 SIM.Advance(2, 1 / 30)
+M.Fire("CHAT_MSG_ADDON", "AZSUNITS")
+local bossPlate, bossBar, bossName = M.MakeNameplate("Sir Zeliek")
+frames(30)
+check(bossBar:IsShown() and not bossPlate.arcanePlatesOverlay,
+	"boss and guardian plates retain their full-size native health bars")
+check(bossPlate.arcanePlatesBossGuardianLabel and bossPlate.arcanePlatesBossGuardianLabel:IsShown(),
+	"boss and guardian names use the dedicated label")
+check(bossPlate.arcanePlatesDebuffRow and bossPlate.arcanePlatesDebuffRow:IsShown(),
+	"boss and guardian debuffs are shown below the plate")
+
+-- Settings panel is a child feature of Arcane, not a standalone addon control.
+Arcane.arcanePlatesOptions()
+check(ArcanePlatesOptions and ArcanePlatesOptions:IsShown(),
+	"Tiny Plates settings open from the Arcane options hub")
+check(type(ArcaneDB.nameplates) == "table",
+	"Tiny Plates preferences are stored under ArcaneDB.nameplates")
+local bossColorSwatch
+local panelChildren = { ArcanePlatesOptions:GetChildren() }
+for i = 1, table.getn(panelChildren) do
+	if panelChildren[i].arcanePlatesPrimarySwatch == "boss" then bossColorSwatch = panelChildren[i] end
+end
+check(bossColorSwatch ~= nil, "the boss custom-color swatch exists in the Arcane panel")
+if bossColorSwatch then bossColorSwatch:Click() end
+local bossColorPicker = ColorPickerFrame
+check(bossColorPicker:IsShown(), "clicking the custom swatch opens the native ColorSelect picker")
+M.PickColor(0.2, 0.4, 0.8)
+check(ArcaneDB.nameplates.bossBarColorOn == true
+	and ArcaneDB.nameplates.bossBarColor[1] == 0.2,
+	"the legacy ColorSelect methods save custom plate colors")
+M.CancelColor()
+check(ArcaneDB.nameplates.bossBarColorOn == false
+	and ArcaneDB.nameplates.bossBarColor[1] == 0
+	and math.abs(ArcaneDB.nameplates.bossBarColor[2] - 0.64) < 0.001,
+	"cancelling the picker restores the original color and disabled state")
+
+local nameplatesPart
+for i = 1, table.getn(Arcane.parts) do
+	if Arcane.parts[i].key == "nameplates" then nameplatesPart = Arcane.parts[i] end
+end
+check(nameplatesPart ~= nil, "Tiny Plates is registered as an Arcane component")
+if nameplatesPart then
+	nameplatesPart.set(false)
+	frames(2)
+	check(tinyBar:IsShown() and tinyName:IsShown() and tinyPlate:GetWidth() == 120,
+		"turning Tiny Plates off restores regular native size, bar and name")
+	check(bossBar:IsShown() and bossName:IsShown()
+		and not bossPlate.arcanePlatesDebuffRow:IsShown(),
+		"turning Tiny Plates off restores boss names and removes custom debuffs")
+	check(M.cvars.nameplateShowEnemies == "1", "turning Tiny Plates off leaves V's CVar untouched")
+	nameplatesPart.set(true)
+	frames(30)
+	check(tinyPlate.arcanePlatesOverlay:IsShown() and not tinyBar:IsShown(),
+		"turning Tiny Plates back on reapplies the compact regular style")
+	check(bossBar:IsShown(), "turning Tiny Plates back on keeps boss health bars native")
+end
 check(ArcaneTimerFrame.__shown, "the timer shows in the run")
 check(findText(ArcaneBosses, "^Noth the Plaguebringer$") ~= nil, "a bar for the boss that's up: " .. table.concat(textsUnder(ArcaneBosses), " | "))
 check(findText(ArcaneBosses, "^Sir Zeliek$") ~= nil, "a bar for the awake mini-boss")

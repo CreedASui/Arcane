@@ -1,10 +1,5 @@
--- Arcane UI: buttons on the minimap's edge. Each a round bezel in the ring's metal with a crest in
--- it, sliding along the edge wherever it's dragged (its place kept). Three of them: Arcane's C opens
--- the options (a right click frees the frames to move, or locks them again), the crossed swords show
--- or hide the damage meter, the clover the luck window. The C is a part of its own: with the minimap
--- left as the game's it still sits on the edge. Where they start: the meter's and the luck window's
--- on the left (where their gems were), the C on the lower right, all clear of the buffs on the upper
--- left, the north mark and the clock.
+-- Arcane UI: three round minimap-edge buttons. The A opens Arcane options; the crossed
+-- swords toggle the damage meter; the clover toggles the luck window.
 
 local C = Arcane
 local DEFAULTS = { enabled = true, angle = 315 }
@@ -38,10 +33,21 @@ function C.EdgeButton(spec)
 	halo:SetPoint("CENTER", b, "CENTER", 0, 0)
 	local bezel = C.Tex(b, "ARTWORK", C.ART .. "MapButton")
 	bezel:SetAllPoints(b)
-	local crest = C.Tex(b, "OVERLAY", C.ART .. spec.crest)
-	crest:SetWidth(SIZE)
-	crest:SetHeight(SIZE)
-	C.Place(crest, "CENTER", b, "CENTER", 0, 0)
+	local crest
+	if spec.letter then
+		crest = b:CreateFontString(nil, "OVERLAY")
+		C.SetFace(crest, C.TITLE_FONT, 23)
+		crest:SetText(spec.letter)
+		crest:SetTextColor(1, 0.84, 0.40)
+		crest:SetShadowColor(0, 0, 0, 1)
+		crest:SetShadowOffset(1, -1)
+		C.Place(crest, "CENTER", b, "CENTER", 0, 1)
+	else
+		crest = C.Tex(b, "OVERLAY", C.ART .. spec.crest)
+		crest:SetWidth(SIZE)
+		crest:SetHeight(SIZE)
+		C.Place(crest, "CENTER", b, "CENTER", 0, 0)
+	end
 	b.halo, b.bezel, b.crest = halo, bezel, crest
 
 	local function Place()
@@ -96,7 +102,11 @@ function C.EdgeButton(spec)
 		if spec.glow then gr, gg, gb = spec.glow(pal) end
 		C.Color(halo, gr, gg, gb, 0.75 * S.glow)
 		local k = (1 + 0.22 * S.hot) * S.lit
-		C.Color(crest, math.min(1, tr * k), math.min(1, tg * k), math.min(1, tb * k), 1)
+		if spec.letter then
+			C.TextColor(crest, math.min(1, tr * k), math.min(1, tg * k), math.min(1, tb * k))
+		else
+			C.Color(crest, math.min(1, tr * k), math.min(1, tg * k), math.min(1, tb * k), 1)
+		end
 	end
 
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
@@ -147,7 +157,7 @@ function C.EdgeButton(spec)
 	return b
 end
 
------------------------------------------------------------------------- Arcane's C: the options
+------------------------------------------------------------------------ Arcane's A: the options
 local db, button
 
 local function Click()
@@ -174,7 +184,7 @@ local function Apply()
 	if type(Minimap) ~= "table" then return end
 	if not button then
 		button = C.EdgeButton({
-			frame = "ArcaneMinimapButton", crest = "MapCrest", store = db, field = "angle", angle = DEFAULTS.angle,
+			frame = "ArcaneMinimapButton", letter = "A", store = db, field = "angle", angle = DEFAULTS.angle,
 			tint = function(pal) return pal.title[1], pal.title[2], pal.title[3] end,
 			held = function() return ArcaneOptions and ArcaneOptions:IsShown() end,
 			tip = Tip, click = Click,
