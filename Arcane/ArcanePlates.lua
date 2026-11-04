@@ -869,7 +869,6 @@ local function ApplyPlateStyle(frame)
 		return;
 	end
 	local visualScale = PLATE_SCALE;
-	ApplyPlateBarColor(frame, BarColor("regular"));
 	HideNameText(frame);
 	local styled = frame.arcanePlatesStyledVisual;
 	if ( styled ) then
@@ -900,6 +899,7 @@ local function ApplyPlateStyle(frame)
 	if ( not source or not overlay ) then
 		return;
 	end
+	ApplyPlateBarColor(frame, BarColor("regular"));
 	local originalOverlayScale = frame.arcanePlatesOverlayOriginalScale or overlay:GetScale();
 	frame.arcanePlatesOverlayOriginalScale = originalOverlayScale;
 	local overlayScale = originalOverlayScale;
