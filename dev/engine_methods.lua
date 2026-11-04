@@ -18,3 +18,9 @@ ENGINE_METHODS["CheckButton"] = {}
 for k in pairs(ENGINE_METHODS["Button"]) do ENGINE_METHODS["CheckButton"][k] = true end
 ENGINE_METHODS["CheckButton"]["GetChecked"] = true
 ENGINE_METHODS["CheckButton"]["SetChecked"] = true
+
+-- Blizzard's 1.12 ColorPickerFrame is a ColorSelect widget.
+ENGINE_METHODS["ColorSelect"] = {}
+for k in pairs(ENGINE_METHODS["Frame"]) do ENGINE_METHODS["ColorSelect"][k] = true end
+ENGINE_METHODS["ColorSelect"]["GetColorRGB"] = true
+ENGINE_METHODS["ColorSelect"]["SetColorRGB"] = true
