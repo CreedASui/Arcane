@@ -1,15 +1,19 @@
 -- Arcane Tiny Plates
 -- Based on ASTinyPlates by Valorless (MIT); see ATTRIBUTION.md and TinyPlates-LICENSE.txt.
 -- Adapted for Arcane's shared DB, menu, lifecycle and Lua 5.0 client.
-local knownPlates = {};
+local C = Arcane
+local knownPlates = {}
+local orderedPlates = {}
+local active = true
+local scanClock = 0
+local SCAN_INTERVAL = 0.10
+local refreshPending = true
+local scanFrame
 
-local OPTION_DEFAULTS = { showDebuffs = true, hideShrunkPlates = false,
-	hideBossName = false, showShrunkName = false };
 local function Opt(key)
-	if ( ASTinyPlatesOption ) then return ASTinyPlatesOption(key); end
-	return OPTION_DEFAULTS[key];
+	return C.TinyPlatesOption and C.TinyPlatesOption(key) or false
 end
-local debugPlates = {};
+local debugPlates = orderedPlates;
 local BORDER = "Interface\\Tooltips\\Nameplate-Border";
 local PLATE_SCALE = 0.5;
 local HORIZONTAL_OFFSET = 10;
@@ -49,9 +53,13 @@ local function AddBossGuardianNames(units, requireKind)
 end
 
 local function ClearBossGuardianPlateFlags()
-	for frame in pairs(knownPlates) do
-		frame.astinyplatesBossGuardian = nil;
-		frame.astinyplatesBossGuardianName = nil;
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		frame.astinyplatesBossGuardian = nil
+		frame.astinyplatesBossGuardianName = nil
+		frame.astinyplatesDebuffUnitID = nil
+		frame.astinyplatesDebuffSignature = nil
+		if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
 	end
 end
 
@@ -76,7 +84,7 @@ local function RefreshBossGuardianNames(force)
 		AddBossGuardianNames(AZS_UNITS, true);
 		if ( type(AZS_GetBosses) == "function" ) then AddBossGuardianNames(AZS_GetBosses(), false); end
 		if ( type(AZS_GetGuardians) == "function" ) then AddBossGuardianNames(AZS_GetGuardians(), false); end
-        lastSpecialRefreshTime = GetTime();
+		lastSpecialRefreshTime = GetTime();
 	end
 	lastSpecialPhase = phase;
 	lastSpecialUnitsUpdate = unitsUpdate;
