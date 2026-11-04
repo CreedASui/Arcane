@@ -1,9 +1,10 @@
-name: Build Arcane Tiny Plates test ZIP
+name: Build Arcane test ZIP
 
 on:
   push:
     branches:
       - feature/tiny-plates-integration
+      - feature/menu-luck-meter-toggles
     paths:
       - 'Arcane/**'
       - 'tools/package.py'
@@ -24,14 +25,30 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Build Lua 5.0.3
+        run: |
+          curl -fsSL https://www.lua.org/ftp/lua-5.0.3.tar.gz -o "$RUNNER_TEMP/lua-5.0.3.tar.gz"
+          tar -xzf "$RUNNER_TEMP/lua-5.0.3.tar.gz" -C "$RUNNER_TEMP"
+          make -C "$RUNNER_TEMP/lua-5.0.3" linux
+          echo "$RUNNER_TEMP/lua-5.0.3/bin" >> "$GITHUB_PATH"
+      - name: Run Lua 5.0 regression suite
+        run: |
+          cd dev
+          lua arcane/tests.lua . ../Arcane
+          lua arcane/timer_tests.lua . ../Arcane
+          lua arcane/numbers_harness.lua . ../Arcane/Numbers.lua
+          lua arcane/globals.lua . ../Arcane
+          lua arcane/overflow.lua . ../Arcane
+          lua arcane/smoke.lua . ../Arcane "$RUNNER_TEMP/arcane-smoke"
+          python3 arcane/locale_check.py ../Arcane
       - name: Install font tooling
         run: python -m pip install fonttools
       - name: Validate and package addon
-        run: python tools/package.py --output dist/Arcane-Tiny-Plates-test.zip
+        run: python tools/package.py --output dist/Arcane-Menu-Toggles-test.zip
       - name: Upload installable test ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: Arcane-Tiny-Plates-test
-          path: dist/Arcane-Tiny-Plates-test.zip
+          name: Arcane-Menu-Toggles-test
+          path: dist/Arcane-Menu-Toggles-test.zip
           if-no-files-found: error
           retention-days: 7
