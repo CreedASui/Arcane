@@ -105,7 +105,9 @@ local function NormalizeName(text)
 end
 
 local function IsOwnObject(frame, object)
-	return object == frame.arcanePlatesOverlay or object == frame.arcanePlatesDebuffRow;
+	return object == frame.arcanePlatesOverlay
+		or object == frame.arcanePlatesDebuffRow
+		or object == frame.arcanePlatesShrunkLabelHolder
 end
 
 -- Searches the plate and its descendants, because UI replacements such as SDUI
@@ -254,28 +256,28 @@ local function RestoreNativeState(frame)
 	frame.arcanePlatesNativeRestored = true
 end
 
-local function IdentifyNameplate(frame)
-	local regions = { frame:GetRegions() };
-	local hasBorder = false;
-	local hasName = false;
-	for i = 1, table.getn(regions) do
-		local region = regions[i];
-		if ( region and region:GetObjectType() == "Texture"
-				and region:GetTexture() == BORDER ) then
-			hasBorder = true;
-		elseif ( region and region:GetObjectType() == "FontString" ) then
-			hasName = true;
-		end
-	end
-	local children = { frame:GetChildren() };
-	local hasHealthBar = false;
+local function HasStatusBar(frame)
+	local children = { frame:GetChildren() }
 	for i = 1, table.getn(children) do
-		if ( children[i]:GetObjectType() == "StatusBar" ) then
-			hasHealthBar = true;
-			break;
+		local child = children[i]
+		if child:GetObjectType() == "StatusBar" or HasStatusBar(child) then return true end
+	end
+	return false
+end
+
+local function IdentifyNameplate(frame)
+	local regions = { frame:GetRegions() }
+	local hasBorder = false
+	for i = 1, table.getn(regions) do
+		local region = regions[i]
+		if region and region:GetObjectType() == "Texture"
+				and region:GetTexture() == BORDER then
+			hasBorder = true
+			break
 		end
 	end
-	return hasName and ( hasBorder or hasHealthBar );
+	local hasName = GetPlateName(frame) ~= nil
+	return hasName and (hasBorder or HasStatusBar(frame))
 end
 
 local function HideNameText(frame)
@@ -1229,7 +1231,16 @@ end
 local function ScanNameplates()
 	if type(WorldFrame) ~= "table" or type(WorldFrame.GetChildren) ~= "function" then return end
 	local children = { WorldFrame:GetChildren() }
-	for i = 1, table.getn(children) do RegisterPlate(children[i]) end
+	for i = 1, table.getn(children) do
+		local frame = children[i]
+		-- V controls whether Blizzard/Azeroth Survivors exposes active plates. Only
+		-- snapshot a real, laid-out plate; hidden pooled frames can still be 0x0.
+		if frame and frame.IsVisible and frame:IsVisible()
+				and frame.GetWidth and frame:GetWidth() > 0
+				and frame.GetHeight and frame:GetHeight() > 0 then
+			RegisterPlate(frame)
+			end
+	end
 end
 
 local function RefreshAll()
