@@ -1174,33 +1174,36 @@ local function RegisterPlate(frame)
 	if not frame or not frame.IsVisible or not frame:IsVisible()
 			or not frame.GetWidth or frame:GetWidth() <= 0
 			or not frame.GetHeight or frame:GetHeight() <= 0 then return false end
-	if not knownPlates[frame] then
-		if not IdentifyNameplate(frame) then return false end
+	local known = knownPlates[frame] and true or false
+	if not known and not IdentifyNameplate(frame) then return false end
+
+	local currentName = GetPlateName(frame)
+	local oldName = frame.arcanePlatesPlateName
+	if known and currentName ~= oldName and oldName ~= nil then
+		-- Restore the previous unit before observing the new unit's native layout.
+		RestoreNativeState(frame)
+	end
+
+	if not known then
 		knownPlates[frame] = true
 		table.insert(orderedPlates, frame)
 		CaptureNativeState(frame)
-		frame.arcanePlatesOriginalScale = frame.arcanePlatesOriginalScale or frame:GetScale() or 1
-	else
-		-- New native children can be added when a pooled plate is reused by the game.
-		-- Snapshot only previously unseen objects, before Arcane styles this incarnation.
+		frame.arcanePlatesOriginalScale = frame:GetScale() or 1
+	elseif currentName ~= oldName then
+		-- A recycled frame may have new regions or children. Capture them after
+		-- old visuals are restored, so the new snapshot is genuinely native.
 		local states = frame.arcanePlatesNativeState or {}
 		local seen = {}
 		for i = 1, table.getn(states) do seen[states[i].object] = true end
 		local fresh = {}
-		local children = { frame:GetChildren() }
-		for i = 1, table.getn(children) do
-			if not seen[children[i]] and not children[i].arcanePlatesOverlay
-					and not children[i].arcanePlatesDebuffRow then SaveObjectState(children[i], fresh) end
+		SaveObjectState(frame, fresh)
+		for i = 1, table.getn(fresh) do
+			if not seen[fresh[i].object] then table.insert(states, fresh[i]) end
 		end
-		local regions = { frame:GetRegions() }
-		for i = 1, table.getn(regions) do if not seen[regions[i]] then SaveObjectState(regions[i], fresh) end end
-		for i = 1, table.getn(fresh) do table.insert(states, fresh[i]) end
 		frame.arcanePlatesNativeState = states
 	end
-	local currentName = GetPlateName(frame)
-	if currentName ~= frame.arcanePlatesPlateName then
-		local oldName = frame.arcanePlatesPlateName
-		if oldName ~= nil then RestoreNativeState(frame) end
+
+	if currentName ~= oldName then
 		frame.arcanePlatesPlateName = currentName
 		frame.arcanePlatesDebuffUnitID = nil
 		frame.arcanePlatesDebuffSignature = nil
@@ -1210,7 +1213,6 @@ local function RegisterPlate(frame)
 	end
 	return true
 end
-
 local function SyncOverlayValues()
 	for i = 1, table.getn(orderedPlates) do
 		local frame = orderedPlates[i]
