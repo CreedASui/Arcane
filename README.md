@@ -45,7 +45,7 @@ Every part can be turned on or off, sized and moved.
 
 ## Credits
 
-Original art made for Arcane UI. The bundled fonts in `Arcane/Fonts` are made from Lora and Noto Sans CJK, both under the SIL Open Font License (see `Arcane/Fonts/LICENSE.txt`).
+Arcane began from the CreedUI codebase and retains its original project assets and applicable attribution. This repository is the independent Arcane continuation; new design and development will evolve separately. The bundled fonts in `Arcane/Fonts` are made from Lora and Noto Sans CJK, both under the SIL Open Font License (see `Arcane/Fonts/LICENSE.txt`).
 
 ## Working on it
 
