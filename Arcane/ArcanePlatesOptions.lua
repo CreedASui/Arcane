@@ -154,17 +154,20 @@ local function MakeColorRow(parent, category, title, y)
 	end)
 	reset:SetPoint("TOPLEFT", parent, "TOPLEFT", 232, y - 19)
 	local picks = {}
+	local function PresetAction(cat, preset)
+		return function()
+			DB()[cat .. "BarColor"] = { preset[1], preset[2], preset[3] }
+			DB()[cat .. "BarColorOn"] = true
+			C.ArcanePlatesRefresh(true)
+			C.ArcanePlatesRefreshOptions()
+		end
+	end
 	for i = 1, table.getn(PRESETS) do
 		local preset = PRESETS[i]
 		local p = Swatch(parent, category, preset, 18 + (i - 1) * 21, y - 43)
 		p.fill:SetVertexColor(preset[1], preset[2], preset[3], 1)
 		picks[i] = p
-		p:SetScript("OnClick", function()
-			DB()[category .. "BarColor"] = { preset[1], preset[2], preset[3] }
-			DB()[category .. "BarColorOn"] = true
-			C.ArcanePlatesRefresh(true)
-			C.ArcanePlatesRefreshOptions()
-		end)
+		p:SetScript("OnClick", PresetAction(category, preset))
 	end
 	colorRows[category] = { swatch = swatch, picks = picks, enabled = enabled }
 end
@@ -197,7 +200,7 @@ local function BuildPanel(parent)
 	panel:EnableMouse(true)
 	panel:Hide()
 	C.AboveHub(panel)
-	if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "ArcaneArcanePlatesOptions") end
+	if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "ArcanePlatesOptions") end
 
 	local title = PanelText(panel, "Tiny Plates", 16, -14, 280, 16, { 0.98, 0.85, 0.52 })
 	C.SetFace(title, C.TITLE_FONT, 17)
