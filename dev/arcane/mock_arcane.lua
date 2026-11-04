@@ -642,16 +642,19 @@ GameFontNormal:SetFont(M.nativeFace, 12)
 STANDARD_TEXT_FONT = M.nativeFace
 
 M.tip = { lines = {}, shown = false }
--- Legacy 1.12 color picker contract: SetColorRGB/GetColorRGB are globals and
--- the picker invokes its func/cancelFunc callbacks when the user accepts/cancels.
+-- Native 1.12 ColorSelect methods on the global ColorPickerFrame.
 M.pickerColor = { 0.8, 0.8, 0.8 }
-function ColorPickerFrame_GetColorRGB()
-	return M.pickerColor[1], M.pickerColor[2], M.pickerColor[3]
-end
 ColorPickerFrame = {
 	shown = false,
 	Hide = function(self) self.shown = false end,
 	Show = function(self) self.shown = true end,
+	SetColorRGB = function(self, r, g, b)
+		M.pickerColor = { r, g, b }
+		if self.func then self.func() end -- 1.12 OnColorSelect invokes func
+	end,
+	GetColorRGB = function(self)
+		return M.pickerColor[1], M.pickerColor[2], M.pickerColor[3]
+	end,
 }
 function M.PickColor(r, g, b)
 	M.pickerColor = { r, g, b }
