@@ -434,10 +434,10 @@ end
 local function SkillOf(ev)
 	local m = ev.meterSourceKey
 	if type(m) == "string" and m ~= "" then
-		local skill = ev.cuiSkill
+		local skill = ev.arcaneSkill
 		if not skill then
 			skill = "m" .. (string.gsub(m, ":r%d+.*$", "")) .. "|" .. tostring(ev.meterSource or "") .. "|" .. tostring(ev.sourceKind or "player")
-			ev.cuiSkill = skill
+			ev.arcaneSkill = skill
 		end
 		return skill
 	end
