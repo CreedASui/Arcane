@@ -49,7 +49,7 @@ Requires Python 3 and FontTools (`python -m pip install fonttools`). From the re
 
 ## Credits
 
-Arcane began from the CreedUI codebase and retains its original project assets and applicable attribution. This repository is the independent Arcane continuation; new design and development will evolve separately. The bundled fonts in `Arcane/Fonts` are made from Lora and Noto Sans CJK, both under the SIL Open Font License (see `Arcane/Fonts/LICENSE.txt`).
+Arcane is developed as an independent project. Project history and retained upstream attribution are documented in [ATTRIBUTION.md](ATTRIBUTION.md). The bundled fonts in `Arcane/Fonts` are modified from Lora and Noto Sans CJK; their SIL Open Font License notices are retained in `Arcane/Fonts/LICENSE.txt`.
 
 ## Working on it
 
