@@ -184,7 +184,7 @@ local function Apply()
 	if type(Minimap) ~= "table" then return end
 	if not button then
 		button = C.EdgeButton({
-			frame = "ArcaneMinimapButton", crest = "MapA", store = db, field = "angle", angle = DEFAULTS.angle,
+			frame = "ArcaneMinimapButton", letter = "A", store = db, field = "angle", angle = DEFAULTS.angle,
 			tint = function(pal) return pal.title[1], pal.title[2], pal.title[3] end,
 			held = function() return ArcaneOptions and ArcaneOptions:IsShown() end,
 			tip = Tip, click = Click,
