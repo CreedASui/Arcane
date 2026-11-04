@@ -229,4 +229,6 @@ function C.TinyPlatesToggleOptions()
 	end
 end
 
+C.tinyPlatesOptions = C.TinyPlatesToggleOptions
+
 C.OnInit(function() DB() end)
