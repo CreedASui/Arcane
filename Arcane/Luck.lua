@@ -3,7 +3,7 @@
 -- or Legendary, put as "1 in N" and glowing the brighter the likelier it is; under them, how often
 -- a level-up should bring a legendary. Luck you gain shows on the medallion as "+N%" and lights it.
 -- Hover the medallion for where your luck comes from, a gem for its odds. Its sides widen it, its
--- corners size it; its x hides it and the clover on the minimap's edge brings it back.
+-- corners size it; its x hides it. The Luck toggle in Arcane Options shows it again.
 --
 -- The odds follow the game's roll: with m = 1 + luck + the level's 1% a level (30% at most), the
 -- five rarities weigh 60, 25m, 10m^2, 4m^3 and m^4, each card on its own.
@@ -142,7 +142,7 @@ local function Build()
 	root.title = C.Text(root, C.TITLE_FONT, 14, nil, "LEFT", 120)
 	root.title:SetPoint("LEFT", root.clover, "RIGHT", 4, 0)
 	C.LText(root.title, "Luck")
-	-- x hides it (the clover on the minimap's edge brings it back), as the meter's
+	-- x hides it; the Luck toggle in Arcane Options brings it back, as the meter's
 	root.close = CreateFrame("Button", nil, root)
 	root.close:SetWidth(16)
 	root.close:SetHeight(16)
@@ -151,12 +151,15 @@ local function Build()
 	root.close.text:SetPoint("CENTER", root.close, "CENTER", 0, 0)
 	root.close.text:SetText("x")
 	root.close.text:SetTextColor(0.78, 0.74, 0.66)
-	root.close:SetScript("OnClick", function() db.shown = false end)
+	root.close:SetScript("OnClick", function()
+		db.shown = false
+		if C.RefreshHub then C.RefreshHub() end
+	end)
 	root.close:SetScript("OnEnter", function()
 		root.close.text:SetTextColor(1, 0.9, 0.6)
 		if GameTooltip then
 			GameTooltip:SetOwner(root.close, "ANCHOR_LEFT")
-			GameTooltip:AddLine(C.L("Hide the luck window (the clover on the minimap's edge brings it back)"), 1, 1, 1, 1)
+			GameTooltip:AddLine(C.L("Click to show or hide it."), 1, 1, 1, 1)
 			C.ShowTip()
 		end
 	end)
@@ -433,26 +436,10 @@ local function Sizing(mover)
 	S.sizer.levels(root:GetFrameLevel() + 6)
 end
 
--- its button on the minimap's edge, by the meter's: a clover that shows or hides it (dim while it's
--- hidden) and slides along the edge (MinimapButton); it starts on the left, where the gem was
-local function BuildToggle()
-	if type(Minimap) ~= "table" or not C.EdgeButton then return end
-	root.toggle = C.EdgeButton({
-		frame = "ArcaneLuckToggle", crest = "MapClover", store = db, field = "edgeAngle", angle = 222,
-		tint = function() return LUCK[1], LUCK[2], LUCK[3] end,
-		dim = function() return not db.shown end,
-		tip = function()
-			GameTooltip:AddLine(C.L("Luck"), LUCK[1], LUCK[2], LUCK[3])
-			GameTooltip:AddLine(C.L("Click to show or hide it."), 1, 1, 1)
-		end,
-		click = function() db.shown = not db.shown end,
-	})
-	if root.toggle and not db.enabled then root.toggle:Hide() end
-end
-
 C.OnInit(function()
 	db = C.DB("luck", DEFAULTS)
 	db.source = nil -- the old window's choice of drop, gone with it
+	db.edgeAngle = nil -- the former minimap toggle is now in Arcane Options
 	W = C.Clamp(tonumber(db.width) or DEFAULTS.width, MIN_W, MAX_W)
 	db.scale = C.Clamp(tonumber(db.scale) or 1, MIN_SCALE, MAX_SCALE)
 	Build()
@@ -468,7 +455,6 @@ C.OnInit(function()
 	local drag = C.Draggable(root, mover)
 	for i = 1, table.getn(root.gems) do drag.handle(root.gems[i].hit) end
 	Sizing(mover)
-	BuildToggle()
 	local driver = CreateFrame("Frame", "ArcaneLuckDriver")
 	local broken = false
 	driver:SetScript("OnUpdate", function()
@@ -493,13 +479,15 @@ end)
 
 C.RegisterPart({
 	key = "luck", name = "Luck",
-	note = "Your luck on a bronze medallion, and the chance of a Rare, Epic or Legendary card as three gems (1 in N); luck you gain shows on the medallion. Drag its sides to widen it, its corners to size it; the clover on the minimap's edge shows or hides it.",
-	get = function() return db and db.enabled end,
+	note = "Your luck on a bronze medallion, and the chance of a Rare, Epic or Legendary card as three gems (1 in N); luck you gain shows on the medallion. Drag its sides to widen it, its corners to size it; use the Luck toggle in Arcane Options to show or hide the window.",
+	get = function() return db and db.enabled and db.shown end,
 	set = function(on)
 		if db then
-			db.enabled = on and true or false
-			if db.enabled then db.shown = true end
-			if root.toggle then if db.enabled then root.toggle:Show() else root.toggle:Hide() end end
+			if on then
+				db.enabled, db.shown = true, true
+			else
+				db.shown = false
+			end
 		end
 	end,
 	getScale = function() return db and db.scale or 1 end,

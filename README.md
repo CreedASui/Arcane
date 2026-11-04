@@ -14,7 +14,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
 - **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
-- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills), and buttons on its edge you can drag around it: the **C** opens the options, the **crossed swords** show or hide the meter, the **clover** the luck window.
+- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills). The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
 - **Chat:** dressed to match, and kept clear of the skill bar's dragon.
 - **Damage numbers:** calm and readable; a spell hitting a crowd adds up into one number a second, and a number that keeps stacking grows.

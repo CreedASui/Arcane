@@ -720,6 +720,12 @@ do
 			if o.__kind == "FontString" and o.__text == label and under(o, rootFrame) then return o.__parent end
 		end
 	end
+	local function partRow(key)
+		if not ArcaneOptions then M.Slash("") end
+		for _, row in ipairs(ArcaneOptions.rows or {}) do
+			if row.info and row.info.key == key then return row end
+		end
+	end
 	local function lineCount()
 		local n = 0
 		for _, o in ipairs(M.All()) do
@@ -847,16 +853,21 @@ do
 	AZS_GetMeterSnapshot = snapFn
 	AZS_GetMeter = nil
 	frames(30)
-	-- close it; the gem by the minimap brings it back
+	-- close it; the Damage meter option toggle brings it back
 	local close = buttonLabeled(ArcaneMeter, "x")
 	this = close
 	close.__scripts.OnClick()
 	frames(40)
 	check(not ArcaneMeter.__shown, "x hides the meter")
-	this = ArcaneMeterToggle
-	ArcaneMeterToggle.__scripts.OnClick()
+	local meterOption = partRow("meter")
+	check(meterOption ~= nil and not meterOption.info.get(), "the Damage meter menu toggle reflects the hidden window")
+	if meterOption then
+		this = meterOption
+		meterOption.__scripts.OnClick()
+	end
 	frames(40)
-	check(ArcaneMeter.__shown, "the gem by the minimap brings it back")
+	check(ArcaneMeter.__shown and ArcaneDB.meter.enabled and ArcaneDB.meter.shown,
+		"the Damage meter toggle in Arcane Options brings it back without releasing the game's HUD")
 	-- fold it to the title
 	local fold = buttonLabeled(ArcaneMeter, "^")
 	this = fold
@@ -1395,16 +1406,23 @@ do
 	local l3, b3, r3, t3 = M.Rect(ArcaneLuck)
 	check(ArcaneLuck:GetScale() > 1.05 and math.abs(l3 - l2) < 0.6 and math.abs(t3 - t2) < 0.6,
 		string.format("a corner makes it bigger, the corner across from it in place (scale %.2f)", ArcaneLuck:GetScale()))
-	-- its x hides it; the gem by the minimap brings it back
+	-- its x hides it; the Luck option toggle brings it back
 	this = ArcaneLuck.close
 	ArcaneLuck.close.__scripts.OnClick()
 	frames(30)
 	check(not ArcaneLuck.__shown, "its x hides it")
-	check(ArcaneLuckToggle and ArcaneLuckToggle.__shown, "a gem by the minimap stays")
-	this = ArcaneLuckToggle
-	ArcaneLuckToggle.__scripts.OnClick()
+	local luckOption
+	for _, row in ipairs(ArcaneOptions.rows or {}) do
+		if row.info and row.info.key == "luck" then luckOption = row end
+	end
+	check(luckOption ~= nil and not luckOption.info.get(), "the Luck menu toggle reflects the hidden window")
+	if luckOption then
+		this = luckOption
+		luckOption.__scripts.OnClick()
+	end
 	frames(30)
-	check(ArcaneLuck.__shown, "and clicking the gem brings it back")
+	check(ArcaneLuck.__shown and ArcaneDB.luck.enabled and ArcaneDB.luck.shown,
+		"the Luck toggle in Arcane Options brings the window back")
 	ArcaneDB.luck.width, ArcaneDB.luck.scale = 236, 1
 	ArcaneLuck:SetScale(1)
 	M.Slash("reset")
@@ -1796,7 +1814,7 @@ do
 		check(math.abs(math.sqrt(x * x + y * y) - 80) < 1 and x > 0 and y < 0, string.format("on the rim, lower right (%.1f, %.1f)", x, y))
 		local l, bt, r, t = M.Rect(b)
 		check(l >= 0 and bt >= 0 and r <= SW and t <= SH, "on the screen")
-		for _, g in ipairs({ ArcaneMeterToggle, ArcaneLuckToggle, ArcaneMinimapClock }) do
+		for _, g in ipairs({ ArcaneMinimapClock }) do
 			local gl, gb, gr, gt = M.Rect(g)
 			check(gr <= l or gl >= r or gt <= bt or gb >= t, "clear of " .. g:GetName())
 		end
@@ -1893,79 +1911,49 @@ do
 	problems("minimap button")
 end
 
------------------------------------------------------------------- 11p2. the meter's swords and the luck window's clover on the edge
+------------------------------------------------------------------ 11p2. Luck and Damage meter controls in Arcane Options
 do
 	local _, _, SW, SH = M.Rect(UIParent)
-	local function centre(o)
-		local l, b, r, t = M.Rect(o)
-		local ml, mb, mr, mt = M.Rect(Minimap)
-		return (l + r) / 2 - (ml + mr) / 2, (b + t) / 2 - (mb + mt) / 2
+	check(ArcaneMeterToggle == nil and ArcaneLuckToggle == nil,
+		"the separate Damage meter swords and Luck clover are no longer created on the minimap")
+	local a = ArcaneMinimapButton
+	check(a ~= nil and M.Visible(a), "the main Arcane A button remains on the minimap")
+	if a then
+		local l, b, r, t = M.Rect(a)
+		check(l >= 0 and b >= 0 and r <= SW and t <= SH, "the remaining Arcane minimap button stays on screen")
 	end
-	local function crestOf(b)
-		for _, o in ipairs(M.All()) do
-			if o.__kind == "Texture" and o.__parent == b and o.__tex and string.find(o.__tex, "Map[SC][wl]o?[ro]") then return o end
+	local function partRow(key)
+		for _, row in ipairs(ArcaneOptions.rows or {}) do
+			if row.info and row.info.key == key then return row end
 		end
 	end
-	local swords, clover = ArcaneMeterToggle, ArcaneLuckToggle
-	check(swords and clover and M.Visible(swords) and M.Visible(clover), "the swords and the clover sit on the minimap")
-	check(swords and swords.crest.__tex and string.find(swords.crest.__tex, "MapSwords$") and string.find(clover.crest.__tex, "MapClover$"),
-		"with their crests")
-	local boxes = { swords, clover, ArcaneMinimapButton, ArcaneMinimapClock }
-	for i = 1, 2 do
-		local x, y = centre(boxes[i])
-		check(math.abs(math.sqrt(x * x + y * y) - 80) < 1 and x < 0, string.format("%s on the rim, on the left (%.1f, %.1f)", boxes[i]:GetName(), x, y))
-		local l, b, r, t = M.Rect(boxes[i])
-		check(l >= 0 and b >= 0 and r <= SW and t <= SH, boxes[i]:GetName() .. " on the screen")
-		for j = 1, table.getn(boxes) do
-			if j ~= i then
-				local gl, gb, gr, gt = M.Rect(boxes[j])
-				check(gr <= l or gl >= r or gt <= b or gb >= t, boxes[i]:GetName() .. " clear of " .. boxes[j]:GetName())
-			end
-		end
+	local luckOption, meterOption = partRow("luck"), partRow("meter")
+	check(luckOption ~= nil and meterOption ~= nil, "Luck and Damage meter each have a toggle in Arcane Options")
+	if luckOption and meterOption then
+		ArcaneDB.luck.enabled, ArcaneDB.luck.shown = true, true
+		ArcaneDB.meter.enabled, ArcaneDB.meter.shown = true, true
+		frames(30)
+		this = luckOption
+		luckOption.__scripts.OnClick()
+		frames(30)
+		check(not ArcaneLuck.__shown and not luckOption.info.get() and ArcaneDB.luck.enabled,
+			"the Luck option hides its window without disabling the luck data")
+		this = luckOption
+		luckOption.__scripts.OnClick()
+		frames(30)
+		check(ArcaneLuck.__shown and luckOption.info.get(), "the Luck option shows its window again")
+		this = meterOption
+		meterOption.__scripts.OnClick()
+		frames(30)
+		check(not ArcaneMeter.__shown and not meterOption.info.get() and ArcaneDB.meter.enabled and M.hud.meter == false,
+			"the Damage meter option hides its window while Arcane keeps the game's meter suppressed")
+		this = meterOption
+		meterOption.__scripts.OnClick()
+		frames(30)
+		check(ArcaneMeter.__shown and meterOption.info.get() and M.hud.meter == false,
+			"the Damage meter option shows its window again without needing a map button")
 	end
-	-- a click hides the meter, the swords dim; another brings it back
-	ArcaneDB.meter.shown = true
-	frames(30)
-	local bright = swords.crest.__vc[1]
-	this = swords
-	arg1 = "LeftButton"
-	swords.__scripts.OnClick()
-	frames(30)
-	check(not ArcaneDB.meter.shown and not M.Visible(ArcaneMeter) or visibleAlpha(ArcaneMeter) < 0.05, "a click on the swords hides the meter")
-	check(swords.crest.__vc[1] < bright * 0.5, string.format("and they dim (%.2f from %.2f)", swords.crest.__vc[1], bright))
-	arg1 = "LeftButton"
-	swords.__scripts.OnClick()
-	frames(30)
-	check(ArcaneDB.meter.shown and swords.crest.__vc[1] > bright * 0.95, "another brings it back, lit")
-	swords.__scripts.OnEnter()
-	local tip = table.concat(M.tip.lines, " / ")
-	check(string.find(tip, "Damage meter", 1, true) and string.find(tip, "Click to show or hide it.", 1, true) and string.find(tip, "Drag:", 1, true), "their tooltip: " .. tip)
-	swords.__scripts.OnLeave()
-	-- the clover dragged up to the top left; kept over a reload
-	clover.__scripts.OnDragStart()
-	local mx, my = Minimap:GetCenter()
-	local k = Minimap:GetEffectiveScale()
-	M.cursorX, M.cursorY = (mx - 40) * k, (my + 40) * k
-	frames(3)
-	clover.__scripts.OnDragStop()
-	local shown = ArcaneDB.luck.shown
-	clover.__scripts.OnClick()
-	check(ArcaneDB.luck.edgeAngle == 135 and ArcaneDB.luck.shown == shown, "the clover slides round where it's dragged, and the drag's end is no click: " .. tostring(ArcaneDB.luck.edgeAngle))
-	frames(15)
-	M.Reload(DIR, true)
-	frames(5)
-	local x, y = centre(ArcaneLuckToggle)
-	check(math.abs(x + 56.6) < 0.6 and math.abs(y - 56.6) < 0.6, string.format("and stays there after a reload (%.1f, %.1f)", x, y))
-	-- each goes with its window's part
-	M.Slash("luck off")
-	check(not M.Visible(ArcaneLuckToggle) and M.Visible(ArcaneMeterToggle), "/Arcane luck off: the clover goes, the swords stay")
-	M.Slash("luck on")
-	M.Slash("meter off")
-	check(not M.Visible(ArcaneMeterToggle) and M.Visible(ArcaneLuckToggle), "/Arcane meter off: the swords go")
-	M.Slash("meter on")
-	check(M.Visible(ArcaneMeterToggle), "and back")
-	ArcaneDB.luck.edgeAngle = nil
-	problems("edge buttons")
+	problems("menu toggles")
 end
 
 ------------------------------------------------------------------ 11q. a proc in another spell's look: its own number, its own icon

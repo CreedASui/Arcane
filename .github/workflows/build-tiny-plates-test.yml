@@ -1,12 +1,14 @@
-name: Build Arcane Tiny Plates test ZIP
+name: Build Arcane test ZIP
 
 on:
   push:
     branches:
       - feature/tiny-plates-integration
+      - feature/menu-luck-meter-toggles
     paths:
       - 'Arcane/**'
       - 'tools/package.py'
+      - 'dev/arcane/**'
       - '.github/workflows/build-tiny-plates-test.yml'
 
 permissions:
@@ -19,7 +21,7 @@ jobs:
       - name: Check out feature branch
         uses: actions/checkout@v4
         with:
-          ref: feature/tiny-plates-integration
+          ref: ${{ github.ref_name }}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -27,11 +29,11 @@ jobs:
       - name: Install font tooling
         run: python -m pip install fonttools
       - name: Validate and package addon
-        run: python tools/package.py --output dist/Arcane-Tiny-Plates-test.zip
+        run: python tools/package.py --output dist/Arcane-Menu-Toggles-test.zip
       - name: Upload installable test ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: Arcane-Tiny-Plates-test
-          path: dist/Arcane-Tiny-Plates-test.zip
+          name: Arcane-Menu-Toggles-test
+          path: dist/Arcane-Menu-Toggles-test.zip
           if-no-files-found: error
           retention-days: 7

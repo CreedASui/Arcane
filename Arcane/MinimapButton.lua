@@ -1,5 +1,5 @@
--- Arcane UI: three round minimap-edge buttons. The A opens Arcane options; the crossed
--- swords toggle the damage meter; the clover toggles the luck window.
+-- Arcane UI: one round minimap-edge button. The A opens Arcane options; Luck and the
+-- damage meter are shown or hidden with their toggles in that menu.
 
 local C = Arcane
 local DEFAULTS = { enabled = true, angle = 315 }
