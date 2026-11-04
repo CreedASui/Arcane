@@ -2,7 +2,7 @@
 
 Read this first. It's where the work stands, the rules the code depends on, how to check it, and
 what's next. It was written at the end of a long Claude session that built Arcane UI with the
-user (GitHub: **CreedASui**), who plays the game and publishes the addon. The user is not a
+user (GitHub: **JamieeLee**), who plays the game and publishes the addon. The user is not a
 programmer: they test in game and send screenshots. Ship them a ready-to-install zip and a
 picture of the change.
 
@@ -13,7 +13,7 @@ picture of the change.
   in Rust ([github.com/samwhosung/benilla](https://github.com/samwhosung/benilla)). The game adds its
   own addon API (`AZS_*`, see section 6).
 - Addon language: **Lua 5.0** with the **1.12 widget API**.
-- Current version: **1.14.1**. Repository: <https://github.com/CreedASui/Arcane-for-AS->.
+- Current version: **1.14.1**. Repository: <https://github.com/JamieeLee/Arcane>.
 - 11 languages: en, fr, de, es, pt, zh, ru, ja, ko, pl, tr.
 
 ## 2. Releases
@@ -117,16 +117,16 @@ Build Lua 5.0.3 (lua.org) and install Python 3 with numpy, Pillow, scipy, fontTo
 From `dev/`:
 
 ```
-lua50 AUI/tests.lua . ../Arcane                # 559 passed, 0 failed
-lua50 AUI/timer_tests.lua . ../Arcane          # 78 passed
-lua50 AUI/numbers_harness.lua . ../Arcane/Numbers.lua   # ALL CHECKS PASSED (also with CROWD=1)
-lua50 AUI/smoke.lua . ../Arcane out            # problems: 0
-lua50 AUI/globals.lua . ../Arcane              # only this, event, arg1
-lua50 AUI/overflow.lua . ../Arcane             # overflows: 0
-python3 AUI/locale_check.py ../Arcane          # LOCALE OK
+lua50 arcane/tests.lua . ../Arcane                # 559 passed, 0 failed
+lua50 arcane/timer_tests.lua . ../Arcane          # 78 passed
+lua50 arcane/numbers_harness.lua . ../Arcane/Numbers.lua   # ALL CHECKS PASSED (also with CROWD=1)
+lua50 arcane/smoke.lua . ../Arcane out            # problems: 0
+lua50 arcane/globals.lua . ../Arcane              # only this, event, arg1
+lua50 arcane/overflow.lua . ../Arcane             # overflows: 0
+python3 arcane/locale_check.py ../Arcane          # LOCALE OK
 ```
 
-For pictures, use a `AUI/*prev.lua` scene and then `AUI/render_cui.py`. To ship: bump `C.VERSION` in
+For pictures, use a `arcane/*prev.lua` scene and then `arcane/render_arcane.py`. To ship: bump `C.VERSION` in
 Core.lua and `## Version` in the .toc, add a `CHANGELOG.md` entry, zip as `Arcane-<version>.zip`,
 send the user the zip and a preview, and tag and release on GitHub.
 
@@ -134,7 +134,7 @@ Add a test for every new behaviour, and prove a fix by showing the test fails on
 
 ## 6. The game's addon API (AZS)
 
-The stand-in client (`dev/AUI/mock_cui.lua`) encodes the exact shapes the code relies on. Read it
+The stand-in client (`dev/arcane/mock_arcane.lua`) encodes the exact shapes the code relies on. Read it
 before using an API. Known:
 
 - **Run state:** `AZS_RUN` (`lvl`, `xp`, `xpn`, `gold`, `kills`, `chest`, `rr`, `rrc`, `px`, `py`, ...),
