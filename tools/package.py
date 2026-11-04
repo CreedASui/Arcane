@@ -21,6 +21,26 @@ OLD_BRANDING = re.compile(
 )
 
 
+def validate_lua50_varargs(path: Path) -> None:
+    """Reject Lua 5.1 vararg expressions; Lua 5.0 exposes varargs through arg."""
+    source = path.read_text(encoding="utf-8")
+    # Drop long comments/strings first, then ordinary quoted strings and line comments.
+    source = re.sub(r"--\[(=*)\[.*?\]\1\]", "", source, flags=re.DOTALL)
+    source = re.sub(r"\[(=*)\[.*?\]\1\]", '""', source, flags=re.DOTALL)
+
+    for line_number, line in enumerate(source.splitlines(), 1):
+        code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', line)
+        code = re.sub(r"--.*$", "", code)
+        # The three dots are legal in a Lua 5.0 function parameter list only.
+        declaration = re.compile(r"\bfunction\b[^()\n]*\([^()\n]*\.\.\.\s*\)")
+        code = declaration.sub("", code)
+        if "..." in code:
+            fail(
+                f"{path.relative_to(ROOT)}:{line_number}: Lua 5.1 vararg expression found; "
+                "use Lua 5.0's arg table instead"
+            )
+
+
 def fail(message: str) -> None:
     print(f"Arcane package: ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
@@ -57,6 +77,9 @@ def validate_addon() -> tuple[str, list[Path]]:
     files = sorted(path for path in ADDON_DIR.rglob("*") if path.is_file())
     if not files:
         fail("Arcane addon folder is empty")
+    for path in files:
+        if path.suffix.lower() == ".lua":
+            validate_lua50_varargs(path)
     duplicate_root = sorted({path.name for path in files if (ROOT / path.name).is_file()})
     if duplicate_root:
         fail("stale root-level copies of addon files remain: " + ", ".join(duplicate_root))
