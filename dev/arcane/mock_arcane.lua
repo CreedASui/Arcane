@@ -66,6 +66,15 @@ function IMPL.SetPoint(self, point, rel, relPoint, x, y)
 	self.__all = nil
 end
 function IMPL.ClearAllPoints(self) self.__points = {}; self.__all = nil end
+function IMPL.GetPoint(self, wanted)
+	local point = wanted
+	local info = point and self.__points[point]
+	if not info then
+		point, info = next(self.__points)
+	end
+	if not info then return nil end
+	return point, info.rel, info.relPoint, info.x, info.y
+end
 function IMPL.SetAllPoints(self, rel)
 	if type(rel) == "string" then rel = getglobal(rel) end
 	self.__points = {}
@@ -277,6 +286,31 @@ function IMPL.SetTexture(self, a, g, b, al)
 	return 1
 end
 function IMPL.GetTexture(self) return self.__tex end
+-- StatusBar widget methods used by the ArcanePlates regression fixture.
+function IMPL.SetMinMaxValues(self, minimum, maximum)
+	CheckNums("SetMinMaxValues", minimum, maximum)
+	if maximum < minimum then Problem("StatusBar max below min") end
+	self.__minimum, self.__maximum = minimum, maximum
+end
+function IMPL.GetMinMaxValues(self) return self.__minimum or 0, self.__maximum or 1 end
+function IMPL.SetValue(self, value)
+	CheckNums("SetValue", value)
+	self.__value = value
+end
+function IMPL.GetValue(self) return self.__value or 0 end
+function IMPL.SetStatusBarColor(self, r, g, b, a)
+	CheckNums("SetStatusBarColor", r, g, b, a or 1)
+	self.__barColor = { r, g, b, a == nil and 1 or a }
+end
+function IMPL.GetStatusBarColor(self)
+	local c = self.__barColor or { 1, 0, 0, 1 }
+	return c[1], c[2], c[3], c[4]
+end
+function IMPL.SetStatusBarTexture(self, path)
+	if not self.__statusTexture then self.__statusTexture = self:CreateTexture(nil, "ARTWORK") end
+	self.__statusTexture:SetTexture(path)
+end
+function IMPL.GetStatusBarTexture(self) return self.__statusTexture end
 function IMPL.SetBlendMode(self, mode)
 	if not BLENDS[mode] then Problem("bad blend mode " .. tostring(mode)) end
 	self.__blend = mode
@@ -444,7 +478,9 @@ function UIParent:IsVisible() return 1 end
 WorldFrame = UIParent
 
 function CreateFrame(kind, name, parent)
-	if kind ~= "Frame" and kind ~= "Button" then error("unexpected frame type " .. tostring(kind)) end
+	if kind ~= "Frame" and kind ~= "Button" and kind ~= "StatusBar" and kind ~= "CheckButton" then
+		error("unexpected frame type " .. tostring(kind))
+	end
 	local f = NewObject(kind, parent)
 	f.__name = name
 	if name then setglobal(name, f) end
@@ -508,6 +544,8 @@ function IMPL.GetNormalTexture(self) return self.__normal end
 function IMPL.Disable(self) self.__disabled = true end
 function IMPL.Enable(self) self.__disabled = nil end
 function IMPL.IsEnabled(self) if self.__disabled then return nil end return 1 end
+function IMPL.SetChecked(self, checked) self.__checked = checked and true or false end
+function IMPL.GetChecked(self) return self.__checked and 1 or nil end
 function IMPL.EnableMouseWheel(self, on) self.__wheel = on and true or false end
 function IMPL.IsMouseWheelEnabled(self) return self.__wheel and 1 or nil end
 function IMPL.GetBackdrop(self) return self.__backdrop end
@@ -877,7 +915,7 @@ function M.Frame(dt)
 end
 
 M.files = { "Core.lua", "Locale.lua", "Locale_zh.lua", "Locale_ru.lua", "Locale_ja.lua", "Locale_ko.lua", "Locale_pl.lua", "Locale_tr.lua", "Timer.lua", "Numbers.lua", "Bosses.lua", "Skulls.lua", "Units.lua", "Party.lua", "Downed.lua", "Bar.lua", "Tally.lua", "LevelUps.lua", "Minimap.lua", "MinimapButton.lua",
-	"Chests.lua", "Meter.lua", "Luck.lua", "Summary.lua", "Character.lua", "Talents.lua", "Chat.lua" }
+	"ArcanePlates.lua", "ArcanePlatesOptions.lua", "Chests.lua", "Meter.lua", "Luck.lua", "Summary.lua", "Character.lua", "Talents.lua", "Chat.lua" }
 function M.Load(dir)
 	for i = 1, table.getn(M.files) do
 		local chunk, err = loadfile(dir .. "/" .. M.files[i])
@@ -898,7 +936,7 @@ function M.Reload(dir, fireLogout)
 		"ArcaneBosses", "ArcaneSkulls", "ArcaneSkullsDriver", "ArcaneDowned", "ArcaneDownedBanner", "ArcaneDownedDriver", "ArcaneLevelUps", "ArcaneLevelUpsDriver", "ArcaneSummary", "ArcaneSummaryDriver", "ArcaneTalents", "ArcanePlayer", "ArcaneTarget", "ArcaneBar", "ArcaneNumbersLayer", "ArcaneHidden",
 		"ArcaneParty", "ArcaneTally", "ArcaneMinimap", "ArcaneMenuGuard", "GameMenuFrame", "Minimap", "ArcaneMeter",
 		"ArcaneLuck", "ArcaneMeterToggle", "ArcaneChatGlass", "ArcaneChatDown", "ChatFrame1", "ChatFrame2", "ArcaneChests", "ArcaneMinimapClock", "ArcaneMeterSizer", "ArcaneLuckSizer", "ArcaneLuckToggle",
-		"ChatFrameEditBox", "ChatFrameMenuButton" }) do
+		"ArcanePlatesDriver", "ArcanePlatesOptions", "ChatFrameEditBox", "ChatFrameMenuButton" }) do
 		setglobal(name, nil)
 	end
 	ArcaneDB = saved
@@ -1081,6 +1119,33 @@ function M.MakeStock()
 	M.MakeChat()
 end
 M.MakeStock()
+
+-- A realistic, minimal nameplate fixture: the same border/name/statusbar shape the client exposes.
+M.nameplateSerial = 0
+function M.MakeNameplate(name)
+	M.nameplateSerial = M.nameplateSerial + 1
+	local plate = CreateFrame("Frame", "MockNameplate" .. M.nameplateSerial, WorldFrame)
+	plate:SetWidth(120)
+	plate:SetHeight(30)
+	plate:SetPoint("CENTER", WorldFrame, "CENTER", 0, 80 - M.nameplateSerial * 42)
+	local border = plate:CreateTexture(nil, "BACKGROUND")
+	border:SetTexture("Interface\\Tooltips\\Nameplate-Border")
+	border:SetAllPoints(plate)
+	local label = plate:CreateFontString(nil, "OVERLAY")
+	label:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	label:SetText(name)
+	label:SetPoint("BOTTOM", plate, "TOP", 0, 2)
+	local bar = CreateFrame("StatusBar", nil, plate)
+	bar:SetWidth(100)
+	bar:SetHeight(10)
+	bar:SetPoint("CENTER", plate, "CENTER", 0, 0)
+	bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+	bar:SetMinMaxValues(0, 100)
+	bar:SetValue(75)
+	bar:SetStatusBarColor(0.8, 0.1, 0.1, 1)
+	plate:Show()
+	return plate, bar, label
+end
 
 ------------------------------------------------------------------ the combat text API (from the Smooth Numbers harness)
 local world = { events = {}, nEvents = 0, anchors = {}, nAnchor = 0, stream = 1, enemies = {} }
