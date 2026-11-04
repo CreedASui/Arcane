@@ -1,7 +1,7 @@
 -- The party's health bars in every class's color: three dumps of four friends (out/class1..3.txt).
 MOCK_SCRATCH = arg[1]
 local DIR, OUT = arg[2], arg[3]
-dofile(MOCK_SCRATCH .. "/AUI/mock_cui.lua")
+dofile(MOCK_SCRATCH .. "/arcane/mock_arcane.lua")
 dofile(MOCK_SCRATCH .. "/bt/sim.lua")
 local M = MOCK
 M.InstallAPI()
