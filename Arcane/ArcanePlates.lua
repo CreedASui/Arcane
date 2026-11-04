@@ -1247,7 +1247,13 @@ local function SyncOverlayValues()
 end
 
 local function ApplyKnownPlate(frame, updateDebuffs)
-	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Frame" or not frame:IsVisible() then return end
+	if not frame or not frame.GetObjectType then return end
+	local objectType = frame:GetObjectType()
+	-- Azeroth Survivors creates native nameplates as anonymous Buttons under WorldFrame.
+	-- They expose the same frame API as ordinary Frames, but rejecting Button here means
+	-- the scanner finds every plate and the styling pass silently skips every one.
+	if objectType ~= "Frame" and objectType ~= "Button" then return end
+	if not frame.IsVisible or not frame:IsVisible() then return end
 	local special = IsBossOrGuardianPlate(frame)
 	local category = special and "boss" or "regular"
 	if frame.arcanePlatesAppliedCategory ~= category
