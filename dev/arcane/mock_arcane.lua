@@ -1330,6 +1330,6 @@ end
 for name, fn in pairs(M.waAPI) do setglobal(name, fn) end
 
 -- Azeroth Survivors' character window (shut, as at login)
-dofile(SCRATCH .. "/AUI/mock_char.lua")
+dofile(SCRATCH .. "/arcane/mock_char.lua")
 M.MakeCharacter()
 CharacterFrame:Hide()
