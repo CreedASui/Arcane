@@ -642,6 +642,28 @@ GameFontNormal:SetFont(M.nativeFace, 12)
 STANDARD_TEXT_FONT = M.nativeFace
 
 M.tip = { lines = {}, shown = false }
+-- Legacy 1.12 color picker contract: SetColorRGB/GetColorRGB are globals and
+-- the picker invokes its func/cancelFunc callbacks when the user accepts/cancels.
+M.pickerColor = { 0.8, 0.8, 0.8 }
+function ColorPickerFrame_GetColorRGB()
+	return M.pickerColor[1], M.pickerColor[2], M.pickerColor[3]
+end
+ColorPickerFrame = {
+	shown = false,
+	Hide = function(self) self.shown = false end,
+	Show = function(self) self.shown = true end,
+}
+function M.PickColor(r, g, b)
+	M.pickerColor = { r, g, b }
+	if ColorPickerFrame.func then ColorPickerFrame.func() end
+	ColorPickerFrame.shown = false
+end
+function M.CancelColor()
+	if ColorPickerFrame.cancelFunc then
+		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+	end
+	ColorPickerFrame.shown = false
+end
 GameTooltip = {
 	SetOwner = function(self, owner, anchor) M.tip.owner, M.tip.anchor, M.tip.lines = owner, anchor, {} end,
 	ClearAllPoints = function() end,
