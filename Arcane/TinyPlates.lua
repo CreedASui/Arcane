@@ -229,63 +229,54 @@ local function CaptureNativeState(frame)
 end
 
 local function RestoreNativeState(frame)
-	if ( frame.astinyplatesNativeRestored ) then return; end
+	if frame.astinyplatesNativeRestored then return end
 	local wasModified = frame.astinyplatesOverlay or frame.astinyplatesStyledVisual
-		or frame.astinyplatesStackScaleApplied or frame.astinyplatesStackPoint
-		or frame.astinyplatesStackNativePoint;
-	if ( not wasModified ) then
-		frame.astinyplatesNativeRestored = true;
-		return;
+		or frame.astinyplatesNativeState or frame.astinyplatesSourceBar
+	if not wasModified then
+		frame.astinyplatesNativeRestored = true
+		return
 	end
-	if ( frame.astinyplatesOverlay ) then frame.astinyplatesOverlay:Hide(); end
-	if ( frame.astinyplatesNativeState ) then
+	if frame.astinyplatesOverlay then frame.astinyplatesOverlay:Hide() end
+	if frame.astinyplatesNativeState then
 		for i = 1, table.getn(frame.astinyplatesNativeState) do
-			local state = frame.astinyplatesNativeState[i];
-			if ( state.object ~= frame.astinyplatesOverlay ) then
-				if ( state.alpha and state.object.SetAlpha ) then state.object:SetAlpha(state.alpha); end
-				if ( state.shown ) then state.object:Show(); else state.object:Hide(); end
+			local state = frame.astinyplatesNativeState[i]
+			local object = state.object
+			if object ~= frame.astinyplatesOverlay and object ~= frame.astinyplatesDebuffRow
+					and object ~= frame.astinyplatesBossGuardianLabel
+				and object ~= frame.astinyplatesShrunkLabelHolder then
+				if object.SetAlpha and state.alpha ~= nil then object:SetAlpha(state.alpha) end
+				if state.shown then object:Show() else object:Hide() end
 			end
 		end
-	else
-		local regions = { frame:GetRegions() };
-		for i = 1, table.getn(regions) do
-			if ( regions[i]:GetObjectType() == "FontString" ) then regions[i]:SetAlpha(1); end
-			regions[i]:Show();
-		end
-		local children = { frame:GetChildren() };
-		for i = 1, table.getn(children) do
-			if ( children[i] ~= frame.astinyplatesOverlay ) then children[i]:Show(); end
-		end
 	end
-	local regions = { frame:GetRegions() };
-	for i = 1, table.getn(regions) do
-		if ( regions[i]:GetObjectType() == "FontString" ) then
-			regions[i]:SetAlpha(1);
-			regions[i]:Show();
-		end
+	if frame.astinyplatesStyledVisual then
+		local styled = frame.astinyplatesStyledVisual
+		if frame.astinyplatesStyledOriginalScale then styled:SetScale(frame.astinyplatesStyledOriginalScale) end
+		styled:ClearAllPoints()
+		styled:SetPoint(frame.astinyplatesStyledPoint or "CENTER",
+			frame.astinyplatesStyledRelativeTo or frame,
+			frame.astinyplatesStyledRelativePoint or "CENTER",
+			frame.astinyplatesStyledX or 0, frame.astinyplatesStyledY or 0)
 	end
-	if ( frame.astinyplatesStyledVisual ) then
-		local styled = frame.astinyplatesStyledVisual;
-		styled:SetScale(frame.astinyplatesStyledOriginalScale);
-		styled:ClearAllPoints();
-		styled:SetPoint(frame.astinyplatesStyledPoint, frame.astinyplatesStyledRelativeTo,
-			frame.astinyplatesStyledRelativePoint, frame.astinyplatesStyledX, frame.astinyplatesStyledY);
+	if frame.astinyplatesSourceBar then
+		if frame.astinyplatesSourceOriginalWidth then frame.astinyplatesSourceBar:SetWidth(frame.astinyplatesSourceOriginalWidth) end
+		if frame.astinyplatesSourceOriginalHeight then frame.astinyplatesSourceBar:SetHeight(frame.astinyplatesSourceOriginalHeight) end
 	end
-	if ( frame.astinyplatesSourceBar ) then
-		frame.astinyplatesSourceBar:SetWidth(frame.astinyplatesSourceOriginalWidth);
-		frame.astinyplatesSourceBar:SetHeight(frame.astinyplatesSourceOriginalHeight);
-	end
-	if ( frame.astinyplatesNativeWidth ) then frame:SetWidth(frame.astinyplatesNativeWidth); end
-	if ( frame.astinyplatesNativeHeight ) then frame:SetHeight(frame.astinyplatesNativeHeight); end
-	if ( frame.astinyplatesNativeScale ) then frame:SetScale(frame.astinyplatesNativeScale); end
-	if ( frame.astinyplatesNativePoint ) then
-		frame:ClearAllPoints();
+	for bar in pairs(frame.astinyplatesColoredBars or {}) do ApplyBarOverride(bar, nil) end
+	if frame.astinyplatesNativeWidth then frame:SetWidth(frame.astinyplatesNativeWidth) end
+	if frame.astinyplatesNativeHeight then frame:SetHeight(frame.astinyplatesNativeHeight) end
+	if frame.astinyplatesNativeScale then frame:SetScale(frame.astinyplatesNativeScale) end
+	if frame.astinyplatesNativePoint then
+		frame:ClearAllPoints()
 		frame:SetPoint(frame.astinyplatesNativePoint,
 			frame.astinyplatesNativeRelativeTo or frame:GetParent(),
-			frame.astinyplatesNativeRelativePoint,
-			frame.astinyplatesNativeX, frame.astinyplatesNativeY);
+			frame.astinyplatesNativeRelativePoint or frame.astinyplatesNativePoint,
+			frame.astinyplatesNativeX or 0, frame.astinyplatesNativeY or 0)
 	end
-	frame.astinyplatesNativeRestored = true;
+	if frame.astinyplatesBossGuardianLabel then frame.astinyplatesBossGuardianLabel:Hide() end
+	if frame.astinyplatesShrunkLabelHolder then frame.astinyplatesShrunkLabelHolder:Hide() end
+	if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
+	frame.astinyplatesNativeRestored = true
 end
 
 local function IdentifyNameplate(frame)
