@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: Arcane UI
-## Notes: A clean, smooth HUD for Azeroth Survivors. Click the C on the minimap (or type /Arcane) for options.
+## Notes: A clean, smooth HUD for Azeroth Survivors. Click the A on the minimap (or type /Arcane) for options.
 ## Version: 1.14.1
 ## SavedVariables: ArcaneDB
 Core.lua
