@@ -11,7 +11,8 @@ local refreshPending = true
 local scanFrame
 
 local function Opt(key)
-	return C.TinyPlatesOption and C.TinyPlatesOption(key) or false
+	if type(C.TinyPlatesOption) == "function" then return C.TinyPlatesOption(key) end
+	return false
 end
 local debugPlates = orderedPlates;
 local BORDER = "Interface\\Tooltips\\Nameplate-Border";
@@ -209,7 +210,7 @@ local function SaveObjectState(object, states)
 end
 
 local function CaptureNativeState(frame)
-	if ( frame.astinyplatesNativeState ) then return; end
+	if frame.astinyplatesNativeCaptured then return end
 	local previouslyStyled = frame.astinyplatesStyledVisual or frame.astinyplatesOverlay;
 	local point, relativeTo, relativePoint, x, y = frame:GetPoint();
 	frame.astinyplatesNativeWidth = frame.astinyplatesStackOriginalWidth or frame:GetWidth();
@@ -225,7 +226,8 @@ local function CaptureNativeState(frame)
 	SaveObjectState(frame, states);
 	-- A reload can leave our old custom visual attached while the native plate
 	-- is already hidden; in that case restore all native children below.
-	if ( not previouslyStyled ) then frame.astinyplatesNativeState = states; end
+	if not previouslyStyled then frame.astinyplatesNativeState = states end
+	frame.astinyplatesNativeCaptured = true
 end
 
 local function RestoreNativeState(frame)
@@ -1200,8 +1202,9 @@ local function UpdateKnownPlates()
 				elseif frame.astinyplatesDebuffRow and frame.astinyplatesDebuffRow:IsShown() then
 					frame.astinyplatesDebuffRow:Hide()
 				end
-			elseif CreatePlateOverlay(frame) then
-				ApplyPlateStyle(frame)
+			else
+				if frame.astinyplatesNativeRestored then frame.astinyplatesNativeRestored = false end
+				if CreatePlateOverlay(frame) then ApplyPlateStyle(frame) end
 			end
 		end
 	end
@@ -1230,13 +1233,17 @@ local function RestoreAll()
 			if frame.astinyplatesDebuffRow then frame.astinyplatesDebuffRow:Hide() end
 			if frame.astinyplatesBossGuardianLabel then frame.astinyplatesBossGuardianLabel:Hide() end
 			if frame.astinyplatesShrunkLabelHolder then frame.astinyplatesShrunkLabelHolder:Hide() end
+			frame.astinyplatesNativeRestored = true
 		end
 	end
 end
 
 local function SetEnabled(on)
 	on = on and true or false
-	if active == on then RefreshAll(); return end
+	if active == on then
+		if active then RefreshAll() end
+		return
+	end
 	active = on
 	if active then
 		scanClock = 0
