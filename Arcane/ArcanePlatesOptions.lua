@@ -114,13 +114,14 @@ local function Swatch(parent, category, color, x, y)
 	b:SetScript("OnClick", function()
 		local d = DB()
 		local old = d[category .. "BarColor"]
+		local oldEnabled = d[category .. "BarColorOn"] and true or false
 		local picker = ColorPickerFrame
 		local r, g, blue = color[1], color[2], color[3]
 		if d[category .. "BarColor"] then
 			r, g, blue = d[category .. "BarColor"][1], d[category .. "BarColor"][2], d[category .. "BarColor"][3]
 		end
 		local function Apply()
-			local cr, cg, cb = ColorPickerFrame_GetColorRGB()
+			local cr, cg, cb = picker:GetColorRGB()
 			d[category .. "BarColor"] = { cr, cg, cb }
 			d[category .. "BarColorOn"] = true
 			C.ArcanePlatesRefresh(true)
@@ -132,16 +133,18 @@ local function Swatch(parent, category, color, x, y)
 			else
 				d[category .. "BarColor"] = old
 			end
+			d[category .. "BarColorOn"] = oldEnabled
 			C.ArcanePlatesRefresh(true)
 			C.ArcanePlatesRefreshOptions()
 		end
 		picker:Hide()
 		picker.hasOpacity = nil
 		picker.opacityFunc = nil
-		ColorPickerFrame.func = Apply
-		ColorPickerFrame.cancelFunc = Cancel
-		ColorPickerFrame.previousValues = { r, g, blue }
-		ColorPickerFrame:Show()
+		picker.func = Apply
+		picker.cancelFunc = Cancel
+		picker.previousValues = { r, g, blue }
+		picker:SetColorRGB(r, g, blue)
+		picker:Show()
 	end)
 	return b
 end
