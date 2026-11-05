@@ -2295,6 +2295,15 @@ do
 		if o.__kind == "Texture" and o.__tex and string.find(o.__tex, "BossSkullEyes$") and under(o, ArcaneSkulls) and visibleAlpha(o) > 0.5 then eyes = eyes + 1 end
 	end
 	check(fierce == 2 and plain == 1 and eyes == 2, string.format("bosses wear the fierce skull with red eyes, the mini-boss the plain one (%d, %d, %d)", fierce, plain, eyes))
+	local guardianWidth
+	for _, o in ipairs(skulls()) do
+		if not string.find(o.__tex, "Fierce$") then
+			local _, _, width = center(o)
+			guardianWidth = width
+		end
+	end
+	check(guardianWidth and math.abs(guardianWidth - 18) < 1,
+		"the guardian skull retains its previous apparent size after boss skulls grow")
 	M.guardians[1].awake = false
 	frames(40)
 	check(table.getn(skulls(0.05)) == 2, "a mini-boss asleep in its lair has none")
@@ -2307,22 +2316,22 @@ do
 	local head = 330 + 6 * 9 + (3 + 1.2) * 9
 	check(s1 and math.abs(cx - (640 - 5 * 9)) < 1 and math.abs(cy - (head + w / 2)) <= 2.5,
 		string.format("the skull floats just over the boss's head (%.1f, %.1f; head at %.1f)", cx, cy, head))
-	check(s1 and math.abs(w - 22) < 1, "a far boss's skull is small, but not smaller than 22 (" .. w .. ")")
+	check(s1 and math.abs(w - 26) < 1, "a far boss's skull is small, but not smaller than 26 (" .. w .. ")")
 	-- nearer: bigger, up to a limit
 	M.waNear["Anub'Rekhan"] = 3
 	frames(30)
 	local _, _, w1 = center(skullOf("Anub'Rekhan"))
 	local _, _, w2 = center(skullOf("Kel'Thuzad"))
-	check(math.abs(w1 - 43) < 1.5 and math.abs(w2 - 22) < 1, string.format("a near boss's skull is bigger (%.1f vs %.1f)", w1, w2))
+	check(math.abs(w1 - 51.8) < 1.5 and math.abs(w2 - 26) < 1, string.format("a near boss's skull is bigger (%.1f vs %.1f)", w1, w2))
 	M.waNear["Anub'Rekhan"] = 10
 	frames(30)
 	_, _, w1 = center(skullOf("Anub'Rekhan"))
-	check(math.abs(w1 - 64) < 1, "and no bigger than 64 however near (" .. w1 .. ")")
+	check(math.abs(w1 - 77) < 1, "and no bigger than 77 however near (" .. w1 .. ")")
 	M.waNear["Anub'Rekhan"] = nil
 	part.setScale(1.5)
 	frames(30)
 	_, _, w2 = center(skullOf("Kel'Thuzad"))
-	check(math.abs(w2 - 33) < 1, "the size setting scales them (" .. w2 .. ")")
+	check(math.abs(w2 - 39) < 1, "the size setting scales them (" .. w2 .. ")")
 	part.setScale(1)
 	-- the final boss glows gold, the others red
 	local gold, red = 0, 0
@@ -2789,7 +2798,7 @@ do
 	local gw, gh, gx = barOf("Gnoll Packleader")
 	check(bw and gw and gw < bw * 0.75 and gh < bh, string.format("a guardian's bar is narrower and thinner than a boss's (%s x %s vs %s x %s)",
 		tostring(gw), tostring(gh), tostring(bw), tostring(bh)))
-	check(bw and math.abs(bw - ArcaneDB.bosses.width) < 1, "the boss keeps its full bar")
+	check(bw and math.abs(bw - ArcaneDB.bosses.width * 1.2) < 1, "the boss bar is 20% larger and keeps its full width")
 	check(bx and gx and math.abs(bx - gx) < 1, "the guardians' bars sit centered under the boss's")
 	local l, b, r, t = M.Rect(ArcaneBosses)
 	local lowest = 9999
@@ -2806,7 +2815,7 @@ do
 	AZS_UNITS_UPDATED = M.now
 	frames(90)
 	local jw = barOf("Jin'do")
-	check(jw and math.abs(jw - ArcaneDB.bosses.width) < 1, "a reused row takes a boss's full look")
+	check(jw and math.abs(jw - ArcaneDB.bosses.width * 1.2) < 1, "a reused row takes a boss's full 20%-larger look")
 	M.bosses, M.guardians = saveB, saveG
 	frames(30)
 	problems("compact guardians")
