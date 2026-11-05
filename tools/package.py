@@ -79,6 +79,23 @@ def validate_addon() -> tuple[str, list[Path]]:
     files = sorted(path for path in ADDON_DIR.rglob("*") if path.is_file())
     if not files:
         fail("Arcane addon folder is empty")
+
+    # Catch missing artwork at build time. Static C.ART references resolve to BLP files;
+    # panel corners are assembled from a suffix and therefore need an explicit family check.
+    missing_art = set()
+    for path in files:
+        if path.suffix.lower() != ".lua":
+            continue
+        source = path.read_text(encoding="utf-8")
+        for asset_name in re.findall(r'\\bC\\.ART\\s*\\.\\.\\s*"([^"]+)"', source):
+            if not (ADDON_DIR / "Art" / f"{asset_name}.blp").is_file():
+                missing_art.add(asset_name)
+    for suffix in ("TL", "TR", "BL", "BR"):
+        if not (ADDON_DIR / "Art" / f"PanelCorner{suffix}.blp").is_file():
+            missing_art.add(f"PanelCorner{suffix}")
+    if missing_art:
+        fail("missing artwork referenced by the addon: " + ", ".join(sorted(missing_art)))
+
     for path in files:
         if path.suffix.lower() == ".lua":
             validate_lua50_varargs(path)
