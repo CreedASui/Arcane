@@ -381,4 +381,12 @@ Arcane.AddLanguage("ja", "日本語", Arcane.FACE_CJK, {
 	["Your talents show here during a run."] = "ラン中はここにタレントが表示されます。",
 	["No talents learned yet."] = "まだタレントを習得していません。",
 	["the talent window stopped after an error: "] = "タレントウィンドウはエラーで停止しました：",
+	["Loot"] = "戦利品",
+	["Marks"] = "マーク",
+	["New in your collection!"] = "コレクションに新しく追加！",
+	["Already in your collection."] = "コレクション登録済み。",
+	["+{1} marks"] = "+{1} マーク",
+	["{1} in all"] = "合計 {1}",
+	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcaneの戦利品通知：各アイテムのアイコン、名前、レア度の色と獲得したマークを表示。ゲーム本来の通知を置き換えます。",
+	["the loot pop-up stopped after an error, so the game's own is back: "] = "戦利品通知がエラーで停止したため、ゲーム本来の通知に戻しました：",
 })
