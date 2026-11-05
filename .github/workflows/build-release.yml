@@ -9,7 +9,7 @@ on:
       - "dev/arcane/**"
       - ".github/workflows/build-release.yml"
   push:
-    branches: [main, "feature/arcane-loot-popup-1.19.0"]
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -43,7 +43,11 @@ jobs:
           luac5.1 -p dev/arcane/loot_tests.lua
           luac5.1 -p dev/arcane/tests.lua
 
-      - name: Run Arcane regression tests
+      - name: Run full Arcane behavior suite
+        working-directory: dev
+        run: lua5.1 arcane/tests.lua . ../Arcane
+
+      - name: Run focused Tiny Plates regression tests
         working-directory: dev
         run: lua5.1 arcane/tiny_plates_tests.lua . ../Arcane
 
