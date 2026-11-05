@@ -176,16 +176,16 @@ local function DressInput(on)
 	end
 end
 
------------------------------------------------------------------------- clear of the dragon
--- A chat window reaching under the skill bar's left dragon gives up the end of its width, enough
--- to keep its glass clear of the dragon's head; it gets it back when the bar moves away, the part
+------------------------------------------------------------------------ clear of the medallion
+-- A chat window reaching under the skill bar's left medallion gives up the end of its width, enough
+-- to keep its glass clear of the full medallion; it gets it back when the bar moves away, the part
 -- is turned off, or you size the window yourself (then that width is the one it keeps clear with).
 local CLEAR_GAP, CLEAR_MIN = 6, 200
 
-local function Dragon()
+local function Medallion()
 	local bar = ArcaneBar
-	local d = bar and bar.deco and bar.deco.dragons and bar.deco.dragons[1]
-	if not (d and bar:IsShown() and d.GetLeft and d:GetLeft()) then return nil end
+	local d = bar and bar.deco and bar.deco.sigils and bar.deco.sigils[1]
+	if not (d and bar:IsShown() and d.GetRight and d:GetRight()) then return nil end
 	return d, bar
 end
 
@@ -197,10 +197,10 @@ local function Clear(f, d, bar)
 	local want = natural
 	if d then
 		local k = bar:GetEffectiveScale() / f:GetEffectiveScale() -- a texture is in its frame's scale
-		local dl, dt = (d:GetLeft() + 4) * k, d:GetTop() * k -- the snout's tip, not the picture's edge
+		local dr, dt = d:GetRight() * k, d:GetTop() * k -- the full medallion's right edge
 		local l, b = f:GetLeft(), f:GetBottom()
-		if b - 6 < dt and l + natural + 8 > dl - CLEAR_GAP then
-			want = math.max(CLEAR_MIN, math.min(natural, dl - CLEAR_GAP - 8 - l))
+		if b - 6 < dt and l + natural + 8 > dr - CLEAR_GAP then
+			want = math.max(CLEAR_MIN, math.min(natural, dr - CLEAR_GAP - 8 - l))
 		end
 	end
 	if math.abs(want - natural) < 0.5 then
