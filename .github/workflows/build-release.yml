@@ -6,14 +6,11 @@ on:
     paths:
       - "Arcane/**"
       - "tools/**"
+      - "dev/arcane/**"
       - ".github/workflows/build-release.yml"
   push:
     branches: [main]
     tags: ["v*"]
-    paths:
-      - "Arcane/**"
-      - "tools/**"
-      - ".github/workflows/build-release.yml"
   workflow_dispatch:
 
 permissions:
@@ -21,7 +18,7 @@ permissions:
 
 jobs:
   package:
-    name: Validate and package Arcane
+    name: Test, validate, and package Arcane
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -32,17 +29,29 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install packaging dependency
-        run: python -m pip install --upgrade pip fonttools
+      - name: Install test and packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+          python -m pip install --upgrade pip fonttools
+
+      - name: Check Lua syntax
+        run: |
+          find Arcane -name '*.lua' -print0 | xargs -0 -n1 luac5.1 -p
+          luac5.1 -p dev/arcane/tiny_plates_tests.lua
+
+      - name: Run Arcane regression tests
+        working-directory: dev
+        run: lua5.1 arcane/tiny_plates_tests.lua . ../Arcane
 
       - name: Validate and build installable ZIP
         run: python tools/package.py
 
       - name: Upload build artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
-          name: Arcane-${{ github.ref_name }}-${{ github.run_number }}
+          name: Arcane-${{ github.run_number }}-test
           path: dist/Arcane-*.zip
           if-no-files-found: error
           retention-days: 30
