@@ -217,7 +217,7 @@ end
 
 local function ClearAll(on)
 	local d, bar = nil, nil
-	if on then d, bar = Dragon() end
+	if on then d, bar = Medallion() end
 	local frames = ChatFrames()
 	for i = 1, table.getn(frames) do
 		local f = frames[i]
@@ -317,7 +317,7 @@ local function Step(dt)
 	S.clearClock = (S.clearClock or 0) - dt
 	if S.clearClock <= 0 then
 		S.clearClock = 0.5
-		if Dragon() then ClearAll(true) end -- while the bar steps aside for the cards, as it was
+		if Medallion() then ClearAll(true) end -- while the bar steps aside for the cards, as it was
 	end
 	-- the game can show its own pieces again (a chat window made later, a reloaded border)
 	S.keepClock = S.keepClock - dt
