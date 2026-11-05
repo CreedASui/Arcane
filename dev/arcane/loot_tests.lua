@@ -33,6 +33,12 @@ local function findText(root, expected)
 	end
 	return nil
 end
+local function findTexture(root, expected)
+	for _, o in ipairs(M.All()) do
+		if o.__kind == "Texture" and o.__tex == expected and under(o, root) and M.Visible(o) then return o end
+	end
+	return nil
+end
 local function visibleToasts()
 	local n = 0
 	for _, o in ipairs(M.All()) do
@@ -57,6 +63,25 @@ frames(8)
 check(findText(ArcaneLoot, "Ashbringer") ~= nil, "a loot line shows the item name")
 check(findText(ArcaneLoot, "New in your collection!") ~= nil, "new collection status is shown")
 check(visibleToasts() == 1, "duplicate chat-window lines make only one notification")
+
+-- Real item hyperlinks must preserve the item icon, rarity and collection status.
+GetItemInfo = function(id)
+	if id == 12345 then
+		return "Ashbringer", nil, 4, 60, 60, "Weapon", "Two-Handed Swords", 1,
+			"INVTYPE_2HWEAPON", "Interface\\\\Icons\\\\INV_Sword_39"
+	end
+end
+local itemLink = "|cffa335ee|Hitem:12345:0:0:0:0:0:0:0|h[Ashbringer]|h|r"
+ChatFrame1:AddMessage("You receive loot: " .. itemLink .. " New in your collection!")
+frames(8)
+check(findTexture(ArcaneLoot, "Interface\\\\Icons\\\\INV_Sword_39") ~= nil,
+	"linked items use GetItemInfo's tenth return value as the icon")
+check(findText(ArcaneLoot, "New in your collection!") ~= nil,
+	"linked items keep their new-collection status")
+ChatFrame1:AddMessage("You receive loot: " .. itemLink .. " Already in your collection.")
+frames(8)
+check(findText(ArcaneLoot, "Already in your collection.") ~= nil,
+	"linked items keep their already-collected status")
 
 frames(1)
 ChatFrame1:AddMessage("You earn 5 marks (120 in all).")
