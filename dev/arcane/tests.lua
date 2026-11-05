@@ -3105,3 +3105,4 @@ print(string.format("%d passed, %d failed", passes, table.getn(failures)))
 for i = 1, table.getn(M.chat) do
 	if string.find(M.chat[i], "error") or string.find(M.chat[i], "problem") or string.find(M.chat[i], "stopped") then print("CHAT: " .. M.chat[i]) end
 end
+if table.getn(failures) > 0 then os.exit(1) end
