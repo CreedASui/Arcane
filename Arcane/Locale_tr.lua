@@ -381,4 +381,12 @@ Arcane.AddLanguage("tr", "Türkçe", Arcane.FACE_LETTERS, {
 	["Your talents show here during a run."] = "Yeteneklerin oyun sırasında burada görünür.",
 	["No talents learned yet."] = "Henüz yetenek öğrenilmedi.",
 	["the talent window stopped after an error: "] = "yetenek penceresi bir hatadan sonra durdu: ",
+	["Loot"] = "Ganimet",
+	["Marks"] = "Nişanlar",
+	["New in your collection!"] = "Koleksiyonunda yeni!",
+	["Already in your collection."] = "Zaten koleksiyonunda.",
+	["+{1} marks"] = "+{1} nişan",
+	["{1} in all"] = "Toplam {1}",
+	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane ganimet bildirimi: her eşyanın simgesi, adı ve nadirlik rengi ile kazandığın nişanları gösterir. Oyunun bildirimini değiştirir.",
+	["the loot pop-up stopped after an error, so the game's own is back: "] = "ganimet bildirimi bir hatadan sonra durdu; oyunun bildirimi geri yüklendi: ",
 })
