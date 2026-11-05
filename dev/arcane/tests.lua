@@ -68,7 +68,7 @@ M.phase = "ready"
 M.hud.clock, M.hud.bosses, M.hud.build = true, true, true
 M.Load(DIR)
 frames(30)
-check(M.hud.clock == false and M.hud.bosses == false and M.hud.build == false, "the game's clock, boss bars and build rows are hidden")
+check(M.hud.clock == false and M.hud.bosses == false and M.hud.build == false and M.hud.loot == false, "the game's clock, boss bars, build rows and loot pop-up are hidden")
 check(PlayerFrame.__parent == ArcaneHidden and TargetFrame.__parent == ArcaneHidden and MainMenuBar.__parent == ArcaneHidden,
 	"the game's player frame, target frame and bar are tucked away")
 check(ArcanePlayer.__shown, "your frame shows out of a run")
@@ -3047,6 +3047,50 @@ do
 	Arcane.palStamp = Arcane.palStamp + 1
 	frames(5)
 	problems("bronze")
+end
+
+------------------------------------------------------------------ 11m. loot and earned marks
+do
+	check(ArcaneLoot ~= nil, "the Arcane loot pop-up is created")
+	check(M.hud.loot == false, "the Arcane loot pop-up hides the game's own")
+
+	local drop = "You receive loot: [Ashbringer] New in your collection!"
+	ChatFrame1:AddMessage(drop)
+	ChatFrame2:AddMessage(drop) -- the same line in another chat window counts once
+	frames(8)
+	check(findText(ArcaneLoot, "^Ashbringer$") ~= nil, "a loot line shows the item's name")
+	check(findText(ArcaneLoot, "^New in your collection!$") ~= nil, "a new collection item is marked")
+	local toastCount = 0
+	for _, o in ipairs(M.All()) do
+		if o.__kind == "Frame" and o.__parent == ArcaneLoot and M.Visible(o) then toastCount = toastCount + 1 end
+	end
+	check(toastCount == 1, "the same loot line in two chat windows makes one notification")
+
+	frames(1)
+	ChatFrame1:AddMessage("You earn 5 marks (120 in all).")
+	frames(8)
+	check(findText(ArcaneLoot, "^%+5 marks$") ~= nil, "earned marks get their own notification")
+	check(findText(ArcaneLoot, "^120 in all$") ~= nil, "the marks notification shows the total")
+
+	local lootPart
+	for i = 1, table.getn(Arcane.parts) do
+		if Arcane.parts[i].key == "loot" then lootPart = Arcane.parts[i] end
+	end
+	check(lootPart ~= nil, "Loot is registered in Arcane Options")
+	if lootPart then
+		lootPart.set(false)
+		frames(2)
+		check(M.hud.loot == true, "turning Loot off restores the game's own pop-up")
+		local visible = 0
+		for _, o in ipairs(M.All()) do
+			if o.__kind == "Frame" and o.__parent == ArcaneLoot and M.Visible(o) then visible = visible + 1 end
+		end
+		check(visible == 0, "turning Loot off clears the queued Arcane notifications")
+		lootPart.set(true)
+		frames(2)
+		check(M.hud.loot == false, "turning Loot back on hides the game's pop-up again")
+	end
+	problems("loot")
 end
 
 ------------------------------------------------------------------ 12. no API at all
