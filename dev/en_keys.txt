@@ -377,7 +377,7 @@ Feral Combat
 What this run plays with
 Your talents show here during a run.
 No talents learned yet.
-the talent window stopped after an error:
+the talent window stopped after an error: 
 Loot
 Marks
 New in your collection!
