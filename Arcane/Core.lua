@@ -790,23 +790,18 @@ end
 ------------------------------------------------------------------------ an MMO panel
 -- A panel in the timer's metal: brushed dark glass inside a thin round rail lit as the timer's
 -- (darkish bronze, one fine bright line on its lit side), the timer's diamonds on its corners,
--- and (asked for) a golden dragon perched on each end, facing out, wings raised, its eye glowing:
--- painted, from the user's own bar picture (dev/art/cut_dragon.py), in its own colors. It straddles
--- the panel's end, the end rail running behind its body, head and chest out past it, its wing back
--- over the bar; the panel leaves C.PANEL_ROOM at each end for the wing, so it never covers a slot.
-local P_RAIL, P_CORNER, P_DRAGON = 8, 16, 122
--- how far it reaches past the panel's end (its front 40% of the picture), and below its foot (25 of 370)
-local P_OUT, P_FOOT = P_DRAGON * 0.40, P_DRAGON * 25 / 370
-C.PANEL_ROOM = math.floor(P_DRAGON - P_OUT + 6)
+-- and the Arcane A medallion at each end. The transparent gold-and-black sigil overlaps the end
+-- rail and extends outward, leaving the slots clear while making the bar unmistakably Arcane.
+local P_RAIL, P_CORNER, P_SIGIL = 8, 16, 122
+-- Keep the same endcap footprint as the previous artwork so the bar's overall layout stays stable.
+local P_OUT, P_FOOT = P_SIGIL * 0.40, P_SIGIL * 25 / 370
+C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
 -- Arcane UI's gold, taken from the user's bar picture (dev/art/source/bar_reference.webp): the panel's
 -- metal is its bright rail; its light rail highlight (0.98, 0.85, 0.52) is the gold of titles and
 -- tooltip heads everywhere, its rail gold (0.91, 0.70, 0.30) the gold of borders and rims
 local GOLD = { 0.95, 0.79, 0.44 }
--- the dragon's eye in its picture, as shares of it (the picture faces right; the left dragon is it
--- mirrored, so both face out)
-local EYE_X, EYE_Y = 0.872, 0.236
 
-function C.Panel(frame, dragons)
+function C.Panel(frame, sigils)
 	local p = { frame = frame, metal = {} }
 	p.fill = C.Tex(frame, "BACKGROUND", C.ART .. "PanelFill")
 	p.fill:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
@@ -835,26 +830,18 @@ function C.Panel(frame, dragons)
 		d:SetPoint("CENTER", frame, c[1], c[3] * 2, c[4] * 2)
 		table.insert(p.metal, d)
 	end
-	if dragons then
-		-- a dragon on each end, facing out, perched on the panel's end
-		p.dragons, p.eyes = {}, {}
-		p.eyeLayer = CreateFrame("Frame", nil, frame)
-		p.eyeLayer:SetAllPoints(frame)
+	if sigils then
+		-- Matching Arcane medallions at both ends; the left copy is mirrored for symmetry.
+		p.sigils = {}
 		local out = P_OUT
 		for i, side in ipairs({ "LEFT", "RIGHT" }) do
 			local k = (side == "LEFT") and -1 or 1
-			local t = C.Tex(frame, "OVERLAY", C.ART .. "PanelDragon")
-			t:SetWidth(P_DRAGON)
-			t:SetHeight(P_DRAGON)
+			local t = C.Tex(frame, "OVERLAY", C.ART .. "PanelSigil")
+			t:SetWidth(P_SIGIL)
+			t:SetHeight(P_SIGIL)
 			t:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * out, -P_FOOT)
 			if k < 0 then t:SetTexCoord(1, 0, 0, 1) end
-			p.dragons[i] = t
-			local ex = (k < 0) and (-out + (1 - EYE_X) * P_DRAGON) or (out - (1 - EYE_X) * P_DRAGON)
-			local e = C.Tex(p.eyeLayer, "OVERLAY", C.ART .. "Glow", "ADD")
-			e:SetWidth(8)
-			e:SetHeight(8)
-			e:SetPoint("CENTER", frame, "BOTTOM" .. side, ex, -P_FOOT + P_DRAGON * (1 - EYE_Y))
-			p.eyes[i] = e
+			p.sigils[i] = t
 		end
 	end
 	return p
@@ -869,19 +856,13 @@ function C.PanelTheme(p, pal)
 	local mr, mg, mb = C.PanelMetal(pal)
 	for i = 1, table.getn(p.metal) do p.metal[i]:SetVertexColor(mr, mg, mb) end
 	p.fill:SetVertexColor(0.5 + tr[1] * 0.3, 0.47 + tr[2] * 0.3, 0.44 + tr[3] * 0.3, 0.95)
-	if p.dragons then
-		for i = 1, 2 do
-			p.dragons[i]:SetVertexColor(1, 1, 1) -- painted in its own gold
-			p.eyes[i]:SetVertexColor(1, 0.62, 0.14, 0.95) -- the eyes glow amber, as painted
-		end
+	if p.sigils then
+		for i = 1, 2 do p.sigils[i]:SetVertexColor(1, 1, 1) end -- preserve the medallion's painted gold
 	end
 end
 
--- the dragons' eyes smoulder
 function C.PanelStep(p, now)
-	if not p.eyes then return end
-	local a = 0.75 + 0.2 * math.sin(now * 2.2)
-	for i = 1, 2 do C.Alpha(p.eyes[i], a) end
+	-- The medallions are static artwork; no animated dragon-eye glow is needed.
 end
 
 ------------------------------------------------------------------------ calling the game safely
