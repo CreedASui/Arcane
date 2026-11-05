@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- **Boss bars:** boss and mini-boss bars are 20% larger; the existing size setting still scales them on top.
+- **Boss skulls:** boss skulls are 20% larger, with increased minimum and maximum sizes. Guardian skulls retain their previous apparent size.
+
 ## 1.14.1
 - **Lua 5.0 packaging guard:** reject Lua 5.1-style vararg expressions before producing an addon ZIP, so stale or incompatible source cannot silently ship.
 - **Repository cleanup:** remove duplicate root-level addon sources and assets; the installable source lives only under `Arcane/`, and the package builder checks that duplicates do not return.
