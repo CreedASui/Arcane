@@ -68,7 +68,7 @@ M.phase = "ready"
 M.hud.clock, M.hud.bosses, M.hud.build = true, true, true
 M.Load(DIR)
 frames(30)
-check(M.hud.clock == false and M.hud.bosses == false and M.hud.build == false, "the game's clock, boss bars and build rows are hidden")
+check(M.hud.clock == false and M.hud.bosses == false and M.hud.build == false and M.hud.loot == false, "the game's clock, boss bars, build rows and loot pop-up are hidden")
 check(PlayerFrame.__parent == ArcaneHidden and TargetFrame.__parent == ArcaneHidden and MainMenuBar.__parent == ArcaneHidden,
 	"the game's player frame, target frame and bar are tucked away")
 check(ArcanePlayer.__shown, "your frame shows out of a run")
@@ -1783,7 +1783,7 @@ do
 	problems("languages")
 end
 
------------------------------------------------------------------- 11o. the chat stops short of the skill bar's dragon
+------------------------------------------------------------------ 11o. the chat stops short of the skill bar's medallion
 do
 	SIM.StartRun("naxx", { killAfter = 120 })
 	M.runTime = 30
@@ -1791,13 +1791,13 @@ do
 	M.Slash("reset")
 	ChatFrame1:SetWidth(420)
 	SIM.Advance(1.5, 1 / 30)
-	local dragon = ArcaneBar.deco.dragons[1]
-	local dl = M.Rect(dragon)
+	local medallion = ArcaneBar.deco.sigils[1]
+	local ml, mb, mr, mt = M.Rect(medallion)
 	local cl, cb, cr = M.Rect(ChatFrame1)
-	check(cr + 8 <= dl + 4 - 5, string.format("the chat's glass stops short of the dragon's snout (%.0f < %.0f)", cr + 8, dl + 4))
+	check(cr + 8 <= mr - 6, string.format("the chat's glass stops short of the full medallion (%.0f < %.0f)", cr + 8, mr - 6))
 	check(ChatFrame1:GetWidth() < 420 and ChatFrame1:GetWidth() >= 200, "by giving up the end of its width: " .. ChatFrame1:GetWidth())
 	-- sized by hand, that width is the one it keeps clear with
-	local clearW = math.floor(dl + 4 - 6 - 8 - cl) - 10 -- well short of the snout
+	local clearW = math.floor(mr - 6 - 8 - cl) - 10 -- well clear of the medallion
 	ChatFrame1:SetWidth(clearW)
 	SIM.Advance(1, 1 / 30)
 	check(ChatFrame1:GetWidth() == clearW, "a width set by hand that's already clear stays: " .. ChatFrame1:GetWidth() .. " / " .. clearW)
@@ -1821,7 +1821,7 @@ do
 	ArcaneDB.pos.bar = nil
 	M.Slash("reset")
 	SIM.Advance(1, 1 / 30)
-	problems("chat and dragon")
+	problems("chat and medallion")
 end
 
 ------------------------------------------------------------------ 11p. the Arcane button on the minimap's edge
@@ -2977,11 +2977,11 @@ do
 	problems("stacking numbers")
 end
 
------------------------------------------------------------------- 11j. the bar's dragons sit on its ends, clear of the slots
+------------------------------------------------------------------ 11j. matching Arcane medallions sit at the bar's ends, clear of the slots
 do
 	M.phase = "playing"
 	frames(10)
-	local d1, d2 = ArcaneBar.deco.dragons[1], ArcaneBar.deco.dragons[2]
+	local d1, d2 = ArcaneBar.deco.sigils[1], ArcaneBar.deco.sigils[2]
 	local pl, pb, pr, pt = M.Rect(ArcaneBar.panel)
 	local l1, b1, r1, t1 = M.Rect(d1)
 	local l2, b2, r2, t2 = M.Rect(d2)
@@ -2993,12 +2993,12 @@ do
 			sl, sr = math.min(sl, l), math.max(sr, r)
 		end
 	end
-	check(math.abs(l1 - (pl - 122 * 0.4)) < 1 and r1 < sl, string.format("the left dragon straddles the panel's end, clear of the first slot (%.0f < %.0f)", r1, sl))
-	check(l2 > sr and math.abs(r2 - (pr + 122 * 0.4)) < 1, "and the right one the other end, past the last")
-	check(d1.__tc and d1.__tc[1] == 1 and d1.__tc[2] == 0 and not (d2.__tc and d2.__tc[1] == 1), "both face out: the left one mirrored, the right as painted")
-	check(d1.__vc and d1.__vc[1] == 1 and d1.__vc[2] == 1 and d1.__vc[3] == 1, "painted in its own colors (no tint)")
-	check(t1 > pt + 20, "rising over the panel's top")
-	problems("bar dragons")
+	check(math.abs(l1 - (pl - 122 * 0.4)) < 1 and r1 < sl, string.format("the left medallion straddles the panel's end, clear of the first slot (%.0f < %.0f)", r1, sl))
+	check(l2 > sr and math.abs(r2 - (pr + 122 * 0.4)) < 1, "and the matching right medallion sits beyond the last slot")
+	check(d1.__tc and d1.__tc[1] == 1 and d1.__tc[2] == 0 and not (d2.__tc and d2.__tc[1] == 1), "both face outward: the left medallion is mirrored")
+	check(d1.__vc and d1.__vc[1] == 1 and d1.__vc[2] == 1 and d1.__vc[3] == 1, "the painted gold is not tinted by the panel theme")
+	check(t1 > pt + 20, "the medallions rise above the panel's top")
+	problems("bar medallions")
 end
 
 ------------------------------------------------------------------ 11k. the bar keeps its size as a run starts
@@ -3047,6 +3047,50 @@ do
 	Arcane.palStamp = Arcane.palStamp + 1
 	frames(5)
 	problems("bronze")
+end
+
+------------------------------------------------------------------ 11m. loot and earned marks
+do
+	check(ArcaneLoot ~= nil, "the Arcane loot pop-up is created")
+	check(M.hud.loot == false, "the Arcane loot pop-up hides the game's own")
+
+	local drop = "You receive loot: [Ashbringer] New in your collection!"
+	ChatFrame1:AddMessage(drop)
+	ChatFrame2:AddMessage(drop) -- the same line in another chat window counts once
+	frames(8)
+	check(findText(ArcaneLoot, "^Ashbringer$") ~= nil, "a loot line shows the item's name")
+	check(findText(ArcaneLoot, "^New in your collection!$") ~= nil, "a new collection item is marked")
+	local toastCount = 0
+	for _, o in ipairs(M.All()) do
+		if o.__kind == "Frame" and o.__parent == ArcaneLoot and M.Visible(o) then toastCount = toastCount + 1 end
+	end
+	check(toastCount == 1, "the same loot line in two chat windows makes one notification")
+
+	frames(1)
+	ChatFrame1:AddMessage("You earn 5 marks (120 in all).")
+	frames(8)
+	check(findText(ArcaneLoot, "^%+5 marks$") ~= nil, "earned marks get their own notification")
+	check(findText(ArcaneLoot, "^120 in all$") ~= nil, "the marks notification shows the total")
+
+	local lootPart
+	for i = 1, table.getn(Arcane.parts) do
+		if Arcane.parts[i].key == "loot" then lootPart = Arcane.parts[i] end
+	end
+	check(lootPart ~= nil, "Loot is registered in Arcane Options")
+	if lootPart then
+		lootPart.set(false)
+		frames(2)
+		check(M.hud.loot == true, "turning Loot off restores the game's own pop-up")
+		local visible = 0
+		for _, o in ipairs(M.All()) do
+			if o.__kind == "Frame" and o.__parent == ArcaneLoot and M.Visible(o) then visible = visible + 1 end
+		end
+		check(visible == 0, "turning Loot off clears the queued Arcane notifications")
+		lootPart.set(true)
+		frames(2)
+		check(M.hud.loot == false, "turning Loot back on hides the game's pop-up again")
+	end
+	problems("loot")
 end
 
 ------------------------------------------------------------------ 12. no API at all

@@ -187,4 +187,12 @@ T = {
 378: "Yeteneklerin oyun sırasında burada görünür.",
 379: "Henüz yetenek öğrenilmedi.",
 380: "yetenek penceresi bir hatadan sonra durdu: ",
+	381: "Ganimet",
+	382: "Nişanlar",
+	383: "Koleksiyonunda yeni!",
+	384: "Zaten koleksiyonunda.",
+	385: "+{1} nişan",
+	386: "Toplam {1}",
+	387: "Arcane ganimet bildirimi: her eşyanın simgesi, adı ve nadirlik rengi ile kazandığın nişanları gösterir. Oyunun bildirimini değiştirir.",
+	388: "ganimet bildirimi bir hatadan sonra durdu; oyunun bildirimi geri yüklendi: ",
 }

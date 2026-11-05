@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- **Skill bar branding:** replace both dragon endcaps with transparent gold-and-black Arcane A medallions; preserve the existing panel rails, slots, and spacing, and keep chat glass clear of the full medallion.
+- **Loot pop-up:** Arcane shows item drops with their icon, name and rarity color, plus collection status; marks appear as separate notifications. Up to three stack and fade away. The game's own loot pop-up is restored when the Loot part is turned off.
 - **Boss bars:** boss and mini-boss bars are 20% larger; the existing size setting still scales them on top.
 - **Boss skulls:** boss skulls are 20% larger, with increased minimum and maximum sizes. Guardian skulls retain their previous apparent size.
 

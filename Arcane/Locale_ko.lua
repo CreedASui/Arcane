@@ -381,4 +381,12 @@ Arcane.AddLanguage("ko", "한국어", Arcane.FACE_CJK, {
 	["Your talents show here during a run."] = "도전 중에 특성이 여기에 표시됩니다.",
 	["No talents learned yet."] = "아직 배운 특성이 없습니다.",
 	["the talent window stopped after an error: "] = "특성 창이 오류로 멈췄습니다: ",
+	["Loot"] = "전리품",
+	["Marks"] = "징표",
+	["New in your collection!"] = "새로운 수집품!",
+	["Already in your collection."] = "이미 수집함.",
+	["+{1} marks"] = "+{1}개 징표",
+	["{1} in all"] = "총 {1}개",
+	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane 전리품 알림: 아이템 아이콘, 이름, 희귀도 색상과 획득한 징표를 표시합니다. 게임 알림을 대체합니다.",
+	["the loot pop-up stopped after an error, so the game's own is back: "] = "전리품 알림이 오류로 중지되어 게임 알림을 복원했습니다: ",
 })

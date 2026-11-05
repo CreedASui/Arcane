@@ -945,6 +945,14 @@ local ROWS = {
 		"das Charakterfenster hat nach einem Fehler gestoppt, das des Spiels ist zurück: ",
 		"el panel del personaje se detuvo tras un error; vuelve el del juego: ",
 		"o painel do personagem parou após um erro; o do jogo voltou: " },
+	{ "Loot", "Butin", "Beute", "Botín", "Saque" },
+	{ "Marks", "Marques", "Marken", "Marcas", "Marcas" },
+	{ "New in your collection!", "Nouveau dans votre collection !", "Neu in deiner Sammlung!", "¡Nuevo en tu colección!", "Novo na sua coleção!" },
+	{ "Already in your collection.", "Déjà dans votre collection.", "Bereits in deiner Sammlung.", "Ya está en tu colección.", "Já está na sua coleção." },
+	{ "+{1} marks", "+{1} marques", "+{1} Marken", "+{1} marcas", "+{1} marcas" },
+	{ "{1} in all", "{1} au total", "{1} insgesamt", "{1} en total", "{1} no total" },
+	{ "Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up.", "La fenêtre de butin d'Arcane : chaque objet avec son icône, son nom et sa couleur de rareté, ainsi que les marques gagnées. Remplace la fenêtre du jeu.", "Arcane-Beutefenster: jeder Gegenstand mit Symbol, Name und Seltenheitsfarbe sowie verdiente Marken. Ersetzt das Beutefenster des Spiels.", "Avisos de botín de Arcane: cada objeto con su icono, nombre y color de rareza, además de las marcas obtenidas. Sustituye el aviso del juego.", "Notificações de saque do Arcane: cada item com ícone, nome e cor de raridade, além das marcas recebidas. Substitui o aviso do jogo." },
+	{ "the loot pop-up stopped after an error, so the game's own is back: ", "la fenêtre de butin s'est arrêtée après une erreur, celle du jeu est revenue : ", "das Beutefenster wurde nach einem Fehler gestoppt; das des Spiels ist zurück: ", "el aviso de botín se detuvo tras un error; vuelve el del juego: ", "o aviso de saque parou após um erro; voltou o do jogo: " },
 }
 C.LOCALE_ROWS = ROWS -- for the tests
 

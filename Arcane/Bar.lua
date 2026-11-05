@@ -1,7 +1,7 @@
 -- Arcane UI: the skill bar. Your six run abilities and your racial, each with a cooldown that
 -- drains off its icon; the jewelry you picked from the cards (neck, two rings, two trinkets) in sockets
 -- rimmed with their rarity; your run's experience; and docked beside them your kills, gold and
--- the next cache's price (Tally.lua), all on a gold-framed panel with a golden dragon sitting on each end. Hover anything for the game's own tooltip: an ability's, or what a piece of
+-- the next cache's price (Tally.lua), all on a gold-framed panel with an Arcane A medallion on each end. Hover anything for the game's own tooltip: an ability's, or what a piece of
 -- jewelry gives you. While it's on, the game's bar and build rows are tucked away; turning it
 -- off brings them back. Each ability wears its rank in a little gold-rimmed box on its bottom
 -- right corner, which flashes when a card ranks it up.
@@ -691,7 +691,7 @@ C.OnInit(function()
 		j.visible = not info.optional
 		jewels[i] = j
 	end
-	-- the panel: brushed glass in the timer's gold, a dragon on each end (Core)
+	-- the panel: brushed glass in the timer's gold, an Arcane medallion on each end (Core)
 	root.panel = CreateFrame("Frame", nil, root)
 	root.panel:SetPoint("TOPLEFT", root, "TOPLEFT", -(C.PANEL_ROOM or 0), 0)
 	root.panel:SetPoint("BOTTOMRIGHT", root, "BOTTOMRIGHT", C.PANEL_ROOM or 0, 0)

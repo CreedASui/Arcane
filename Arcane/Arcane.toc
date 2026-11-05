@@ -32,3 +32,4 @@ Summary.lua
 Character.lua
 Talents.lua
 Chat.lua
+Loot.lua

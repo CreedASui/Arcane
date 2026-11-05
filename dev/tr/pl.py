@@ -187,4 +187,12 @@ T = {
 378: "Talenty pojawiają się tu podczas wyprawy.",
 379: "Brak poznanych talentów.",
 380: "okno talentów zatrzymało się po błędzie: ",
+	381: "Łup",
+	382: "Znaki",
+	383: "Nowość w twojej kolekcji!",
+	384: "Już w twojej kolekcji.",
+	385: "+{1} zn.",
+	386: "{1} łącznie",
+	387: "Powiadomienia o łupach Arcane: przedmiot z ikoną, nazwą i kolorem rzadkości oraz zdobyte znaki. Zastępują powiadomienie gry.",
+	388: "powiadomienie o łupach zatrzymało się po błędzie; przywrócono powiadomienie gry: ",
 }
