@@ -381,4 +381,12 @@ Arcane.AddLanguage("zh", "中文", Arcane.FACE_CJK, {
 	["Your talents show here during a run."] = "冒险中你的天赋会显示在这里。",
 	["No talents learned yet."] = "尚未学习天赋。",
 	["the talent window stopped after an error: "] = "天赋窗口出错后已停止：",
+	["Loot"] = "战利品",
+	["Marks"] = "印记",
+	["New in your collection!"] = "收藏新增！",
+	["Already in your collection."] = "已收藏。",
+	["+{1} marks"] = "+{1} 枚印记",
+	["{1} in all"] = "共 {1} 枚",
+	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane 战利品通知：显示每件物品的图标、名称、稀有度颜色以及获得的印记。取代游戏自带通知。",
+	["the loot pop-up stopped after an error, so the game's own is back: "] = "战利品通知发生错误并停止，已恢复游戏自带通知：",
 })
