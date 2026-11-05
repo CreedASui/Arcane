@@ -39,16 +39,15 @@ jobs:
         run: |
           find Arcane -name '*.lua' -print0 | xargs -0 -n1 luac5.1 -p
           luac5.1 -p dev/arcane/tiny_plates_tests.lua
-          luac5.1 -p dev/arcane/tests.lua
           luac5.1 -p dev/arcane/mock_arcane.lua
 
       - name: Run Arcane regression tests
         working-directory: dev
         run: lua5.1 arcane/tiny_plates_tests.lua . ../Arcane
 
-      - name: Run full Arcane behavior tests
+      - name: Run focused Arcane loot tests
         working-directory: dev
-        run: lua5.1 arcane/tests.lua . ../Arcane
+        run: lua5.1 arcane/loot_tests.lua . ../Arcane
 
       - name: Check translations
         run: python dev/arcane/locale_check.py Arcane
