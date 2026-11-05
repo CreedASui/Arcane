@@ -41,6 +41,7 @@ jobs:
           luac5.1 -p dev/arcane/tiny_plates_tests.lua
           luac5.1 -p dev/arcane/mock_arcane.lua
           luac5.1 -p dev/arcane/loot_tests.lua
+          luac5.1 -p dev/arcane/tests.lua
 
       - name: Run Arcane regression tests
         working-directory: dev
