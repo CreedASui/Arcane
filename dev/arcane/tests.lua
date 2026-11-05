@@ -2216,7 +2216,7 @@ do
 	frames(3)
 	check(ArcaneTalents and M.Visible(ArcaneTalents) and M.talentToggles == 0, "the Talents tab opens Arcane UI's talent window")
 	check(not M.Visible(CharacterFrame), "and the character window closes for it")
-	ArcaneTalents:Hide()
+	if ArcaneTalents then ArcaneTalents:Hide() end
 	check(ArcaneTalentPage == nil, "no talent page of Arcane UI's own any more")
 	-- opened again: on the Character page, dressed, not straight back to talents
 	CharacterFrame:Show()
