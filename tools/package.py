@@ -87,7 +87,7 @@ def validate_addon() -> tuple[str, list[Path]]:
         if path.suffix.lower() != ".lua":
             continue
         source = path.read_text(encoding="utf-8")
-        for asset_name in re.findall(r'\\bC\\.ART\\s*\\.\\.\\s*"([^"]+)"', source):
+        for asset_name in re.findall(r'\bC\.ART\s*\.\.\s*"([^"]+)"', source):
             if not (ADDON_DIR / "Art" / f"{asset_name}.blp").is_file():
                 missing_art.add(asset_name)
     for suffix in ("TL", "TR", "BL", "BR"):
