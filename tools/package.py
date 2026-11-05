@@ -88,6 +88,8 @@ def validate_addon() -> tuple[str, list[Path]]:
             continue
         source = path.read_text(encoding="utf-8")
         for asset_name in re.findall(r'\bC\.ART\s*\.\.\s*"([^"]+)"', source):
+            if asset_name == "PanelCorner":  # the suffix is appended below
+                continue
             if not (ADDON_DIR / "Art" / f"{asset_name}.blp").is_file():
                 missing_art.add(asset_name)
     for suffix in ("TL", "TR", "BL", "BR"):
