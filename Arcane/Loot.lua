@@ -22,7 +22,7 @@ local MARK_LINES = { "Câștigi {n} însemne ({total} în total).", "Du erhälts
 local MARK_ICON = "Interface\\Icons\\INV_Misc_Token_ArgentDawn"
 -- what the line may say after the item: new to your collection, or had already
 local NEW_LINES = { "Koleksiyonunda yeni!", "Neu in deiner Sammlung!", "New in your collection!", "Nou în colecția ta!", "Nouveau dans votre collection !", "Novinka ve tvé sbírce!", "Novo na sua coleção!", "Nowość w twojej kolekcji!", "¡Nuevo en tu colección!", "Нове у вашій колекції!", "Новое в вашей коллекции!", "コレクションに新しく追加！", "收藏新增！", "새로운 수집품!" }
-local HAD_LINES = { "Already collected", "Bereits gesammelt", "Deja colecționat", "Déjà obtenu", "Już w kolekcji", "Já na coleção", "Už ve sbírce", "Ya en tu colección", "Zaten toplandı", "Уже в коллекции", "Уже є в колекції", "入手済み", "已收藏", "이미 수집함" }
+local HAD_LINES = { "Already in your collection!", "Already in your collection.", "Already collected", "Bereits gesammelt", "Deja colecționat", "Déjà obtenu", "Już w kolekcji", "Já na coleção", "Už ve sbírce", "Ya en tu colección", "Zaten toplandı", "Уже в коллекции", "Уже є в колекції", "入手済み", "已收藏", "이미 수집함" }
 -- The line names the item but not its look: an icon is picked by a word in its name (its slot or
 -- its weapon), the first that matches winning. A real link's own icon always comes first.
 local I = "Interface\\Icons\\"
@@ -62,7 +62,7 @@ end
 
 local db
 local root
-local S = { live = {}, pool = {}, broken = false, patterns = nil, heard = {}, takeClock = 0 }
+local S = { live = {}, pool = {}, broken = false, patterns = nil, lastMessage = nil, lastMessageAt = nil, takeClock = 0 }
 local Toast -- below: a new pop-up for a drop or for marks
 
 ------------------------------------------------------------------------ what came
@@ -93,11 +93,18 @@ local function Number(s) return tonumber((string.gsub(s or "", ",", ""))) end
 
 local function Plain(msg) return string.gsub(string.gsub(msg, "|c%x%x%x%x%x%x%x%x", ""), "|r", "") end
 
+local RARITY_HEX = { ["9d9d9d"] = 0, ["ffffff"] = 1, ["1eff00"] = 2, ["0070dd"] = 3, ["a335ee"] = 4, ["ff8000"] = 5 }
+
 local function Rarity(hex)
-	if not hex then return nil end
-	for q, c in pairs(QUALITY) do
-		local h = string.format("%02x%02x%02x", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
-		if string.lower(hex) == h then return q end
+	return hex and RARITY_HEX[string.lower(hex)] or nil
+end
+
+local function CollectionStatus(msg)
+	for i = 1, table.getn(NEW_LINES) do
+		if string.find(msg, NEW_LINES[i], 1, true) then return true end
+	end
+	for i = 1, table.getn(HAD_LINES) do
+		if string.find(msg, HAD_LINES[i], 1, true) then return false end
 	end
 	return nil
 end
@@ -121,6 +128,7 @@ local function Hear(msg)
 		local start, stop = string.find(plain, LOOT_LINES[i], 1, true)
 		if start == 1 then -- the game's own line, not someone saying it
 			local item = ParseLoot(msg)
+			if item then item.new = CollectionStatus(plain) end
 			if not item then
 				-- a name with no link: the words after the line's start, its color its rarity
 				local rest = string.gsub(string.gsub(string.sub(plain, stop + 1), "^%s+", ""), "%s+$", "")
@@ -144,12 +152,12 @@ local function Hear(msg)
 			end
 			if item.name == "" then return end
 			if type(GetItemInfo) == "function" and item.id then
-				local _, _, quality, _, _, _, _, _, icon = GetItemInfo(item.id)
-				item.quality, item.icon = quality or item.quality, icon
+				local _, _, quality, _, _, _, _, _, _, icon = GetItemInfo(item.id)
+				item.quality, item.icon = quality or item.quality, icon or item.icon
 			end
 			if not item.icon then item.icon = LookOf(item.name) end
 			if not item.quality then
-				local _, _, hex = string.find(item.link or "", "^|c%x%x(%x%x%x%x%x%x)")
+				local _, _, hex = string.find(msg, "|c%x%x(%x%x%x%x%x%x)|Hitem:")
 				item.quality = Rarity(hex)
 			end
 			Toast(item)
@@ -169,8 +177,8 @@ local function Listen()
 				local msg = arg[1]
 				if db and db.enabled and not S.broken and type(msg) == "string" then
 					local now = GetTime()
-					if S.heard[msg] ~= now then
-						S.heard[msg] = now
+					if S.lastMessage ~= msg or S.lastMessageAt ~= now then
+						S.lastMessage, S.lastMessageAt = msg, now
 						pcall(Hear, msg)
 					end
 				end
