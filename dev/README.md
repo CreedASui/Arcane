@@ -19,6 +19,7 @@ on it: bosses, guardians, cards, deaths, victory.
 | Command | What it checks |
 | --- | --- |
 | `lua50 arcane/tests.lua . ../Arcane` | Every part, end to end (500+ checks) |
+| `lua50 arcane/loot_tests.lua . ../Arcane` | Loot and mark notifications, duplicate chat lines, and restoring the game's own pop-up |
 | `lua50 arcane/timer_tests.lua . ../Arcane` | The boss timer |
 | `lua50 arcane/numbers_harness.lua . ../Arcane/Numbers.lua` | The damage numbers (`CROWD=1` for crowds) |
 | `lua50 arcane/smoke.lua . ../Arcane <out folder>` | A long run with everything on, no errors |
