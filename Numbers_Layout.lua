@@ -1,4 +1,4 @@
--- Damage-number layout: decide which labels show and resolve overlap.
+-- Shared geometry helpers used by culling, placement and animation.
 local AUI = Arcane
 local N = AUI.Numbers
 local S = N.Layout
