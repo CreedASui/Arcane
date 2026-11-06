@@ -118,6 +118,58 @@ function C.Place(r, point, rel, relPoint, x, y)
 end
 
 ------------------------------------------------------------------------ numbers as text
+-- A stable spell key shared by rank-specific and display-name variants.
+function C.SkillKey(k)
+	if type(k) ~= "string" or k == "" then return nil end
+	k = string.gsub(k, ":r%d+.*$", "")
+	k = string.gsub(k, "^.*:", "")
+	return string.lower((string.gsub(k, "[%s%-']+", "_")))
+end
+
+-- Recent per-skill hit values, used by the pet bar's tooltip.
+C.hitValues = {}
+function C.NoteHitValue(ev)
+	if type(ev) ~= "table" then return end
+	local amount = tonumber(ev.amount)
+	if ev.kind ~= "damage" or not amount or amount <= 0 or ev.periodic then return end
+	local keys
+	if ev.meterSourceKey ~= nil then
+		keys = { ev.meterSourceKey, C.SkillKey(ev.meterSourceKey), ev.meterSource }
+	else
+		keys = { ev.meterSource, ev.abilityName, C.SkillKey(ev.meterSource or ev.abilityName) }
+	end
+	local v
+	for i = 1, 3 do
+		if keys[i] ~= nil and C.hitValues[keys[i]] then v = C.hitValues[keys[i]] end
+	end
+	if not v then v = { times = {} } end
+	for i = 1, 3 do
+		if keys[i] ~= nil then C.hitValues[keys[i]] = v end
+	end
+	if ev.critical then
+		v.crit = amount
+	else
+		v.avg = v.avg and (v.avg + (amount - v.avg) * 0.25) or amount
+		v.last = amount
+		if not v.low or amount < v.low then v.low = amount end
+		if not v.high or amount > v.high then v.high = amount end
+	end
+	local now = GetTime()
+	table.insert(v.times, now)
+	while table.getn(v.times) > 0 and (now - v.times[1] > 10 or table.getn(v.times) > 200) do
+		table.remove(v.times, 1)
+	end
+end
+
+function C.HitRate(v)
+	if not v or not v.times then return 0 end
+	local now, n = GetTime(), 0
+	for i = 1, table.getn(v.times) do
+		if now - v.times[i] <= 10 then n = n + 1 end
+	end
+	return n / 10
+end
+
 function C.Short(n)
 	n = n or 0
 	local neg = n < 0
