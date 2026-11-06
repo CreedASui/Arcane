@@ -2426,7 +2426,7 @@ end
 ------------------------------------------------------------------------------
 -- Slash commands
 
-local function Help()
+AUI.NumbersHelp = function()
 	Print(L("damage number commands:"))
 	Print(L("/Arcane numbers - options window"))
 	Print(L("/Arcane numbers on | off - Arcane UI's numbers or the game's own"))
@@ -2441,7 +2441,7 @@ local function Help()
 	Print(L("/Arcane numbers reset - default settings"))
 end
 
-local function NumberSlash(msg)
+AUI.NumbersSlash = function(msg)
 	if not db then
 		InitDB()
 	end
@@ -2477,7 +2477,7 @@ local function NumberSlash(msg)
 			RefreshOptions()
 			Print(string.format(L("size %d%%."), math.floor(db.size * 100 + 0.5)))
 		else
-			Help()
+			AUI.NumbersHelp()
 		end
 	elseif command == "dots" or command == "dot" then
 		db.dotTotals = not db.dotTotals
@@ -2525,7 +2525,7 @@ local function NumberSlash(msg)
 		RefreshOptions()
 		Print(L("settings reset."))
 	else
-		Help()
+		AUI.NumbersHelp()
 	end
 end
 
@@ -2534,7 +2534,7 @@ AUI.numberSlash = function(msg)
 		Print(L("Smooth Numbers is still on, so it draws the numbers. Turn it off in Options -> AddOns."))
 		return
 	end
-	NumberSlash(msg)
+	AUI.NumbersSlash(msg)
 end
 AUI.numberOptions = function()
 	AUI.numberSlash("")
@@ -2597,7 +2597,7 @@ end)
 -- If the game isn't calling our frame handler (the preview while off, or a
 -- handler the game dropped), the numbers move from here instead, and the
 -- handler is asked for again now and then.
-local nextRegisterTry = 0
+driver.nextRegisterTry = 0
 driver:SetScript("OnUpdate", function()
 	if not db or blocked then
 		return
@@ -2616,8 +2616,8 @@ driver:SetScript("OnUpdate", function()
 	if active or nLabels > 0 or testUntil then
 		SafeStep(now)
 	end
-	if active and now - handlerAt > 1 and now >= nextRegisterTry then
-		nextRegisterTry = now + 5
+	if active and now - handlerAt > 1 and now >= driver.nextRegisterTry then
+		driver.nextRegisterTry = now + 5
 		local ok, result, failure = pcall(AZS_RegisterCombatTextFrameHandler, OnFrame)
 		if ok and failure == nil and result ~= false then
 			registered = true
