@@ -1365,9 +1365,10 @@ local function BuildHub()
 	end)
 	C.LText(langButton.text, "Language")
 	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
-	-- The three skill-bar treatments sit in the free third of this row.
+	-- A dedicated row keeps the three skill-bar treatments easy to identify.
+	local styleY = y - 30
 	local styleLabel = HubText(o, 9, 0.62, 0.62, 0.68)
-	styleLabel:SetPoint("BOTTOMLEFT", o, "TOPLEFT", 326, y + 4)
+	styleLabel:SetPoint("BOTTOMLEFT", o, "TOPLEFT", 326, styleY + 4)
 	C.LText(styleLabel, "Skill bar style")
 	local function StyleChoice(mode, label, x)
 		local button = C.Button(o, 96, 24, "", function()
@@ -1376,7 +1377,7 @@ local function BuildHub()
 		end)
 		C.LText(button.text, label)
 		button.mode = mode
-		button:SetPoint("TOPLEFT", o, "TOPLEFT", x, y)
+		button:SetPoint("TOPLEFT", o, "TOPLEFT", x, styleY)
 		return button
 	end
 	o.barStyleButtons = {
