@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Skill bar styles:** add Classic Arcane (default), Hybrid and Full Class presentations. The existing slot/cooldown renderer is shared by all three; class palettes and panel art live in separate modules, with all nine class emblem/crest and rail sets included. The chosen mode is saved in `ArcaneDB.bar.style`.
+- **Skill bar styles:** add Classic Arcane (default), Hybrid and Full Class presentations. The existing slot/cooldown renderer is shared by all three; class palettes and panel art live in separate modules, with all nine class emblem/crest and rail sets included. The chosen mode is saved in `ArcaneDB.bar.style`. Hybrid now has a dedicated forged-metal Arcane medallion on the left, with its central inlay colorized by class; the original class crest remains on the right. Hybrid trim and XP surround are gold while the glass and action-slot accents retain class colors.
 
 
 ## v0.2
