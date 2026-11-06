@@ -47,10 +47,10 @@ def validate_rle_tga(path: Path) -> None:
     header = data[:18]
     width = int.from_bytes(header[12:14], "little")
     height = int.from_bytes(header[14:16], "little")
-    if (header[1] != 0 or header[2] != 10 or width != 112 or height != 112
+    if (header[1] != 0 or header[2] != 10 or width != 128 or height != 128
             or header[16] != 32 or (header[17] & 0x0F) != 8
             or (header[17] & 0x20) == 0):
-        fail(f"Hybrid medallion texture must be top-origin 112x112 32-bit alpha RLE TGA: Art/{path.name}")
+        fail(f"Hybrid medallion texture must be top-origin 128x128 32-bit alpha RLE TGA: Art/{path.name}")
     offset = 18 + header[0]
     for _row in range(height):
         row_pixels = 0
@@ -161,7 +161,7 @@ def main() -> None:
         if not path.is_file():
             fail(f"Missing Hybrid Arcane medallion art: Art/{name}")
         validate_rle_tga(path)
-    print("PASS: dedicated Hybrid Arcane medallion and class-tinted gem are valid 32-bit alpha TGAs")
+    print("PASS: dedicated Hybrid Arcane medallion and class-tinted gem are valid power-of-two 32-bit alpha TGAs")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))
