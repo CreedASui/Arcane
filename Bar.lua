@@ -507,7 +507,7 @@ local function Theme(pal)
 	for i = 1, 3 do root.dividers[i]:SetVertexColor(mr, mg, mb) end
 	for i = 1, 7 do
 		local s = slots[i]
-		if s.kind == "racial" and Styles.Mode() == 1 then
+		if s.kind == "racial" and Styles.Mode() == Styles.CLASSIC then
 			s.bezel:SetVertexColor(0.95, 0.79, 0.44)
 		else
 			s.bezel:SetVertexColor(rim[1], rim[2], rim[3])
