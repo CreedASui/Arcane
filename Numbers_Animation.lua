@@ -66,7 +66,7 @@ local function Animate(label, now, dt, ratio)
 	local leaving = now - label.lastHit > C.MAX_AGE or label.lost
 	if leaving then
 		if not label.culled then
-			N.Layout.CullLabel(label, now)
+			N.Culling.CullLabel(label, now)
 		end
 		if label.lost then
 			label.frozen = true
