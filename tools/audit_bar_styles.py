@@ -39,38 +39,6 @@ def count_chunk_level_locals(text: str) -> int:
     return count
 
 
-def validate_rle_tga(path: Path) -> None:
-    """Validate the complete row-safe 32-bit RLE TGA stream, not just its header."""
-    data = path.read_bytes()
-    if len(data) < 18:
-        fail(f"Hybrid medallion texture is truncated: Art/{path.name}")
-    header = data[:18]
-    width = int.from_bytes(header[12:14], "little")
-    height = int.from_bytes(header[14:16], "little")
-    if (header[1] != 0 or header[2] != 10 or width != 128 or height != 128
-            or header[16] != 32 or (header[17] & 0x0F) != 8
-            or (header[17] & 0x20) == 0):
-        fail(f"Hybrid medallion texture must be top-origin 128x128 32-bit alpha RLE TGA: Art/{path.name}")
-    offset = 18 + header[0]
-    for _row in range(height):
-        row_pixels = 0
-        while row_pixels < width:
-            if offset >= len(data):
-                fail(f"Hybrid medallion TGA RLE data ends early: Art/{path.name}")
-            packet = data[offset]
-            offset += 1
-            count = (packet & 0x7F) + 1
-            if row_pixels + count > width:
-                fail(f"Hybrid medallion TGA RLE packet crosses a row: Art/{path.name}")
-            byte_count = 4 if packet & 0x80 else count * 4
-            if offset + byte_count > len(data):
-                fail(f"Hybrid medallion TGA RLE packet is truncated: Art/{path.name}")
-            offset += byte_count
-            row_pixels += count
-    if offset != len(data):
-        fail(f"Hybrid medallion TGA has unexpected trailing data: Art/{path.name}")
-
-
 def main() -> None:
     toc = [line.strip() for line in source("Arcane.toc").splitlines()
            if line.strip() and not line.lstrip().startswith("#")]
@@ -124,8 +92,12 @@ def main() -> None:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
     if 'C.LText(styleLabel, "Skill bar style")' not in core:
         fail("Options hub must label the skill-bar style selector")
-    if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
-        fail("Hybrid must use its own left Arcane medallion endcap")
+    if 'panel.endLeft or {}' not in styles or 'C.ART .. "PanelSigil"' not in styles:
+        fail("Hybrid must reuse Arcane's original left PanelSigil medallion")
+    if 'texture:SetWidth(HYBRID_SIGIL)' not in styles:
+        fail("Hybrid must scale the original Arcane sigil to the dedicated endcap size")
+    if 'panel.hybridArcane' in styles or 'panel.hybridGem' in styles:
+        fail("Hybrid must not use reconstructed screenshot-derived medallion textures")
     if 'SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)' not in styles:
         fail("Hybrid Arcane medallion must be anchored on the left")
     if 'PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)' not in styles:
@@ -147,21 +119,14 @@ def main() -> None:
         pretty = class_name[0].upper() + class_name[1:]
         assets.extend((f"PanelEmblem{pretty}L.blp", f"PanelEmblem{pretty}R.blp",
                        f"PanelRail{pretty}T.blp", f"PanelRail{pretty}B.blp"))
-    assets.append("PanelGlass.blp")
+    assets.extend(("PanelGlass.blp", "PanelSigil.blp"))
     for name in assets:
         path = ROOT / "Art" / name
         if not path.is_file():
             fail(f"Missing class-bar art: Art/{name}")
         if path.stat().st_size < 16 or path.read_bytes()[:4] != b"BLP2":
             fail(f"Invalid or empty BLP texture: Art/{name}")
-    print(f"PASS: all {len(assets)} class emblems, rails and glass textures are valid BLP2 assets")
-
-    for name in ("PanelHybridArcane.tga", "PanelHybridArcaneGem.tga"):
-        path = ROOT / "Art" / name
-        if not path.is_file():
-            fail(f"Missing Hybrid Arcane medallion art: Art/{name}")
-        validate_rle_tga(path)
-    print("PASS: dedicated Hybrid Arcane medallion and class-tinted gem are valid power-of-two 32-bit alpha TGAs")
+    print(f"PASS: all {len(assets)} class emblems, rails, glass and original Arcane sigil textures are valid BLP2 assets")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))
