@@ -57,7 +57,7 @@ end
 local function Queue(ev, now)
 	if N.CombatAPI.Wanted(ev, now) then
 		N.Combat.NoteHit(ev, now)
-		N.Combat.NoteSource(ev)
+		N.Icons.NoteSource(ev)
 		N.Combat.nPending = N.Combat.nPending + 1
 		N.Combat.pending[N.Combat.nPending] = ev
 	end
