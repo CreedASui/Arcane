@@ -513,7 +513,7 @@ local function Theme(pal)
 			s.bezel:SetVertexColor(rim[1], rim[2], rim[3])
 		end
 	end
-	if Styles.Mode() == 1 then
+	if Styles.Mode() == Styles.CLASSIC then
 		C.BarColors(xp, XP_COLORS[1], XP_COLORS[2], XP_COLORS[3])
 	else
 		C.BarColors(xp, pal.fillA, pal.fillM, pal.fillB)
