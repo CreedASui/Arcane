@@ -852,7 +852,7 @@ C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
 -- Arcane UI's gold, taken from the user's bar picture (dev/art/source/bar_reference.webp).
 local GOLD = { 0.95, 0.79, 0.44 }
 function C.Panel(frame, sigils)
-	local p = { frame = frame, metal = {}, ends = {} }
+	local p = { frame = frame, metal = {}, ends = {}, endLeft = {}, endRight = {} }
 	p.baseFill = C.ART .. "PanelFill"
 	p.fill = C.Tex(frame, "BACKGROUND", p.baseFill)
 	p.fill:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
@@ -874,6 +874,8 @@ function C.Panel(frame, sigils)
 	railR:SetWidth(P_RAIL)
 	table.insert(p.ends, railL)
 	table.insert(p.ends, railR)
+	table.insert(p.endLeft, railL)
+	table.insert(p.endRight, railR)
 	for _, c in ipairs({ { "TOPLEFT", "TL", 1, -1 }, { "TOPRIGHT", "TR", -1, -1 }, { "BOTTOMLEFT", "BL", 1, 1 }, { "BOTTOMRIGHT", "BR", -1, 1 } }) do
 		local t = C.Tex(frame, "BORDER", C.ART .. "PanelCorner" .. c[2])
 		t:SetWidth(P_CORNER)
@@ -881,12 +883,15 @@ function C.Panel(frame, sigils)
 		t:SetPoint(c[1], frame, c[1], 0, 0)
 		table.insert(p.metal, t)
 		table.insert(p.ends, t)
+		local sideEnds = string.find(c[1], "LEFT") and p.endLeft or p.endRight
+		table.insert(sideEnds, t)
 		local d = C.Tex(frame, "ARTWORK", C.ART .. "Diamond")
 		d:SetWidth(13)
 		d:SetHeight(13)
 		d:SetPoint("CENTER", frame, c[1], c[3] * 2, c[4] * 2)
 		table.insert(p.metal, d)
 		table.insert(p.ends, d)
+		table.insert(sideEnds, d)
 	end
 	if sigils then
 		p.sigils = {}
