@@ -80,10 +80,10 @@ local function Step(now)
 	end
 	if now >= S.nextSweep then
 		Sweep()
-		N.Combat.RefreshFallbackIcons(now)
+		N.Icons.RefreshFallbackIcons(now)
 		S.nextSweep = now + 2
 	end
-	N.Combat.WatchSummons(now)
+	N.Icons.WatchSummons(now)
 
 	if N.CombatAPI.active then
 		N.CombatAPI.ReadEvents(now)
