@@ -1243,6 +1243,14 @@ RefreshHub = function()
 		b.selected = b.code == C.lang
 		PaintButton(b)
 	end
+	if hub.barStyleButtons and C.BarStyles then
+		local mode = C.BarStyles.Mode()
+		for i = 1, table.getn(hub.barStyleButtons) do
+			local b = hub.barStyleButtons[i]
+			b.selected = b.mode == mode
+			PaintButton(b)
+		end
+	end
 end
 C.RefreshHub = function() RefreshHub() end
 
@@ -1352,6 +1360,22 @@ local function BuildHub()
 	end)
 	C.LText(langButton.text, "Language")
 	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
+	-- The three skill-bar treatments sit in the free third of this row.
+	local function StyleChoice(mode, label, x)
+		local button = C.Button(o, 96, 24, "", function()
+			if C.BarStyles then C.BarStyles.SetMode(mode) end
+			RefreshHub()
+		end)
+		C.LText(button.text, label)
+		button.mode = mode
+		button:SetPoint("TOPLEFT", o, "TOPLEFT", x, y)
+		return button
+	end
+	o.barStyleButtons = {
+		StyleChoice(1, "Arcane", 326),
+		StyleChoice(2, "Hybrid", 429),
+		StyleChoice(3, "Full class", 532),
+	}
 	-- the language: a button that opens the list of them, each in its own words
 	o.lang = langButton
 	local menu = CreateFrame("Frame", "ArcaneLanguageMenu", o)
