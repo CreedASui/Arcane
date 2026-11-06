@@ -1,7 +1,6 @@
 -- Damage-number anchors: project world positions and calculate merged centroids.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Anchors = N.Anchors or {}
 local S = N.Anchors
 local C = N.Config
 
