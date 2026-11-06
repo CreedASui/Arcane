@@ -160,10 +160,13 @@ local function EnsureHybridArcane(panel)
 	local frame = panel.frame
 	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane.tga")
 	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem.tga")
+	-- The Arcane dragon faces inward from the right endcap.
+	panel.hybridArcane:SetTexCoord(1, 0, 0, 1)
+	panel.hybridGem:SetTexCoord(1, 0, 0, 1)
 	for _, texture in ipairs({ panel.hybridArcane, panel.hybridGem }) do
 		texture:SetWidth(HYBRID_SIGIL)
 		texture:SetHeight(HYBRID_SIGIL)
-		texture:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)
+		texture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", HYBRID_OUT, -HYBRID_FOOT)
 		C.Vis(texture, false)
 	end
 end
@@ -211,7 +214,7 @@ function M.Apply(panel)
 		C.Vis(panel.hybridGem, true)
 		for i = 1, table.getn(panel.endLeft or {}) do C.Vis(panel.endLeft[i], false) end
 		for i = 1, table.getn(panel.endRight or {}) do C.Vis(panel.endRight[i], false) end
-		PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)
+		PlaceEmblem(panel.classEmblems[1], panel.frame, "LEFT", theme.emblem)
 		return
 	end
 	for i = 1, table.getn(panel.ends) do C.Vis(panel.ends[i], false) end
@@ -256,7 +259,7 @@ function M.Theme(panel, pal)
 		panel.fill:SetVertexColor(fill[1] * 0.48, fill[2] * 0.48, fill[3] * 0.48, 0.97)
 		panel.hybridArcane:SetVertexColor(1, 1, 1, 1)
 		panel.hybridGem:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)
-		panel.classEmblems[2]:SetVertexColor(1, 1, 1, 1)
+		panel.classEmblems[1]:SetVertexColor(1, 1, 1, 1)
 	else
 		local fill = theme.fill
 		panel.fill:SetVertexColor(fill[1], fill[2], fill[3], 0.97)
