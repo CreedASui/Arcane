@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - refactor/numbers-modules
+      - feature/class-skill-bar-styles
     paths:
       - "**.lua"
       - "**.toc"
@@ -46,6 +47,9 @@ jobs:
 
       - name: Audit TOC order and module ownership
         run: python tools/audit_numbers.py
+
+      - name: Audit skill-bar style modules and class artwork
+        run: python tools/audit_bar_styles.py
 
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
