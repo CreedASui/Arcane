@@ -16,6 +16,11 @@ N.Lifecycle = N.Lifecycle or {}
 N.Options = N.Options or {}
 N.Commands = N.Commands or {}
 local C = N.Config
+-- Load order in Arcane.toc follows the data flow:
+-- Widgets -> combat rules -> icons -> labels -> combat API -> preview -> anchors ->
+-- geometry -> culling -> placement -> animation -> lifecycle -> options -> commands.
+-- Shared behavior stays with its owner; other modules call that implementation.
+
 --[[
 Arcane UI: damage numbers (Smooth Numbers) - calmer, cleaner damage numbers for Azeroth Survivors.
 
