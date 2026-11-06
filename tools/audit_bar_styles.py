@@ -59,7 +59,7 @@ def main() -> None:
     bar = source("Bar.lua")
     core = source("Core.lua")
 
-    found = set(re.findall(r"^\s{1,4}([a-z]+)\s*=\s*\{", data, re.M))
+    found = set(re.findall(r"^\t([a-z]+)\s*=\s*\{", data, re.M))
     if found != set(CLASSES):
         fail("Class palette data must define exactly the nine supported classes; "
              f"found {', '.join(sorted(found)) or 'none'}")
@@ -90,6 +90,8 @@ def main() -> None:
                      'StyleChoice(C.BarStyles.FULL_CLASS, "Full class"'):
         if contract not in core:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
+    if 'C.LText(styleLabel, "Skill bar style")' not in core:
+        fail("Options hub must label the skill-bar style selector")
     if "state.db.style = CLASSIC" not in styles:
         fail("Classic Arcane style must remain the default for existing saved variables")
     if 'C.DB("bar")' not in styles:
