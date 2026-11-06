@@ -113,7 +113,7 @@ local function Line(i)
 		S.list[i] = e
 	end
 	e.icon, e.portrait, e.classKey, e.color, e.proc, e.top, e.topRate, e.school = nil, nil, nil, nil, false, nil, nil, nil
-	e.skill, e.pet = nil, nil
+	e.skill, e.pet, e.petLine, e.ownerId = nil, nil, nil, nil
 	return e
 end
 
@@ -137,10 +137,10 @@ local function SchoolOf(snap, row)
 	return best
 end
 
--- a source view: your own skills, each on its line, and each summon's skills on theirs
--- ("Infernal: Immolation"), all the summons of one kind counted together
+-- The hero's skills stay separate; pets and summons share one Pet line, while totems
+-- keep their own lines. Skill details are retained per summon for the pet bar.
 local function SourceLines(snap, tab)
-	local n, at = 0, {}
+	local n, at, petParts, petSkills = 0, {}, {}, {}
 	local list = type(snap.rows) == "table" and snap.rows or {}
 	local actors = type(snap.actors) == "table" and snap.actors or {}
 	local sources = type(snap.sources) == "table" and snap.sources or {}
@@ -152,11 +152,30 @@ local function SourceLines(snap, tab)
 			local own = row.actorId == nil or actor.kind == "hero" or row.actorId == row.ownerId
 			local who = own and "" or tostring(actor.summonKey or actor.totemKey or actor.name or row.actorId)
 			local proc = row.nativeProc and true or false
-			-- all of a skill's ranks are one line, by its name: the game counts each rank apart
 			local src = sources[row.sourceKey] or {}
 			local skill = (type(src.name) == "string" and src.name ~= "" and src.name) or src.abilityKey or src.talentKey
 				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
-			local key = "s" .. tostring(skill) .. "|" .. who .. (proc and "#p" or "")
+			local pet = not own and not actor.totemKey and actor.kind ~= "totem"
+			local key = pet and "pet" or ("s" .. tostring(skill) .. "|" .. who .. (proc and "#p" or ""))
+			if pet then
+				local part = (type(actor.name) == "string" and actor.name ~= "" and (actor.name .. ": ") or "")
+					.. ((type(src.name) == "string" and src.name ~= "") and src.name or tostring(skill))
+				petParts[part] = (petParts[part] or 0) + amount
+				if tab == "damage" then
+					local whoKey = tostring(actor.summonKey or actor.name or "?")
+					local skillList = petSkills[whoKey]
+					if not skillList then skillList = { at = {} }; petSkills[whoKey] = skillList end
+					local skillName = (type(src.name) == "string" and src.name ~= "") and src.name or tostring(skill)
+					local it = skillList.at[skillName]
+					if not it then
+						it = { name = skillName, key = row.sourceKey, amount = 0 }
+						skillList.at[skillName] = it
+						table.insert(skillList, it)
+					end
+					it.amount = it.amount + amount
+					if not it.icon and type(src.icon) == "table" and src.icon.status == "ready" then it.icon = src.icon.path end
+				end
+			end
 			local rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate) or 0
 			local e = at[key] and S.list[at[key]]
 			if e then
@@ -173,25 +192,43 @@ local function SourceLines(snap, tab)
 				e.share = tonumber(row.share) or 0
 				local name = type(src.name) == "string" and src.name or tostring(row.sourceKey)
 				e.skill = name
-				if not own and type(actor.name) == "string" and actor.name ~= "" and not string.find(name, actor.name, 1, true) then
-					e.pet = actor.name -- shown in a tag after the skill (the tooltip has both)
+				if pet then
+					e.petLine, e.proc = true, false
+					name = C.L("Pet")
+					e.skill = name
+				elseif not own and type(actor.name) == "string" and actor.name ~= "" and not string.find(name, actor.name, 1, true) then
+					e.pet = actor.name
 					name = actor.name .. ": " .. name
 				end
 				e.name = name
-				if type(src.icon) == "table" and src.icon.status == "ready" and type(src.icon.path) == "string" then
+				if pet and type(actor.portrait) == "table" and actor.portrait.status == "ready" then
+					e.portrait = actor.portrait.portraitKey
+				elseif type(src.icon) == "table" and src.icon.status == "ready" and type(src.icon.path) == "string" then
 					e.icon = src.icon.path
 				elseif not own and type(actor.portrait) == "table" and actor.portrait.status == "ready" then
-					e.portrait = actor.portrait.portraitKey -- a summon's own swing: its face
+					e.portrait = actor.portrait.portraitKey
 				end
-				local school = tab ~= "healing" and SchoolOf(snap, row) or nil
-				e.school = school
+				e.school = tab ~= "healing" and SchoolOf(snap, row) or nil
 			end
+		end
+	end
+	if tab == "damage" then
+		for _, skillList in pairs(petSkills) do
+			table.sort(skillList, function(a, b) return a.amount > b.amount end)
+		end
+		C.petSkills = petSkills
+	end
+	local petLine = at["pet"] and S.list[at["pet"]]
+	if petLine then
+		local most = -1
+		for part, amount in pairs(petParts) do
+			if amount > most then petLine.top, most = part, amount end
 		end
 	end
 	return n
 end
 
--- Party DPS: a line a hero, in its class's color, with its portrait
+-- One line per party member, tagged with their best skill.
 local function OwnerLines(snap)
 	local n = 0
 	local list = type(snap.rows) == "table" and snap.rows or {}
@@ -203,7 +240,7 @@ local function OwnerLines(snap)
 			n = n + 1
 			local e = Line(n)
 			local actor = actors[row.ownerId] or {}
-			e.key, e.amount = "o" .. tostring(row.ownerId), amount
+			e.key, e.amount, e.ownerId = "o" .. tostring(row.ownerId), amount, row.ownerId
 			e.rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate)
 			e.recent, e.share = RateValue(row.recentRate), tonumber(row.share) or 0
 			e.name = type(actor.name) == "string" and actor.name or "?"
@@ -215,10 +252,38 @@ local function OwnerLines(snap)
 	return n
 end
 
+local function BestSkills(snap)
+	local list = type(snap.rows) == "table" and snap.rows or {}
+	local sources = type(snap.sources) == "table" and snap.sources or {}
+	local best = {}
+	for i = 1, table.getn(list) do
+		local row = list[i]
+		local amount = type(row) == "table" and tonumber(row.displayAmount) or 0
+		if amount > 0 and row.ownerId ~= nil and (not best[row.ownerId] or amount > best[row.ownerId].amount) then
+			local src = sources[row.sourceKey] or {}
+			local name = (type(src.name) == "string" and src.name ~= "" and src.name)
+				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
+			best[row.ownerId] = { name = name, amount = amount,
+				rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate) }
+		end
+	end
+	for i = 1, S.n do
+		local e = S.list[i]
+		local b = e and e.ownerId and best[e.ownerId]
+		if b then e.pet, e.top, e.topRate = b.name, b.name, b.rate end
+	end
+end
+
 local function FromSnapshot(snap, tab)
 	local n
-	if tab == "party" then n = OwnerLines(snap) else n = SourceLines(snap, tab) end
-	S.n = n
+	if tab == "party" then
+		n = OwnerLines(snap)
+		S.n = n
+		BestSkills(snap)
+	else
+		n = SourceLines(snap, tab)
+		S.n = n
+	end
 	local totals = type(snap.totals) == "table" and snap.totals or {}
 	S.total = tonumber(totals.displayAmount) or 0
 	S.rate = RateValue(totals.recentRate) or RateValue(totals.displayRate)
@@ -814,7 +879,9 @@ local function ShowTip(r)
 		GameTooltip:AddDoubleLine(C.L("Last 10 seconds"), C.Commas(math.floor(e.recent + 0.5)) .. " " .. tab.unit, 0.8, 0.8, 0.8, 1, 1, 1)
 	end
 	GameTooltip:AddDoubleLine(C.L("Share"), string.format("%.1f%%", (e.share or 0) * 100), 0.8, 0.8, 0.8, 1, 1, 1)
-	if e.top then
+	if e.petLine and e.top then
+		GameTooltip:AddDoubleLine(C.L("Most damage"), e.top, 0.8, 0.8, 0.8, 1, 1, 1)
+	elseif e.top then
 		GameTooltip:AddDoubleLine(C.L("Best spell"), e.top .. (e.topRate and ("  " .. Amount(e.topRate) .. " dps") or ""), 0.8, 0.8, 0.8, 1, 1, 1)
 	end
 	if e.proc then GameTooltip:AddLine(C.L("A talent's or amulet's own damage."), 0.55, 0.75, 1, 1) end
@@ -983,7 +1050,7 @@ local function StepRow(r, e, rank, slot, max, dt, now)
 	local cc = (db.tab == "party" and e.color) or nil
 	if cc then
 		C.TextColor(r.name, 0.4 + cc[1] * 0.6, 0.4 + cc[2] * 0.6, 0.4 + cc[3] * 0.6)
-	elseif e.pet then
+	elseif e.pet or e.petLine then
 		C.TextColor(r.name, 1, 0.86, 0.6) -- a summon's line in its tag's gold, even when the tag finds no room
 	else
 		C.TextColor(r.name, 1, 0.97, 0.92)

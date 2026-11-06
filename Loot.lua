@@ -102,6 +102,20 @@ local function Rarity(hex)
 	return nil
 end
 
+local TO_QUALITY = { [0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [7] = 3 }
+local function RarityOfName(name)
+	if type(name) ~= "string" then return nil end
+	local rarity = C.lootWeapons and C.lootWeapons[name]
+	if not rarity and C.lootSets then
+		local best = 0
+		for set, value in pairs(C.lootSets) do
+			local n = string.len(set)
+			if n > best and string.find(name, set, 1, true) then best, rarity = n, value end
+		end
+	end
+	return rarity and TO_QUALITY[rarity]
+end
+
 -- a line of the chat: a drop, or marks earned
 local function Hear(msg)
 	if type(msg) ~= "string" then return end
@@ -143,6 +157,7 @@ local function Hear(msg)
 				item.quality = Rarity(hex)
 			end
 			if item.name == "" then return end
+			if not item.quality then item.quality = RarityOfName(item.name) end
 			if type(GetItemInfo) == "function" and item.id then
 				local _, _, quality, _, _, _, _, _, icon = GetItemInfo(item.id)
 				item.quality, item.icon = quality or item.quality, icon

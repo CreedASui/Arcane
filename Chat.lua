@@ -230,7 +230,66 @@ local function ClearAll(on)
 	end
 end
 
+------------------------------------------------------------------------ moved and sized by hand
+-- Save the game's original chat geometry, then keep a custom location and size between reloads.
+local function Home(frame)
+	if db.home then return end
+	db.home = { x = frame:GetLeft(), y = frame:GetBottom(), w = frame:GetWidth(), h = frame:GetHeight() }
+end
+local function Place(frame, p)
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", p.x, p.y)
+	frame:SetWidth(p.w)
+	frame:SetHeight(p.h)
+	frame.arcaneW, frame.arcaneSetW = nil, nil
+end
+local function GoHome(frame)
+	if type(frame) ~= "table" or not db.home then return end
+	Place(frame, db.home)
+	db.home = nil
+end
+local function SavePlace(frame)
+	frame:StopMovingOrSizing()
+	db.place = { x = frame:GetLeft(), y = frame:GetBottom(), w = frame:GetWidth(), h = frame:GetHeight() }
+	Place(frame, db.place)
+end
+local function BuildMover()
+	local chat = getglobal("ChatFrame1")
+	if W.mover or type(chat) ~= "table" then return end
+	local m = CreateFrame("Frame", "ArcaneChatMover", UIParent)
+	W.mover = m
+	m:SetAllPoints(chat)
+	m:SetFrameStrata("DIALOG")
+	m:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
+	m:SetBackdropColor(0.1, 0.2, 0.4, 0.35)
+	m:SetBackdropBorderColor(0.91, 0.70, 0.30, 0.8)
+	m:EnableMouse(true)
+	m:RegisterForDrag("LeftButton")
+	m:SetScript("OnDragStart", function() Home(chat); chat:SetMovable(true); chat:StartMoving() end)
+	m:SetScript("OnDragStop", function() SavePlace(chat) end)
+	m.text = C.Text(m, C.FONT, 11, "OUTLINE", "CENTER", 200)
+	m.text:SetPoint("CENTER", m, "CENTER", 0, 0)
+	m.text:SetTextColor(0.98, 0.85, 0.52)
+	C.LText(m.text, "Chat")
+	local g = CreateFrame("Button", "ArcaneChatGrip", m)
+	m.grip = g
+	g:SetWidth(16)
+	g:SetHeight(16)
+	g:SetPoint("BOTTOMRIGHT", m, "BOTTOMRIGHT", 0, 0)
+	g.tex = C.Tex(g, "OVERLAY", "Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+	g.tex:SetAllPoints(g)
+	g:SetScript("OnMouseDown", function()
+		Home(chat)
+		chat:SetResizable(true)
+		chat:SetMinResize(200, 80)
+		chat:StartSizing("BOTTOMRIGHT")
+	end)
+	g:SetScript("OnMouseUp", function() SavePlace(chat) end)
+	m:Hide()
+end
+
 ------------------------------------------------------------------------ on and off
+
 local function Apply()
 	Build()
 	local on = db.enabled and true or false
@@ -253,6 +312,16 @@ local function Apply()
 	end
 	if on then C.HideStock("ChatFrameMenuButton") else C.RestoreStock("ChatFrameMenuButton") end
 	DressInput(on)
+	BuildMover()
+	local chat = getglobal("ChatFrame1")
+	if type(chat) == "table" then
+		if on and db.place then
+			Home(chat)
+			Place(chat, db.place)
+		elseif not on then
+			GoHome(chat)
+		end
+	end
 	ClearAll(on)
 	S.applied = on
 	if not on then
@@ -280,6 +349,19 @@ end
 
 ------------------------------------------------------------------------ every frame
 local function Step(dt)
+	if W.mover then
+		local moveOn = (db.enabled and C.unlocked) and true or false
+		if moveOn ~= (W.mover:IsShown() and true or false) then
+			if moveOn then W.mover:Show() else W.mover:Hide() end
+		end
+	end
+	if S.resetSeen ~= C.resetStamp then
+		if S.resetSeen ~= nil and db.place then
+			db.place = nil
+			GoHome(getglobal("ChatFrame1"))
+		end
+		S.resetSeen = C.resetStamp
+	end
 	if not (db.enabled and S.applied and W.glass) then return end
 	local pal = C.Pal()
 	if S.stamp ~= C.palStamp then

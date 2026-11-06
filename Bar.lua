@@ -110,6 +110,11 @@ local function NewSlot(kind, size, label)
 		r.text:SetPoint("CENTER", r, "CENTER", 1, 0)
 		C.Vis(r, false)
 		s.rank = r
+		-- Active ground effects and totem counts appear in the slot's upper-left corner.
+		s.active = C.Text(s.top, C.FONT, 12, "OUTLINE", "LEFT", 30)
+		s.active:SetPoint("TOPLEFT", b, "TOPLEFT", 3, -2)
+		s.active:SetTextColor(1, 0.86, 0.45)
+		s.casts = {}
 	end
 	b:SetScript("OnEnter", function()
 		s.hovering = true
@@ -187,6 +192,12 @@ local function StepDock(dt)
 end
 
 ------------------------------------------------------------------------ reading
+local LASTS = {
+	spell_frost_icestorm = 8, spell_fire_soulburn = 8, spell_shadow_rainoffire = 8,
+	spell_holy_innerfire = 8, spell_nature_cyclone = 10, spell_fire_incinerate = 15,
+	ability_marksmanship = 6, spell_frost_freezingbreath = 30, spell_fire_flameshock = 15,
+}
+
 local function ReadAbilities(cds)
 	for i = 1, 7 do
 		local s = slots[i]
@@ -205,11 +216,51 @@ local function ReadAbilities(cds)
 		if cds then
 			local start, duration, enable = Call(GetActionCooldown, s.action)
 			if has and start and duration and duration > 0 and enable ~= 0 then
+				if s.casts and start > (s.castAt or 0) + 0.05 then
+					s.castAt = start
+					table.insert(s.casts, start)
+				end
 				s.cdStart, s.cdDur = start, duration
 			else
 				s.cdStart, s.cdDur = 0, 0
 			end
 		end
+	end
+end
+
+local IconKey -- forward declaration: counters run before the loadout helpers
+
+local function TotemCounts()
+	if type(AZS_GetTotems) ~= "function" then return nil end
+	local ok, list = pcall(AZS_GetTotems)
+	if not ok or type(list) ~= "table" then return nil end
+	local out = {}
+	for i = 1, table.getn(list) do
+		local t = list[i]
+		local key = type(t) == "table" and IconKey(t.icon)
+		if key then out[key] = (out[key] or 0) + (tonumber(t.count) or 0) end
+	end
+	return out
+end
+
+local function StepCounts(now, totems)
+	for i = 1, 6 do
+		local s = slots[i]
+		local key = s.has and IconKey(s.tex)
+		local n = 0
+		local lasts = key and LASTS[key]
+		if totems and key and totems[key] then
+			n = totems[key]
+		elseif lasts then
+			for k = table.getn(s.casts), 1, -1 do
+				if now - s.casts[k] >= lasts then table.remove(s.casts, k) end
+			end
+			n = table.getn(s.casts)
+		end
+		if not lasts then
+			for k = table.getn(s.casts), 1, -1 do table.remove(s.casts, k) end
+		end
+		C.SetText(s.active, (n > 0) and tostring(n) or "")
 	end
 end
 
@@ -260,7 +311,7 @@ end
 ------------------------------------------------------------------------ the abilities' ranks
 -- The game's loadout lists your abilities with their ranks and their icons: each slot finds its
 -- own by the icon it shows (or, if the game gives no icons, by its slot number).
-local function IconKey(path)
+IconKey = function(path)
 	if type(path) ~= "string" or path == "" then return nil end
 	local p = string.lower(string.gsub(path, "/", "\\"))
 	p = string.gsub(p, "%.blp$", "")
@@ -607,6 +658,11 @@ local function Step(dt)
 		S.rankClock = RANK_EVERY
 		S.spellsSeen = AZS_SPELLS_UPDATED
 		UpdateRanks()
+	end
+	S.countClock = (S.countClock or 0) - dt
+	if S.countClock <= 0 then
+		S.countClock = 0.2
+		StepCounts(now, TotemCounts())
 	end
 	for i = 1, 7 do
 		StepSlot(slots[i], now, dt, pal)

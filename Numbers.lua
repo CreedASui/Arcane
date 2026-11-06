@@ -111,10 +111,18 @@ local PRESET_NOTES = {
 	clean = "One number per enemy, counting up.",
 	detailed = "More numbers, sooner, plus Miss and Immune.",
 }
+local MOTION_ORDER = { "smooth", "fountain", "rise", "impact" }
+local MOTION_NAMES = { smooth = "Smooth", fountain = "Fountain", rise = "Rise", impact = "Impact" }
+local MOTION_NOTES = {
+	smooth = "Numbers drift up gently and melt away.",
+	fountain = "Numbers arc up and fall away to the side.",
+	rise = "Numbers scroll straight up, quickly.",
+	impact = "Numbers punch in big and stay put; crits shake.",
+}
 
 local DEFAULTS = {
 	enabled = true,
-	preset = "clean",
+	preset = "clean", motion = "smooth",
 	maxLabels = 12, group = false, mergeAge = 0.9, misses = false, minShare = 0,
 	size = 1.0, font = 1,
 	short = true, spread = true, count = false, school = false, icons = true,
@@ -222,6 +230,7 @@ local function InitDB()
 		db.preset = "clean"
 	end
 	db.size = Clamp(db.size, 0.6, 1.8)
+	if not MOTION_NAMES[db.motion or ""] then db.motion = "smooth" end
 	db.maxLabels = Clamp(math.floor(db.maxLabels), 1, 80)
 	db.mergeAge = Clamp(db.mergeAge, 0.1, 2)
 	db.minShare = Clamp(db.minShare, 0, 0.9)
@@ -996,6 +1005,7 @@ local function ReadEvents(now)
 					NoteHit(ev, now)
 					NoteSource(ev)
 					if ev.abilityName and ev.icon and AUI.LearnIcon then AUI.LearnIcon(ev.abilityName, ev.icon) end
+					if AUI.NoteHitValue then AUI.NoteHitValue(ev) end
 					nPending = nPending + 1
 					pending[nPending] = ev
 				end
@@ -1771,14 +1781,17 @@ local function Animate(label, now, dt, ratio)
 	label.swellSpeed = (speed - POP_SPRING * push) * decay
 	label.swell = label.bump + (away + push) * decay
 	local pop = 1
-	if shownAge < POP_TIME then
-		local t = 1 - shownAge / POP_TIME
+	local motion = db.motion
+	local popTime = (motion == "impact") and 0.32 or POP_TIME
+	if shownAge < popTime then
+		local t = 1 - shownAge / popTime
 		local strength = 0.25
 		if label.crit then
 			strength = 0.55
 		elseif label.miss then
 			strength = 0.1
 		end
+		if motion == "impact" then strength = strength * 2.6 end
 		pop = 1 + strength * t * t * t
 	end
 	local fading = Smooth(fadeP)
@@ -1818,7 +1831,21 @@ local function Animate(label, now, dt, ratio)
 	label.nudgeSpeed = (speed - SPRING * push) * decay
 	label.nudge = label.nudgeGoal + (offset + push) * decay
 	local rise = Lift(label, now) + label.nudge + FADE_RISE * db.size * fadeP * fadeP
-	local px = math.floor(label.x * ratio * 10 + 0.5) / 10
+	local sideways = 0
+	local age = now - label.born
+	if motion == "fountain" then
+		if not label.side then label.side = (math.mod(math.floor(label.born * 997), 2) == 0) and 1 or -1 end
+		sideways = label.side * 52 * db.size * (1 - math.exp(-age * 1.8))
+		rise = (BASE_RISE + 95 * age - 80 * age * age) * db.size + label.nudge
+	elseif motion == "rise" then
+		rise = (BASE_RISE + 85 * age) * db.size + label.nudge + FADE_RISE * db.size * fadeP
+	elseif motion == "impact" then
+		rise = BASE_RISE * db.size + label.nudge
+		if label.crit and shownAge < 0.3 then
+			sideways = math.sin(shownAge * 95) * 5 * db.size * (1 - shownAge / 0.3)
+		end
+	end
+	local px = math.floor((label.x + sideways) * ratio * 10 + 0.5) / 10
 	local py = math.floor((label.y + rise) * ratio * 10 + 0.5) / 10
 	if w.px ~= px or w.py ~= py then
 		w.holder:SetPoint("CENTER", WorldFrame, "BOTTOMLEFT", px, py)
@@ -2196,6 +2223,12 @@ RefreshOptions = function()
 		PaintButton(button)
 	end
 	o.styleNote:SetText(L(PRESET_NOTES[db.preset] or ""))
+	for i = 1, table.getn(o.motions) do
+		local button = o.motions[i]
+		button.selected = db.motion == button.motion
+		PaintButton(button)
+	end
+	o.motionNote:SetText(L(MOTION_NOTES[db.motion] or ""))
 	o.sizeText:SetText(string.format("%d%%", math.floor(db.size * 100 + 0.5)))
 	o.fontText:SetText(FONTS[db.font].name)
 	for i = 1, table.getn(o.checks) do
@@ -2212,7 +2245,7 @@ local function BuildOptions()
 	local o = CreateFrame("Frame", "ArcaneNumbersOptions", UIParent)
 	options = o
 	o:SetWidth(300)
-	o:SetHeight(548)
+	o:SetHeight(620)
 	o:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 	if AUI.AboveHub then AUI.AboveHub(o) else o:SetFrameStrata("DIALOG") end
 	o:SetBackdrop({ bgFile = FLAT, edgeFile = FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
@@ -2351,6 +2384,26 @@ local function BuildOptions()
 	reset:SetPoint("TOPLEFT", o, "TOPLEFT", 154, -488)
 	LText(reset.text, "Reset settings")
 
+	local motionHead = Text(o, 12, 0.85, 0.85, 0.9)
+	motionHead:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -524)
+	LText(motionHead, "Motion")
+	o.motions = {}
+	for i = 1, table.getn(MOTION_ORDER) do
+		local name = MOTION_ORDER[i]
+		local button = MakeButton(o, 66, 24, MOTION_NAMES[name], function()
+			db.motion = name
+			RefreshOptions()
+		end)
+		button.motion = name
+		LText(button.text, MOTION_NAMES[name])
+		button:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + (i - 1) * 69, -542)
+		o.motions[i] = button
+	end
+	o.motionNote = Text(o, 10, 0.6, 0.6, 0.65)
+	o.motionNote:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -572)
+	o.motionNote:SetWidth(272)
+	o.motionNote:SetJustifyH("LEFT")
+
 	local footer = Text(o, 10, 0.5, 0.5, 0.55)
 	footer:SetPoint("BOTTOM", o, "BOTTOM", 0, 10)
 	LText(footer, "Type /Arcane numbers to open this window.")
@@ -2373,7 +2426,7 @@ end
 ------------------------------------------------------------------------------
 -- Slash commands
 
-local function Help()
+AUI.NumbersHelp = function()
 	Print(L("damage number commands:"))
 	Print(L("/Arcane numbers - options window"))
 	Print(L("/Arcane numbers on | off - Arcane UI's numbers or the game's own"))
@@ -2383,11 +2436,12 @@ local function Help()
 	Print(L("/Arcane numbers dots - DoT totals until the enemy dies, on or off"))
 	Print(L("/Arcane numbers crowd - merge a spell hitting 3+ enemies, on or off"))
 	Print(L("/Arcane numbers spells - merge every spell, on or off"))
+	Print(L("/Arcane numbers smooth | fountain | rise | impact - choose how numbers move"))
 	Print(L("/Arcane numbers preview - show some pretend numbers"))
 	Print(L("/Arcane numbers reset - default settings"))
 end
 
-local function NumberSlash(msg)
+AUI.NumbersSlash = function(msg)
 	if not db then
 		InitDB()
 	end
@@ -2409,6 +2463,10 @@ local function NumberSlash(msg)
 			RefreshOptions()
 		end
 		Print(L("style: ") .. L(PRESET_NAMES[command]) .. ". " .. L(PRESET_NOTES[command]))
+	elseif MOTION_NAMES[command] then
+		db.motion = command
+		RefreshOptions()
+		Print(L("number motion: ") .. L(MOTION_NAMES[command]) .. ". " .. L(MOTION_NOTES[command]))
 	elseif command == "size" then
 		local value = tonumber(rest)
 		if value then
@@ -2419,7 +2477,7 @@ local function NumberSlash(msg)
 			RefreshOptions()
 			Print(string.format(L("size %d%%."), math.floor(db.size * 100 + 0.5)))
 		else
-			Help()
+			AUI.NumbersHelp()
 		end
 	elseif command == "dots" or command == "dot" then
 		db.dotTotals = not db.dotTotals
@@ -2467,7 +2525,7 @@ local function NumberSlash(msg)
 		RefreshOptions()
 		Print(L("settings reset."))
 	else
-		Help()
+		AUI.NumbersHelp()
 	end
 end
 
@@ -2476,7 +2534,7 @@ AUI.numberSlash = function(msg)
 		Print(L("Smooth Numbers is still on, so it draws the numbers. Turn it off in Options -> AddOns."))
 		return
 	end
-	NumberSlash(msg)
+	AUI.NumbersSlash(msg)
 end
 AUI.numberOptions = function()
 	AUI.numberSlash("")
@@ -2539,7 +2597,7 @@ end)
 -- If the game isn't calling our frame handler (the preview while off, or a
 -- handler the game dropped), the numbers move from here instead, and the
 -- handler is asked for again now and then.
-local nextRegisterTry = 0
+driver.nextRegisterTry = 0
 driver:SetScript("OnUpdate", function()
 	if not db or blocked then
 		return
@@ -2558,8 +2616,8 @@ driver:SetScript("OnUpdate", function()
 	if active or nLabels > 0 or testUntil then
 		SafeStep(now)
 	end
-	if active and now - handlerAt > 1 and now >= nextRegisterTry then
-		nextRegisterTry = now + 5
+	if active and now - handlerAt > 1 and now >= driver.nextRegisterTry then
+		driver.nextRegisterTry = now + 5
 		local ok, result, failure = pcall(AZS_RegisterCombatTextFrameHandler, OnFrame)
 		if ok and failure == nil and result ~= false then
 			registered = true

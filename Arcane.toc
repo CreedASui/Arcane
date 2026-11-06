@@ -27,9 +27,12 @@ ArcanePlates.lua
 ArcanePlatesOptions.lua
 Chests.lua
 Meter.lua
+Hurt.lua
+Pets.lua
 Luck.lua
 Summary.lua
 Character.lua
 Talents.lua
 Chat.lua
+LootSets.lua
 Loot.lua
