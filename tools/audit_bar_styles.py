@@ -92,6 +92,10 @@ def main() -> None:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
     if 'C.LText(styleLabel, "Skill bar style")' not in core:
         fail("Options hub must label the skill-bar style selector")
+    if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
+        fail("Hybrid must use its own left Arcane medallion endcap")
+    if 'panel.endRight or {}' not in styles:
+        fail("Hybrid must reserve the right side for the class crest")
     if "state.db.style = CLASSIC" not in styles:
         fail("Classic Arcane style must remain the default for existing saved variables")
     if 'C.DB("bar")' not in styles:
