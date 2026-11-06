@@ -185,8 +185,22 @@ local function RestoreBasePanel(panel)
 	panel.fill:SetTexture(panel.baseFill or (C.ART .. "PanelFill"))
 	for i = 1, table.getn(panel.ends) do C.Vis(panel.ends[i], true) end
 	if panel.sigils then
-		C.Vis(panel.sigils[1], true)
-		C.Vis(panel.sigils[2], true)
+		for i, side in ipairs({ "LEFT", "RIGHT" }) do
+			local texture = panel.sigils[i]
+			if texture then
+				local k = (side == "LEFT") and -1 or 1
+				texture:SetWidth(BASE_SIGIL)
+				texture:SetHeight(BASE_SIGIL)
+				texture:ClearAllPoints()
+				texture:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * BASE_OUT, -BASE_FOOT)
+				if k > 0 then
+					texture:SetTexCoord(1, 0, 0, 1)
+				else
+					texture:SetTexCoord(0, 1, 0, 1)
+				end
+				C.Vis(texture, true)
+			end
+		end
 	end
 	if panel.classEmblems then
 		C.Vis(panel.classEmblems[1], false)
