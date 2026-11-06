@@ -1,14 +1,13 @@
--- Damage-number lifecycle: frame updates, activation, recovery and game HUD handoff.
+-- Damage-number lifecycle: frame stepping, activation, recovery and game-number handoff.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Lifecycle = N.Lifecycle or {}
 local S = N.Lifecycle
 local C = N.Config
 
 ------------------------------------------------------------------------------
 -- Every frame
 
-S.lastNow, S.nextBossRefresh, S.nextSweep= nil, 0, 0
+S.lastNow, S.nextBossRefresh, S.nextSweep = nil, 0, 0
 
 local function RefreshBossNames()
 	N.Combat.bossNames = {}
@@ -118,9 +117,9 @@ local function Step(now)
 	N.Animation.Render(now, dt)
 end
 
-S.errors, S.lastErrorAt, S.errorShown, S.giveUp= 0, 0, false, false
-S.blocked= false -- Smooth Numbers itself is running, so this part stays off
-S.SetEnabled = nil-- below
+S.errors, S.lastErrorAt, S.errorShown, S.giveUp = 0, 0, false, false
+S.blocked = false  -- Smooth Numbers itself is running, so this part stays off
+S.SetEnabled = nil -- below
 
 -- A problem in one frame never reaches the game: that frame's numbers are
 -- dropped. Many problems in a row switch the addon off (done from OnUpdate,
@@ -146,7 +145,7 @@ end
 
 -- The game calls this every frame in the world, after the camera moved and
 -- before anything is drawn, so the numbers stay glued to the enemies.
-S.handlerAt= -1
+S.handlerAt = -1
 S.OnFrame = function()
 	local now = GetTime()
 	S.handlerAt = now
@@ -214,7 +213,7 @@ local function Deactivate()
 	S.ShowGameNumbers()
 end
 
-N.Options.RefreshOptions = nil-- below
+N.Options.RefreshOptions = nil -- below
 
 S.SetEnabled = function(on)
 	C.db.enabled = on and true or false
