@@ -16,3 +16,5 @@ The Tiny Plates feature adapts the MIT-licensed nameplate implementation by Valo
 ## Class skill-bar artwork
 
 The optional nine-class skill-bar treatment reuses the class emblems, crests and rail textures from the synced `JamieeLee/CreedUI-for-AS-` working base. Those assets retain the same project provenance and original rights notices described above; Arcane keeps its own panel branding, slot renderer and settings namespace.
+
+The Hybrid-only Arcane medallion is original generated artwork adapted for Arcane's identity. Its forged-metal base and separately colorized gem layer are new Hybrid assets; the original Classic Arcane sigil is unchanged. The class-specific right-hand emblems remain sourced from the synced Creed reference above.
