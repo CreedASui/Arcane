@@ -82,7 +82,7 @@ def main() -> None:
     print("PASS: existing slot/cooldown renderer delegates visual modes to one controller")
 
     for contract in ("p.railT = Rail(", "p.railB = Rail(", "p.endLeft = {}",
-                     "p.endRight = {}", "function C.PanelTheme(p, pal)"):
+                     "endLeft = {}", "endRight = {}", "function C.PanelTheme(p, pal)"):
         if contract not in core:
             fail(f"Core panel API is missing shared style support: {contract}")
     for contract in ('StyleChoice(C.BarStyles.CLASSIC, "Arcane"',
