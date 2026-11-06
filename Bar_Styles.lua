@@ -6,7 +6,8 @@ local CLASSIC, HYBRID, FULL_CLASS = 1, 2, 3
 local EMBLEM_U = 76 / 110 * 0.85
 local EMBLEM_W, EMBLEM_H = 512 * EMBLEM_U, 256 * EMBLEM_U
 local EMBLEM_L, EMBLEM_R, EMBLEM_IN = 220, 292, 24
-local RAIL_H, BASE_RAIL_H = 16 * 76 / 110, 8
+local RAIL_H, BASE_RAIL_H = 16 * 76 / 110, C.PANEL_RAIL or 8
+local PANEL_CORNER = C.PANEL_CORNER or 16
 local state = {
 	db = nil, class = nil, runId = nil, readClock = 0, stamp = 0,
 	palette = {}, paletteBase = nil, palettePalStamp = -1,
@@ -157,11 +158,11 @@ local function RestoreBasePanel(panel)
 	panel.railT:SetHeight(BASE_RAIL_H)
 	panel.railB:SetHeight(BASE_RAIL_H)
 	panel.railT:ClearAllPoints()
-	panel.railT:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, 0)
-	panel.railT:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, 0)
+	panel.railT:SetPoint("TOPLEFT", frame, "TOPLEFT", PANEL_CORNER, 0)
+	panel.railT:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PANEL_CORNER, 0)
 	panel.railB:ClearAllPoints()
-	panel.railB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 0)
-	panel.railB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 0)
+	panel.railB:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PANEL_CORNER, 0)
+	panel.railB:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -PANEL_CORNER, 0)
 	panel.fill:SetTexture(panel.baseFill or (C.ART .. "PanelFill"))
 	for i = 1, table.getn(panel.ends) do C.Vis(panel.ends[i], true) end
 	if panel.sigils then
@@ -197,13 +198,13 @@ function M.Apply(panel)
 	panel.railT:SetTexture(C.ART .. "PanelRail" .. theme.emblem .. "T")
 	panel.railT:SetHeight(RAIL_H)
 	panel.railT:ClearAllPoints()
-	panel.railT:SetPoint("TOPLEFT", panel.frame, "TOPLEFT", 16, y)
-	panel.railT:SetPoint("TOPRIGHT", panel.frame, "TOPRIGHT", -16, y)
+	panel.railT:SetPoint("TOPLEFT", panel.frame, "TOPLEFT", PANEL_CORNER, y)
+	panel.railT:SetPoint("TOPRIGHT", panel.frame, "TOPRIGHT", -PANEL_CORNER, y)
 	panel.railB:SetTexture(C.ART .. "PanelRail" .. theme.emblem .. "B")
 	panel.railB:SetHeight(RAIL_H)
 	panel.railB:ClearAllPoints()
-	panel.railB:SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", 16, -y)
-	panel.railB:SetPoint("BOTTOMRIGHT", panel.frame, "BOTTOMRIGHT", -16, -y)
+	panel.railB:SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", PANEL_CORNER, -y)
+	panel.railB:SetPoint("BOTTOMRIGHT", panel.frame, "BOTTOMRIGHT", -PANEL_CORNER, -y)
 	panel.fill:SetTexture(C.ART .. "PanelGlass")
 end
 
@@ -218,19 +219,19 @@ function M.Theme(panel, pal)
 	local theme = CurrentTheme()
 	local metal = theme.metal
 	for i = 1, table.getn(panel.metal) do
-		C.Color(panel.metal[i], metal[1], metal[2], metal[3], 1)
+		panel.metal[i]:SetVertexColor(metal[1], metal[2], metal[3], 1)
 	end
 	if mode == HYBRID then
 		local fill = theme.fill
-		C.Color(panel.fill, fill[1] * 0.48, fill[2] * 0.48, fill[3] * 0.48, 0.97)
-		C.Color(panel.sigils[1], metal[1], metal[2], metal[3], 1)
-		C.Color(panel.classEmblems[2], 1, 1, 1, 1)
+		panel.fill:SetVertexColor(fill[1] * 0.48, fill[2] * 0.48, fill[3] * 0.48, 0.97)
+		panel.sigils[1]:SetVertexColor(metal[1], metal[2], metal[3], 1)
+		panel.classEmblems[2]:SetVertexColor(1, 1, 1, 1)
 	else
 		local fill = theme.fill
-		C.Color(panel.fill, fill[1], fill[2], fill[3], 0.97)
-		C.Color(panel.railT, 1, 1, 1, 1)
-		C.Color(panel.railB, 1, 1, 1, 1)
-		C.Color(panel.classEmblems[1], 1, 1, 1, 1)
+		panel.fill:SetVertexColor(fill[1], fill[2], fill[3], 0.97)
+		panel.railT:SetVertexColor(1, 1, 1, 1)
+		panel.railB:SetVertexColor(1, 1, 1, 1)
+		panel.classEmblems[1]:SetVertexColor(1, 1, 1, 1)
 		C.Color(panel.classEmblems[2], 1, 1, 1, 1)
 	end
 end
