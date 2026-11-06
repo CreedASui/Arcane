@@ -518,7 +518,11 @@ local function Theme(pal)
 	else
 		C.BarColors(xp, pal.fillA, pal.fillM, pal.fillB)
 	end
-	C.BarTheme(xp, pal)
+	if Styles.Mode() == Styles.HYBRID then
+		C.BarTheme(xp, C.BRONZE)
+	else
+		C.BarTheme(xp, pal)
+	end
 end
 
 local function JewelRim(j)
