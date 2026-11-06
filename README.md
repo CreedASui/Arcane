@@ -61,6 +61,6 @@ The release asset is named `Arcane-v0.2.zip`. There is currently no checked-in `
 
 Arcane is developed as an independent project. Project history and retained upstream attribution are documented in [ATTRIBUTION.md](ATTRIBUTION.md). The bundled fonts in `Fonts/` are modified from Lora and Noto Sans CJK; their SIL Open Font License notices are retained in [`Fonts/LICENSE.txt`](Fonts/LICENSE.txt).
 
-## Working on it
+## Project files
 
 The source modules are at the repository root. Artwork is in [`Art/`](Art/), bundled fonts and their license are in [`Fonts/`](Fonts/), and the repository preview is in [`docs/images/`](docs/images/).
