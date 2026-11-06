@@ -158,8 +158,8 @@ end
 local function EnsureHybridArcane(panel)
 	if panel.hybridArcane then return end
 	local frame = panel.frame
-	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane")
-	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem")
+	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane.tga")
+	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem.tga")
 	for _, texture in ipairs({ panel.hybridArcane, panel.hybridGem }) do
 		texture:SetWidth(HYBRID_SIGIL)
 		texture:SetHeight(HYBRID_SIGIL)
