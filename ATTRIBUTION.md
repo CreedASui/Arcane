@@ -12,3 +12,7 @@ The bundled font files are modified versions of Lora and Noto Sans CJK. Their de
 ## Nameplate integration
 
 The Tiny Plates feature adapts the MIT-licensed nameplate implementation by Valorless from [Valorless/ASTinyPlates](https://github.com/Valorless/ASTinyPlates). Its runtime code, settings, frame identifiers and saved-variable keys have been integrated into Arcane's own namespace and options system. The original MIT notice is retained in [ArcanePlates-LICENSE.txt](ArcanePlates-LICENSE.txt). This credit records source provenance; it does not imply that the upstream project is part of or endorses Arcane.
+
+## Class skill-bar artwork
+
+The optional nine-class skill-bar treatment reuses the class emblems, crests and rail textures from the synced `JamieeLee/CreedUI-for-AS-` working base. Those assets retain the same project provenance and original rights notices described above; Arcane keeps its own panel branding, slot renderer and settings namespace.
