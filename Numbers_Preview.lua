@@ -1,7 +1,6 @@
 -- Damage-number preview: generate synthetic targets and hits for the options preview.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Preview = N.Preview or {}
 local S = N.Preview
 local C = N.Config
 
@@ -19,7 +18,7 @@ local TEST_SKILLS = {
 	{ school = 1 },
 }
 local TEST_DOT = { id = 172, name = "Corruption", school = 32, icon = "Interface\\Icons\\Spell_Shadow_AbominationExplosion" }
-S.testUntil, S.testSerial, S.testAcc= nil, 0, 0
+S.testUntil, S.testSerial, S.testAcc = nil, 0, 0
 local testLives = {} -- per pretend enemy: which life it is on, when it dies, its next tick
 
 S.FakePosition = function(index, now)
@@ -37,7 +36,7 @@ end
 local function TestEvent(index, now, skill)
 	S.testSerial = S.testSerial + 1
 	local ev = {
-		eventId = "preview" .. testSerial,
+		eventId = "preview" .. S.testSerial,
 		presentedAt = now,
 		targetId = TestTarget(index),
 		targetName = "Training Dummy",
