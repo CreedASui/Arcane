@@ -74,7 +74,7 @@ S.ReadEvents = function(now)
 				local ev = events[i]
 				if S.Wanted(ev, now) then
 					N.Combat.NoteHit(ev, now)
-					N.Combat.NoteSource(ev)
+					N.Icons.NoteSource(ev)
 					if ev.abilityName and ev.icon and AUI.LearnIcon then AUI.LearnIcon(ev.abilityName, ev.icon) end
 					if AUI.NoteHitValue then AUI.NoteHitValue(ev) end
 					N.Combat.nPending = N.Combat.nPending + 1
