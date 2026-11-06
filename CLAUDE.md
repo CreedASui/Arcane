@@ -1,141 +1,63 @@
-# Arcane UI: handoff for Claude Code
+# Arcane UI — developer handoff
 
-Read this first. It's where the work stands, the rules the code depends on, how to check it, and
-what's next. It is the working handoff for developing Arcane UI with JamieeLee (GitHub:
-**JamieeLee**). JamieeLee directs the product and design goals, tests changes in game, and shares
-screenshots. Provide ready-to-install builds and clear summaries of changes.
+Current release: **v0.2**  
+Repository: <https://github.com/JamieeLee/Arcane>
 
-## 1. What this is
+Arcane is a HUD addon for **Azeroth Survivors**, a World of Warcraft 1.12.1 roguelike running on the benilla client. The addon uses **Lua 5.0** and the 1.12 widget API. JamieeLee owns product direction and tests changes in the game.
 
-- **Arcane UI** is a HUD addon for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), a
-  World of Warcraft 1.12.1 roguelike played in the browser on **benilla**, a 1.12 client rewritten
-  in Rust ([github.com/samwhosung/benilla](https://github.com/samwhosung/benilla)). The game adds its
-  own addon API (`AZS_*`, see section 6).
-- Addon language: **Lua 5.0** with the **1.12 widget API**.
-- Current version: **1.14.1**. Repository: <https://github.com/JamieeLee/Arcane>.
-- 11 languages: en, fr, de, es, pt, zh, ru, ja, ko, pl, tr.
+## Repository layout
 
-## 2. Releases
+The repository root is the **source workspace**, not the install folder. All addon source files are at the root:
 
-The repository retains the inherited development history and tools. Build the installable package
-from the repository root with `python3 tools/package.py` (requires Python 3 and FontTools); it
-validates the TOC and assets, rebrands bundled font metadata in the staged package, and writes
-`dist/Arcane-<version>.zip`. Releases use tag `v<version>`, title **Arcane UI <version>**, the
-version's `CHANGELOG.md` entry as the release notes, and that ZIP as the attachment.
+- `Arcane.toc` — addon manifest, load order, title, notes and version.
+- `Core.lua` — shared helpers, saved settings, language system, options hub, `/Arcane`, shared panel and frame utilities.
+- `Timer.lua`, `Numbers.lua`, `Bosses.lua`, `Skulls.lua`, `Units.lua`, `Party.lua`, `Downed.lua` — timer, combat numbers, boss/guardian display, unit/party frames and revive indicators.
+- `Bar.lua`, `Tally.lua`, `LevelUps.lua`, `Minimap.lua`, `MinimapButton.lua`, `Chests.lua` — skill bar, run counters, stored level-ups, minimap and map pins.
+- `ArcanePlates.lua`, `ArcanePlatesOptions.lua` — Tiny Plates nameplates and their options.
+- `Meter.lua`, `Hurt.lua`, `Pets.lua`, `Luck.lua`, `Summary.lua`, `Character.lua`, `Talents.lua`, `Chat.lua`, `LootSets.lua`, `Loot.lua` — meter, damage taken/healing numbers, pet bar, luck, run summary, character/talents, chat and loot.
+- `Locale.lua` — English source strings plus French, German, Spanish and Portuguese translations.
+- `Locale_zh.lua`, `Locale_ru.lua`, `Locale_ja.lua`, `Locale_ko.lua`, `Locale_pl.lua`, `Locale_tr.lua` — Chinese, Russian, Japanese, Korean, Polish and Turkish translations.
+- `Art/` — committed BLP textures used by the UI.
+- `Fonts/` — `Letters.ttf`, `LettersCJK.ttf` and `LICENSE.txt`.
+- `ArcanePlates-LICENSE.txt` — retained MIT notice for Tiny Plates.
+- `docs/images/arcane-ui-v0.2.png` — README preview image.
+- `README.md`, `CHANGELOG.md`, `ATTRIBUTION.md`, `CLAUDE.md` — project documentation.
 
-## 3. Layout
+There are currently no packaging or development-tool directories in this repository. No packaging scripts, mock client or automated test harness are checked in. Do not document or instruct contributors to run scripts under removed paths.
 
-```
-Arcane/            the addon (this folder name is the install folder; never rename it)
-  Arcane.toc       load order, version, notes
-  Core.lua          helpers, memo writers, language system, the options hub, /Arcane, panel art,
-                    sizers and the resize cursor, tooltip faces, the meter's per-line icons
-  Locale.lua        en/fr/de/es/pt rows; Locale_<zh|ru|ja|ko|pl|tr>.lua are generated (dev/tr)
-  Timer.lua         the boss timer (DON'T TOUCH: the user loves it as it is)
-  Numbers.lua       floating damage numbers (combat text API)
-  Bosses.lua        boss and mini-boss bars        Units.lua    player and target frames
-  Skulls.lua        a skull over each boss (horned, red eyes) and guardian (world anchors), sized by distance
-  Party.lua         party frames                   Chat.lua     dressed chat, kept clear of the dragon
-  Downed.lua        friends down: banner + sound, a revive mark on their spot, edge arrows (world anchors)
-  LevelUps.lua      the Level Up! button for stored level-ups (replaces the game's "levels" HUD part)
-  Summary.lua       the run's summary panel when it ends (AZS_GetRunSummary)
-  Talents.lua       the talent window: trees side by side, learned talents with ranks (meter loadout)
-  Bar.lua           skill bar, each ability's rank box, jewelry, XP/s, the gold panel (C.PANEL_ROOM at each
-                    end for its painted dragons, Core's C.Panel)
-  Tally.lua         kills / gold / cache, docked inside the bar's panel
-  Minimap.lua       metal ring, local clock, zone name
-  MinimapButton.lua C.EdgeButton (draggable round buttons on the minimap's edge) and the C button
-  Chests.lua        caches and guardians' lairs as pins on the minimap
-  Meter.lua         damage meter (+ its crossed-swords edge button)
-  Luck.lua          luck medallion (+ its clover edge button)
-  Character.lua     the game's character window dressed: gear slots lit by rarity, the run's stats
-                    read off the game's own labels and regrouped beside it; the Skills tab is called
-                    Talents and opens Talents.lua's window (the game's own if that's missing); Honor hidden.
-                    Behind the level-up cards it dims (it shares panel art with the lit skill bar)
-  Art/              original art, BLP2 uncompressed (made by dev/art scripts)
-  Fonts/            Letters.ttf (Latin+Cyrillic, from Lora), LettersCJK.ttf (from Noto Sans CJK), OFL
-dev/                tools: stand-in game client + tests, translations, art, fonts, renderer
-                    (dev/README.md explains each)
-dev/attic/          code kept for later (the 1.8.0 talents strip, the 1.11.0 talent-tree page)
-README.md, CHANGELOG.md
-```
+## Version and release packaging
 
-## 4. Rules the code depends on
+The current version is **v0.2** in all current-version fields:
 
-**The game and its client**
-- The install folder must stay `Arcane`. The client loads it by its .toc name, every texture and
-  font path is `Interface\\AddOns\\Arcane\\...`, and settings live in `ArcaneDB` under that name.
-  Release zips are named **`Arcane-<version>.zip`** (the user's choice) and contain `Arcane/`.
-- **Lua 5.0:** no `#` (use `table.getn`), no `string.match` (use `string.find` with captures), no
-  hex literals, `math.mod` not `%`, varargs through `arg` (`arg.n`), and at most 32 upvalues per function.
-  Scripts get `this`, `event` and `arg1` as globals.
-- **Only real 1.12 widget methods.** `dev/engine_methods.lua` lists them; the stand-in client errors
-  on anything else, even *reading* a method a widget type doesn't have (`texture.IsMouseEnabled`). Check
-  the object type first.
-- **At most 200 locals** at a file's top level (Lua 5.0): Numbers.lua is near it; group new constants
-  in a table.
-- **Lists:** take items off with `table.remove`, never `list[n] = nil`: in Lua 5.0 that leaves
-  `table.getn` as it was (it broke the skulls' pool in 1.9.0 to 1.11.0).
-- **No stray `nil` arguments.** The game's API counts a passed `nil` as an argument and refuses
-  the call. Use `C.Call(fn, a, b)`, and pass exact counts (`SetTexCoord` takes 4 *or* 8).
-- **Memo writers** in Core (`C.SetText`, `C.Size`, `C.Width`, `C.Place`, `C.Vis`, `C.Alpha`, `C.Color`,
-  `C.TextColor`, `C.TextWidth`) skip unchanged writes. Never mix them with direct calls on the same
-  region.
+- `Arcane.toc`: `## Version: v0.2`
+- `Core.lua`: `C.VERSION = "0.2"` (the options hub adds the leading `v` when displaying it)
+- Release tag/title and release asset: `v0.2`, **Arcane UI v0.2**, `Arcane-v0.2.zip`
+- Current changelog heading: `## v0.2`
 
-**Text and languages**
-- The game's fonts have no Chinese, Japanese, Korean or Cyrillic letters (and miss some Polish and
-  Turkish ones), and a missing letter draws *nothing*.
-  - Make font strings with `C.Text` / `C.SetFace` so the language's bundled face applies.
-  - Show our own tooltips with `C.ShowTip()` (it swaps the tooltip's faces) instead of
-    `GameTooltip:Show()`. Tooltips with the game's own content (`SetUnit`, `SetAction`, `SetTalent`)
-    keep `GameTooltip:Show()`.
-- Every word the player sees goes through `C.L` / `C.F` / `C.LText` and is translated into all 11
-  languages: see "Translations" in `dev/README.md`. Then run `gen.py`, `locale_check.py` and
-  `overflow.lua`, and check the bundled fonts have every new letter (fontTools cmap).
+The install folder name is always **Arcane**. Textures, fonts and saved variables depend on that name. When preparing a release ZIP, create a top-level `Arcane/` folder and place the root-level addon files and folders inside it. The ZIP must contain `Arcane/Arcane.toc` at its top level. Never ship a branch-named directory such as `Arcane-main/`.
 
-**Design and code style**
-- **Art must be original.** The user doesn't want anything looking lifted from other addons. All
-  art is drawn by the scripts in `dev/art` (numpy/PIL), except the skill bar's dragon (1.14.0): cut
-  from the user's own bar picture (`dev/art/source/bar_reference.webp`, made for them with an image
-  generator) by `dev/art/cut_dragon.py`. `make_dragon.py` is the earlier drawn dragon, kept.
-- **The gold** comes from that picture: panel metal (0.95, 0.79, 0.44), titles and tooltip heads
-  (0.98, 0.85, 0.52), borders and rims (0.91, 0.70, 0.30). Use these for anything gold.
-  `C.Pal()` is the timer's zone palette with its metal (rim, title, gem, glow, trough, mc) swapped
-  for `C.BRONZE` in every zone (1.14.1, asked for): every part is bronze gold; the timer keeps its own.
-- The look: dark glass, a gold rail, the timer's metal, diamonds on corners (`C.Panel`). Smooth,
-  "eye candy", but calm.
-- **Parts:** every part registers with `C.RegisterPart` (key, name, note, get, set; optional scale),
-  can be turned off (giving back the game's own UI exactly), and wraps its OnUpdate in `pcall`. After
-  an error it turns itself off with a translated message.
-- Comments are plain English prose describing what the player sees. Keep that voice.
-- The options hub lays the parts out in two columns (the first half on the left) and grows 26 px
-  per two parts: at 22 parts it's 458 px tall. A test keeps it under 700 px.
+To make the install package, include `Arcane.toc`, all listed Lua modules, `Art/`, `Fonts/` and the applicable license notices. The repository documentation and `docs/images/` preview do not need to be inside the install folder.
 
-## 5. Checking before shipping
+## Runtime and coding rules
 
-Build Lua 5.0.3 (lua.org) and install Python 3 with numpy, Pillow, scipy, fontTools and opencv-python.
-From `dev/`:
+- Keep code compatible with **Lua 5.0**. Do not use the length operator `#`, `string.match`, hex literals, `goto`, or Lua 5.1+ vararg idioms. Use `table.getn`, `string.find` with captures, `math.mod` and the Lua 5.0 `arg` table.
+- Keep file-scope local counts below Lua 5.0's 200-local limit. `Numbers.lua` is especially close to that limit; group new state and constants under a table rather than adding more top-level locals.
+- Use only methods supported by the 1.12 widget type being accessed. Verify methods against the actual client/API; do not assume modern WoW APIs exist.
+- Avoid passing stray `nil` arguments to game APIs. Use `C.Call(fn, ...)` where appropriate and pass the exact argument count.
+- Remove list entries with `table.remove`; do not leave holes by assigning `nil` into an array that relies on `table.getn`.
+- Shared memo writers in `Core.lua` (`C.SetText`, `C.Size`, `C.Width`, `C.Place`, `C.Vis`, `C.Alpha`, `C.Color`, `C.TextColor`, `C.TextWidth`) skip unchanged writes. Do not mix them with direct writes on the same region.
+- Every player-facing string should go through `C.L`, `C.F` or `C.LText`. Keep all 11 languages aligned with the English keys in `Locale.lua` and the six `Locale_*.lua` files. Translation-generation and validation scripts are not in this repository; make edits directly and check key coverage when adding strings.
+- Preserve Arcane's visual identity and existing artwork. Do not replace its art with assets from other addons.
+- Every UI part should be registered through `C.RegisterPart`, expose its show/hide setting and restore the game's own UI when disabled. Guard frame update handlers against errors in the same style as the surrounding modules.
+- Comments should describe what the player sees in plain English.
 
-```
-lua50 arcane/tests.lua . ../Arcane                # 559 passed, 0 failed
-lua50 arcane/timer_tests.lua . ../Arcane          # 78 passed
-lua50 arcane/numbers_harness.lua . ../Arcane/Numbers.lua   # ALL CHECKS PASSED (also with CROWD=1)
-lua50 arcane/smoke.lua . ../Arcane out            # problems: 0
-lua50 arcane/globals.lua . ../Arcane              # only this, event, arg1
-lua50 arcane/overflow.lua . ../Arcane             # overflows: 0
-python3 arcane/locale_check.py ../Arcane          # LOCALE OK
-```
+## Live testing
 
-For pictures, use a `arcane/*prev.lua` scene and then `arcane/render_arcane.py`. To ship: bump `C.VERSION` in
-Core.lua and `## Version` in the .toc, add a `CHANGELOG.md` entry, zip as `Arcane-<version>.zip`,
-send the user the zip and a preview, and tag and release on GitHub.
-
-Add a test for every new behaviour, and prove a fix by showing the test fails on the old code.
+Static source review is useful but does not replace loading the addon in Azeroth Survivors. Test changes in the actual client, especially UI frame methods, game API return shapes, combat event data, visibility restoration and saved positions. Do not report tests as passing unless they were actually run. Use `/Arcane probe` to collect game-provided values when investigating an API.
 
 ## 6. The game's addon API (AZS)
 
-The stand-in client (`dev/arcane/mock_arcane.lua`) encodes the exact shapes the code relies on. Read it
-before using an API. Known:
+No mock client or automated API fixture is checked into this repository. Treat these as recorded API observations, and use `/Arcane probe` plus live client behaviour to confirm details before depending on them. Known:
 
 - **Run state:** `AZS_RUN` (`lvl`, `xp`, `xpn`, `gold`, `kills`, `chest`, `rr`, `rrc`, `px`, `py`, ...),
   `AZS_STATS` (`luck`, `gluck`, ...; the full field list isn't known yet). `AZS_GetPhase`,
@@ -165,7 +87,7 @@ before using an API. Known:
   `{ down, share, by, reviving, rshare }`. `PlaySound(kit)` plays the game's sounds ("RaidWarning").
 - **The game's own words** in its 14 languages (`"end.victory": "..."` and so on) are JSON inside the
   client file too: read them as UTF-8 from the bytes (`strings` drops non-ASCII letters).
-- **World anchors (API 0.139.2):** read from the game's own code (below), mirrored in the stand-in.
+- **World anchors (API 0.139.2):** read from the game's own code (below), verified against the live client.
   - `AZS_GetWorldAnchorCapabilities()`: kinds `enemy`, `elite`, `guardian`, `boss`, `finalBoss`,
     `cache`, `guardianLair`, `downedPartyMember`; attachments `position`, `overhead`; 256 a call.
   - `AZS_GetWorldAnchors(query, cursor, limit)`: query nil or `{ kinds = {...}, states = {...} }` (no
@@ -191,26 +113,3 @@ before using an API. Known:
 - `/Arcane probe` prints `AZS_STATS`, `AZS_RUN` and the stats the character panel found. Ask the user
   for its output when you need field names.
 
-## 7. Next
-
-1. **Boss skulls (1.9.0):** done, not yet seen in the real client. Ask the user for a screenshot in a
-   boss fight and the output of `/Arcane probe` there; adjust `Skulls.lua` and the stand-in if the
-   answers are nested differently.
-2. **1.11.0, not yet seen in the real client:** downed friends (does the projection give `x`/`y` for
-   off-screen anchors? the arrow needs them; is `AZS_GetRevive().reviving` a name or an id? both are
-   matched), the summary's fields, the Level Up! button, Damage Taken. Ask for screenshots.
-   Ideas not done yet: talent/summon timers (`AZS_GetTimers`), arrows to caches and lairs, the
-   upcoming bosses (`AZS_GetUpcomingBosses`; ask first, the timer is the user's favorite).
-3. **Talents (1.13.0):** Talents.lua shows the meter loadout's `talents` (`sourceKey`, `rank`, `treeKey`,
-   `specKey`; names and icons in `sources`): learned ones only, no grid, max ranks, branches or paintings.
-   Tree names: the key's last part in title case, through C.L (the game's 24 tree names are rows).
-   Not seen live: the `treeKey` format. The game's own window is `ToggleTalentFrame()`.
-4. **Not yet confirmed in the real client:**
-   - the bundled TTFs loading from the addon folder, and CJK rendering;
-   - `SetCursor` taking an addon texture (the resize arrow; if it fails, the drawn arrow comes back);
-   - the character window's assumptions: stats are read as "Label:" with the value on the same row,
-     and the Run Stats panel is found by its title;
-   - the downed mark's class crest (`Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes`,
-     in the game's boot manifest; the 1.12 coordinates).
-
-   Ask the user for a screenshot after each change in these areas.
