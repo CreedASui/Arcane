@@ -21,6 +21,8 @@ Numbers_CombatAPI.lua
 Numbers_Preview.lua
 Numbers_Anchors.lua
 Numbers_Layout.lua
+Numbers_Culling.lua
+Numbers_Placement.lua
 Numbers_Animation.lua
 Numbers_Lifecycle.lua
 Numbers_Options.lua
