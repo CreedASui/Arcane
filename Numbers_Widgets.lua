@@ -1,14 +1,13 @@
 -- Damage-number widgets: creation, pooling, layout and font refresh.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Widgets = N.Widgets or {}
 local S = N.Widgets
 local C = N.Config
 
 -- The number widgets: a holder placed on the enemy, a visual inside it that
 -- scales (so a pop never moves the number), and the text. Kept in a pool.
 
-S.layer= CreateFrame("Frame", "ArcaneNumbersLayer", WorldFrame)
+S.layer = CreateFrame("Frame", "ArcaneNumbersLayer", WorldFrame)
 S.layer:SetAllPoints(WorldFrame)
 S.layer:SetFrameStrata("LOW")
 S.layer:EnableMouse(false)
