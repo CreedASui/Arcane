@@ -1,7 +1,6 @@
 -- Damage-number animation: format, color, animate and draw visible labels.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Animation = N.Animation or {}
 local S = N.Animation
 local C = N.Config
 
