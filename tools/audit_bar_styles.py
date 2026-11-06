@@ -98,7 +98,7 @@ def main() -> None:
         fail("Hybrid must scale the original Arcane sigil to the dedicated endcap size")
     if 'panel.hybridArcane' in styles or 'panel.hybridGem' in styles:
         fail("Hybrid must not use reconstructed screenshot-derived medallion textures")
-    if 'SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)' not in styles:
+    if 'SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)' not in styles:
         fail("Hybrid Arcane medallion must be anchored on the left")
     if 'PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)' not in styles:
         fail("Hybrid must place the active class emblem on the right")
