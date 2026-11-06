@@ -77,6 +77,7 @@ local ROWS = {
 		"Bis zu vier Freunde mit Lebensleisten in Klassenfarbe und echten Zahlen, Mana/Energie/Wut, und Tot oder Offline. Klicken zum Anvisieren. Ersetzt die Gruppenrahmen des Spiels.",
 		"Hasta cuatro amigos con barras de vida del color de su clase y los números reales, su maná/energía/ira, y Muerto o Desconectado. Haz clic para seleccionarlos. Sustituye los marcos de grupo del juego.",
 		"Até quatro amigos com barras de vida na cor da classe e os números reais, mana/energia/raiva, e Morto ou Offline. Clique para selecionar. Substitui os quadros de grupo do jogo." },
+	{ "Skill bar style", "Style de barre", "Leistenstil", "Estilo de barra", "Estilo da barra" },
 	{ "Arcane", "Arcane", "Arcane", "Arcane", "Arcane" },
 	{ "Hybrid", "Hybride", "Hybrid", "Híbrido", "Híbrido" },
 	{ "Full class", "Classe complète", "Voller Klassenstil", "Clase completa", "Classe completa" },
