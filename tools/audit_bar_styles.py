@@ -39,6 +39,38 @@ def count_chunk_level_locals(text: str) -> int:
     return count
 
 
+def validate_rle_tga(path: Path) -> None:
+    """Validate the complete row-safe 32-bit RLE TGA stream, not just its header."""
+    data = path.read_bytes()
+    if len(data) < 18:
+        fail(f"Hybrid medallion texture is truncated: Art/{path.name}")
+    header = data[:18]
+    width = int.from_bytes(header[12:14], "little")
+    height = int.from_bytes(header[14:16], "little")
+    if (header[1] != 0 or header[2] != 10 or width != 112 or height != 112
+            or header[16] != 32 or (header[17] & 0x0F) != 8
+            or (header[17] & 0x20) == 0):
+        fail(f"Hybrid medallion texture must be top-origin 112x112 32-bit alpha RLE TGA: Art/{path.name}")
+    offset = 18 + header[0]
+    for _row in range(height):
+        row_pixels = 0
+        while row_pixels < width:
+            if offset >= len(data):
+                fail(f"Hybrid medallion TGA RLE data ends early: Art/{path.name}")
+            packet = data[offset]
+            offset += 1
+            count = (packet & 0x7F) + 1
+            if row_pixels + count > width:
+                fail(f"Hybrid medallion TGA RLE packet crosses a row: Art/{path.name}")
+            byte_count = 4 if packet & 0x80 else count * 4
+            if offset + byte_count > len(data):
+                fail(f"Hybrid medallion TGA RLE packet is truncated: Art/{path.name}")
+            offset += byte_count
+            row_pixels += count
+    if offset != len(data):
+        fail(f"Hybrid medallion TGA has unexpected trailing data: Art/{path.name}")
+
+
 def main() -> None:
     toc = [line.strip() for line in source("Arcane.toc").splitlines()
            if line.strip() and not line.lstrip().startswith("#")]
@@ -128,12 +160,7 @@ def main() -> None:
         path = ROOT / "Art" / name
         if not path.is_file():
             fail(f"Missing Hybrid Arcane medallion art: Art/{name}")
-        header = path.read_bytes()[:18]
-        if (len(header) != 18 or header[2] != 10
-                or int.from_bytes(header[12:14], "little") != 112
-                or int.from_bytes(header[14:16], "little") != 112
-                or header[16] != 32 or (header[17] & 0x0F) != 8):
-            fail(f"Hybrid medallion texture must be 112x112 32-bit alpha RLE TGA: Art/{name}")
+        validate_rle_tga(path)
     print("PASS: dedicated Hybrid Arcane medallion and class-tinted gem are valid 32-bit alpha TGAs")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
