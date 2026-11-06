@@ -131,7 +131,7 @@ local THEMES = {
 		title = { 0.86, 0.96, 0.78 }, rim = { 0.80, 0.82, 0.74 },
 		fillA = { 0.06, 0.12, 0.08 }, fillM = { 0.26, 0.48, 0.30 }, fillB = { 0.84, 0.94, 0.70 },
 		glow = { 0.82, 1.00, 0.78 }, gem = { 0.70, 1.00, 0.46 }, trough = { 0.02, 0.04, 0.08 },
-		motif = "mist", mc = { 0.66, 0.96, 0.62 },
+		motif = "necrotic", mc = { 0.66, 0.96, 0.62 },
 	},
 	aq = {
 		name = "Gates of Ahn'Qiraj", sub = "The Old God Stirs",

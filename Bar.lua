@@ -228,6 +228,8 @@ local function ReadAbilities(cds)
 	end
 end
 
+local IconKey -- forward declaration: counters run before the loadout helpers
+
 local function TotemCounts()
 	if type(AZS_GetTotems) ~= "function" then return nil end
 	local ok, list = pcall(AZS_GetTotems)
@@ -309,7 +311,7 @@ end
 ------------------------------------------------------------------------ the abilities' ranks
 -- The game's loadout lists your abilities with their ranks and their icons: each slot finds its
 -- own by the icon it shows (or, if the game gives no icons, by its slot number).
-local function IconKey(path)
+IconKey = function(path)
 	if type(path) ~= "string" or path == "" then return nil end
 	local p = string.lower(string.gsub(path, "/", "\\"))
 	p = string.gsub(p, "%.blp$", "")
