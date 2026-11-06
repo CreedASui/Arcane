@@ -36,7 +36,7 @@ Every part can be turned on or off, sized and moved.
 
 The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `Arcane-v0.2.zip`. There is currently no checked-in `tools/` or `dev/` packaging script; do not expect an automated package build from this repository.
+The release asset is named `Arcane-v0.2.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
