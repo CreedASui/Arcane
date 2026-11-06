@@ -74,3 +74,52 @@ Fixes from playtesting:
 - Damage numbers keep a proc's hits (like Shadow Weaving) apart from the spell it borrows, with its own icon.
 
 - Bundled fonts so every language shows its letters.
+
+---
+
+## Developer reference
+
+This section records the project's runtime constraints and observed Azeroth Survivors addon API. It is a maintainer reference, not a list of additional v0.2 release changes. API observations should be checked against the live client before depending on them.
+
+### Runtime and coding constraints
+
+- Arcane targets the Azeroth Survivors 1.12.1 client and its **Lua 5.0** runtime. Do not assume modern WoW widget methods or newer Lua features are available.
+- Keep chunk-level local declarations below Lua 5.0's 200-local limit. Group related state and constants under a table instead of continually adding file-scope locals.
+- Use Lua 5.0-compatible idioms: use `table.getn` for arrays, `string.find` with captures instead of `string.match`, and `math.mod` where appropriate. Avoid the length operator, hex literals, `goto`, and Lua 5.1+ vararg patterns.
+- Pass game APIs only the arguments they require; avoid stray `nil` arguments. Use the shared protected-call helper where appropriate.
+- Remove array entries with `table.remove`. Do not create holes in arrays that are read with `table.getn`.
+- Core's memo writers (`C.SetText`, `C.Size`, `C.Width`, `C.Place`, `C.Vis`, `C.Alpha`, `C.Color`, `C.TextColor`, `C.TextWidth`) skip unchanged writes. Do not mix them with direct writes to the same region.
+- Route player-facing strings through `C.L`, `C.F` or `C.LText`; keep all 11 addon languages aligned with the English keys.
+- Register each UI part through `C.RegisterPart`, expose its enabled state, and restore the game's own UI when Arcane's replacement is disabled. Guard frame-update work against errors.
+- Preserve Arcane's existing visual identity and artwork. Comments should explain what the player sees in plain English.
+
+### Testing
+
+The repository's GitHub workflow performs static architecture checks, compiles Lua chunks with Lua 5.1, and checks the generated ZIP. There is no mock game client or complete in-game API fixture. These checks do **not** prove Lua 5.0 runtime compatibility, widget-method availability, live API return shapes, or correct restoration of the game's UI.
+
+Load changes in the actual client and check the affected behavior, especially frame methods, event data, visibility restoration, saved positions and cross-system interactions. Use `/Arcane probe` to collect live values when an API shape is uncertain. Never report a live test as passed unless it was actually run.
+
+### Recorded Azeroth Survivors API observations
+
+These are recorded observations, not a substitute for checking the current client. Some tables are only partially mapped.
+
+- **Run state:** `AZS_RUN` includes fields such as `lvl`, `xp`, `xpn`, `gold`, `kills`, `chest`, `rr`, `rrc`, `px` and `py`. `AZS_STATS` includes `luck` and `gluck`; its complete field list is not known. Related functions include `AZS_GetPhase`, `AZS_GetRunTime` (stops during cards and pause), `AZS_GetRunLength` and `AZS_GetLocalTime`.
+- **Minimap data:** `AZS_LAIRS` and `AZS_LAIRS_UPDATED` expose lair state (including asleep, awake and empty), `left`, `x`, `y` and `flag). Chests are exposed through `AZS_CHESTS`.
+- **Game HUD:** `AZS_SetHudShown` and `AZS_IsHudShown` control or report HUD pieces such as `flag` and `localClock`. `AZS_SetOnTopOfScreens` manages frames that must remain above game screens.
+- **Combat text:** `AZS_GetCombatTextCapabilities`, `AZS_GetCombatTextEvents(cursor, max)`, `AZS_ProjectCombatTextAnchors` and `AZS_RegisterCombatTextFrameHandler`. Events include `meterSource`, `meterSourceKey` and distance from the hero.
+- **Meter API v1:** `AZS_GetMeterContext`, `AZS_GetMeterSnapshot(query)` and checkpoints. Snapshot sources carry names and icons. Related getters cover summons, totems, bosses and guardians. `AZS_GetMeterLoadout({ apiVersion = 1, runId [, ownerId] })` accepts only those query keys and returns abilities (`sourceKey`, `rank`, `slotId`, `learned`, `passive`), equipment, talents, run jewelry, and source icons. Skill-bar rank boxes match abilities to slots by icon, falling back to `slotId` when needed.
+- **Spells:** `AZS_SPELLS` and `AZS_SPELLS_UPDATED`; entries have `key`, `spell`, `rank`, `cd` and `cdmax`, with no slot field.
+- **Run summary:** `AZS_GetRunSummary()` is nil while a run is ongoing; at its end, `AZS_END` has been observed with `result` (victory, defeat or left), `t`, `lvl`, `kills`, `elites`, `guardians`, `bosses`, `dmg`, `taken`, `gold`, `chests`, `magnets`, `endl` and `hero`.
+- **Damage taken:** `AZS_TAKEN` and `AZS_TAKEN_UPDATED` expose entries with `source` and `dmg`. The meter API itself has only damage and healing metrics.
+- **Stored level-ups:** `AZS_GetStoredLevels()` (also reflected by `AZS_RUN.sl`), `AZS_IsStoringLevels()`, `AZS_OpenStoredLevels()` and `AZS_SetStoringLevels(on)`. The game's button is the `levels` HUD part.
+- **Downed players and revives:** `AZS_DOWNED` entries have been observed with `id`, `name`, `x`, `y`, `z`, `ep` and `state`. `AZS_GetRevive()` / `AZS_REVIVE` expose `down`, `share`, `by`, `reviving` and `rshare`. `PlaySound(kit)` can play game sounds such as `RaidWarning`.
+- **World anchors (API 0.139.2 observation):**
+  - `AZS_GetWorldAnchorCapabilities()` reports kinds `enemy`, `elite`, `guardian`, `boss`, `finalBoss`, `cache`, `guardianLair` and `downedPartyMember`; attachments are `position` and `overhead`, with up to 256 results per call.
+  - `AZS_GetWorldAnchors(query, cursor, limit)` accepts nil or a query containing only `kinds` and `states`; cursor is nil or a string, and limit is 1–256. The response includes `apiVersion`, `catalogId`, `entries`, `hasMore`, `nextCursor` and `overflowed`. Entries include `anchorId`, `kind`, `state`, `attachments`, `positionAvailable`, coordinates and relevant ids. Observed errors include `NOT_READY`, `CATALOG_CHANGED` (restart the read from the beginning) and `INVALID_ARGUMENT`.
+  - `AZS_ProjectWorldAnchors(requests)` accepts requests containing `anchorId`, `attachment` (`position` or `overhead`) and an optional yard-based `offset` with `x`, `y` and `z`. The response includes `cameraSampleId`, `frameCurrent` and entries with projection states such as `onScreen`, `offscreen`, `behindCamera`, `clipped`, `notReady`, `expired`, `unknownAnchor`, `worldChanged` and `unsupportedAttachment`, plus coordinates, camera depth, UI units per yard and player distance.
+  - `AZS_RegisterWorldAnchorFrameHandler(fn)` runs each frame after the camera, like the combat-text frame handler.
+  - `AZS_GetDownedPartyMembers()` has been observed to return entries with `id`, `name`, `positionAvailable`, `anchorStatus`, `anchorId`, coordinates, `mapId`, `runId` and `spaceId`. Before the run's lines exist, it may return nil and an error.
+  - The exact nesting of some API responses has not been confirmed; use `/Arcane probe` in the live client before depending on it.
+- The game's own localized words (for example, `end.victory`) are JSON embedded in the client and have been observed in 14 languages. When extracting non-ASCII text, read the client bytes as UTF-8; ordinary `strings` output drops those characters.
+- The game's Lua API definitions and comments have been located in the client at `https://wow.aethus.pl/wenilla_bg.wasm`. Searching its extracted strings for `function AZS_` can help investigate API behavior; native-side field names and errors are also present there.
+
