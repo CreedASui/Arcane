@@ -1,7 +1,6 @@
 -- Damage-number culling: decide which labels remain visible when the screen gets busy.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Culling = N.Culling or {}
 local S = N.Culling
 local C = N.Config
 
