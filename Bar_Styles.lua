@@ -11,9 +11,11 @@ local PANEL_CORNER = C.PANEL_CORNER or 16
 local BASE_SIGIL = C.PANEL_SIGIL or 122
 local BASE_OUT = BASE_SIGIL * 0.40
 local BASE_FOOT = BASE_SIGIL * 25 / 370
-local HYBRID_SIGIL = BASE_SIGIL * 1.65
-local HYBRID_OUT = HYBRID_SIGIL * 0.40
-local HYBRID_FOOT = HYBRID_SIGIL * 25 / 370
+-- The approved reference medallion is a 400px cutout placed on a 256px power-of-two TGA.
+-- Center the visible crest on the panel's left edge; do not scale the old bottom-left offset.
+local HYBRID_SIGIL = BASE_SIGIL * 1.40
+local HYBRID_CENTER_X = HYBRID_SIGIL * 0.10
+local HYBRID_CENTER_Y = HYBRID_SIGIL * 18 / 400
 local state = {
 	db = nil, class = nil, runId = nil, readClock = 0, stamp = 0,
 	palette = {}, paletteBase = nil, palettePalStamp = -1,
@@ -159,15 +161,18 @@ local function EnsureClassEmblems(panel)
 end
 
 local function EnsureHybridArcane(panel)
-	-- Reuse Arcane's original, high-detail PanelSigil BLP. Do not reconstruct it from a screenshot.
-	local texture = panel.sigils and panel.sigils[1]
-	if not texture then return end
-	texture:SetTexture(C.ART .. "PanelSigil")
-	texture:SetWidth(HYBRID_SIGIL)
-	texture:SetHeight(HYBRID_SIGIL)
-	texture:ClearAllPoints()
-	texture:SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)
-	texture:SetTexCoord(0, 1, 0, 1)
+	if panel.hybridArcane then return end
+	local frame = panel.frame
+	-- High-resolution transparent crest extracted from the approved Hybrid reference.
+	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane.tga")
+	-- Separate grayscale gemstone layer: only this gem is tinted by the active class palette.
+	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem.tga")
+	for _, texture in ipairs({ panel.hybridArcane, panel.hybridGem }) do
+		texture:SetWidth(HYBRID_SIGIL)
+		texture:SetHeight(HYBRID_SIGIL)
+		texture:SetPoint("CENTER", frame, "LEFT", HYBRID_CENTER_X, HYBRID_CENTER_Y)
+		C.Vis(texture, false)
+	end
 end
 
 local function RestoreBasePanel(panel)
@@ -206,6 +211,8 @@ local function RestoreBasePanel(panel)
 		C.Vis(panel.classEmblems[1], false)
 		C.Vis(panel.classEmblems[2], false)
 	end
+	if panel.hybridArcane then C.Vis(panel.hybridArcane, false) end
+	if panel.hybridGem then C.Vis(panel.hybridGem, false) end
 
 end
 
@@ -220,8 +227,10 @@ function M.Apply(panel)
 	EnsureClassEmblems(panel)
 	if mode == HYBRID then
 		EnsureHybridArcane(panel)
-		C.Vis(panel.sigils[1], true)
+		C.Vis(panel.sigils[1], false)
 		C.Vis(panel.sigils[2], false)
+		C.Vis(panel.hybridArcane, true)
+		C.Vis(panel.hybridGem, true)
 		for i = 1, table.getn(panel.endLeft or {}) do C.Vis(panel.endLeft[i], false) end
 		for i = 1, table.getn(panel.endRight or {}) do C.Vis(panel.endRight[i], false) end
 		PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)
@@ -267,7 +276,8 @@ function M.Theme(panel, pal)
 	if mode == HYBRID then
 		local fill = theme.fill
 		panel.fill:SetVertexColor(fill[1] * 0.48, fill[2] * 0.48, fill[3] * 0.48, 0.97)
-		panel.sigils[1]:SetVertexColor(1, 1, 1, 1)
+		panel.hybridArcane:SetVertexColor(1, 1, 1, 1)
+		panel.hybridGem:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)
 		panel.classEmblems[2]:SetVertexColor(1, 1, 1, 1)
 		if panel.classGems then
 			for i = 1, table.getn(panel.classGems) do
