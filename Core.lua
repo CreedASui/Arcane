@@ -845,7 +845,7 @@ end
 -- and the Arcane A medallion at each end. The transparent gold-and-black sigil overlaps the end
 -- rail and extends outward, leaving the slots clear while making the bar unmistakably Arcane.
 local P_RAIL, P_CORNER, P_SIGIL = 8, 16, 122
-C.PANEL_RAIL, C.PANEL_CORNER = P_RAIL, P_CORNER
+C.PANEL_RAIL, C.PANEL_CORNER, C.PANEL_SIGIL = P_RAIL, P_CORNER, P_SIGIL
 -- Keep the same endcap footprint as the previous artwork so the bar's overall layout stays stable.
 local P_OUT, P_FOOT = P_SIGIL * 0.40, P_SIGIL * 25 / 370
 C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
