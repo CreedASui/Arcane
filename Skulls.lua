@@ -73,7 +73,7 @@ local function NewMarker()
 	m.glow:SetPoint("CENTER", f, "CENTER", 0, 0)
 	m.skull = C.Tex(f, "ARTWORK", C.ART .. "BossSkullFierce")
 	m.skull:SetPoint("CENTER", f, "CENTER", 0, 0)
-	-- a boss's eyes: their own light over the skull, smouldering like the dragons' on the skill bar
+	-- a boss's eyes: their own light over the skull, smouldering like the warm gold accents on the skill bar
 	m.eyes = C.Tex(f, "OVERLAY", C.ART .. "BossSkullEyes", "ADD")
 	m.eyes:SetPoint("CENTER", f, "CENTER", 0, 0)
 	m.eyes:SetVertexColor(1, 0.22, 0.06)

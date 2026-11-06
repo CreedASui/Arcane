@@ -103,7 +103,6 @@ local function Step(dt, now)
 		local row = ROWS[i]
 		C.SetText(root.rows[i].value, Value(row, S.values[row.field], k))
 	end
-	C.PanelStep(root.deco, now)
 end
 
 local function Build()

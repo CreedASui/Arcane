@@ -800,7 +800,6 @@ C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
 -- metal is its bright rail; its light rail highlight (0.98, 0.85, 0.52) is the gold of titles and
 -- tooltip heads everywhere, its rail gold (0.91, 0.70, 0.30) the gold of borders and rims
 local GOLD = { 0.95, 0.79, 0.44 }
-
 function C.Panel(frame, sigils)
 	local p = { frame = frame, metal = {} }
 	p.fill = C.Tex(frame, "BACKGROUND", C.ART .. "PanelFill")
@@ -859,10 +858,6 @@ function C.PanelTheme(p, pal)
 	if p.sigils then
 		for i = 1, 2 do p.sigils[i]:SetVertexColor(1, 1, 1) end -- preserve the medallion's painted gold
 	end
-end
-
-function C.PanelStep(p, now)
-	-- The medallions are static artwork; no animated dragon-eye glow is needed.
 end
 
 ------------------------------------------------------------------------ calling the game safely

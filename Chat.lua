@@ -2,7 +2,7 @@
 -- scrolls (Shift jumps to the top or the bottom), and a small arrow shows while you're scrolled up
 -- (click it to come back down). A soft glass fades in behind the lines while the mouse is over
 -- them or you type, and the typing box gets the boss timer's glass and metal lines. A window that
--- would reach under the skill bar's left dragon stops short of it. Turning this part off puts the
+-- would reach under the skill bar's left medallion stops short of it. Turning this part off puts the
 -- game's chat back as it was.
 
 local C = Arcane
@@ -197,10 +197,10 @@ local function Clear(f, d, bar)
 	local want = natural
 	if d then
 		local k = bar:GetEffectiveScale() / f:GetEffectiveScale() -- a texture is in its frame's scale
-		local dr, dt = d:GetRight() * k, d:GetTop() * k -- the full medallion's right edge
+		local dl, dt = d:GetRight() * k, d:GetTop() * k -- the full medallion's right edge
 		local l, b = f:GetLeft(), f:GetBottom()
-		if b - 6 < dt and l + natural + 8 > dr - CLEAR_GAP then
-			want = math.max(CLEAR_MIN, math.min(natural, dr - CLEAR_GAP - 8 - l))
+		if b - 6 < dt and l + natural + 8 > dl - CLEAR_GAP then
+			want = math.max(CLEAR_MIN, math.min(natural, dl - CLEAR_GAP - 8 - l))
 		end
 	end
 	if math.abs(want - natural) < 0.5 then
@@ -313,7 +313,7 @@ local function Step(dt)
 		C.Vis(W.arrow, true)
 		C.Alpha(W.arrow, C.Smooth(S.arrowA) * (0.75 + 0.25 * math.sin(GetTime() * 3)))
 	end
-	-- clear of the skill bar's dragon, looked at twice a second (the bar can move or be sized)
+	-- clear of the skill bar's medallion, looked at twice a second (the bar can move or be sized)
 	S.clearClock = (S.clearClock or 0) - dt
 	if S.clearClock <= 0 then
 		S.clearClock = 0.5

@@ -178,7 +178,7 @@ local function StepDock(dt)
 	if math.abs(w - target) < 0.3 then w = target end
 	if w ~= S.dock then
 		S.dock = w
-		local room = C.PANEL_ROOM or 0 -- each end's room for its dragon (Core)
+		local room = C.PANEL_ROOM or 0 -- each end's room for its medallion (Core)
 		root.panel:ClearAllPoints()
 		root.panel:SetPoint("TOPLEFT", root, "TOPLEFT", -room, 0)
 		root.panel:SetPoint("BOTTOMRIGHT", root, "BOTTOMRIGHT", w + room, 0)
@@ -624,7 +624,6 @@ local function Step(dt)
 	end
 	StepXP(dt, now)
 	StepDock(dt)
-	C.PanelStep(root.deco, real)
 
 	S.takeClock = S.takeClock - dt
 	if S.takeClock <= 0 then
@@ -647,9 +646,8 @@ local function Levels()
 		jewels[i].top:SetFrameLevel(base + 3)
 	end
 	C.BarLevels(xp, base + 1)
-	-- the panel under everything: the root's own level, the dragons' eyes over it
+	-- the panel sits under the slots; the medallions are static artwork on its overlay
 	root.panel:SetFrameLevel(base)
-	if root.deco.eyeLayer then root.deco.eyeLayer:SetFrameLevel(base + 1) end
 end
 
 local function Apply()
