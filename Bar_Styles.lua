@@ -198,13 +198,13 @@ function M.Apply(panel)
 	panel.railT:SetTexture(C.ART .. "PanelRail" .. theme.emblem .. "T")
 	panel.railT:SetHeight(RAIL_H)
 	panel.railT:ClearAllPoints()
-	panel.railT:SetPoint("TOPLEFT", panel.frame, "TOPLEFT", PANEL_CORNER, y)
-	panel.railT:SetPoint("TOPRIGHT", panel.frame, "TOPRIGHT", -PANEL_CORNER, y)
+	panel.railT:SetPoint("TOPLEFT", panel.frame, "TOPLEFT", 0, y)
+	panel.railT:SetPoint("TOPRIGHT", panel.frame, "TOPRIGHT", 0, y)
 	panel.railB:SetTexture(C.ART .. "PanelRail" .. theme.emblem .. "B")
 	panel.railB:SetHeight(RAIL_H)
 	panel.railB:ClearAllPoints()
-	panel.railB:SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", PANEL_CORNER, -y)
-	panel.railB:SetPoint("BOTTOMRIGHT", panel.frame, "BOTTOMRIGHT", -PANEL_CORNER, -y)
+	panel.railB:SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", 0, -y)
+	panel.railB:SetPoint("BOTTOMRIGHT", panel.frame, "BOTTOMRIGHT", 0, -y)
 	panel.fill:SetTexture(C.ART .. "PanelGlass")
 end
 
@@ -232,7 +232,7 @@ function M.Theme(panel, pal)
 		panel.railT:SetVertexColor(1, 1, 1, 1)
 		panel.railB:SetVertexColor(1, 1, 1, 1)
 		panel.classEmblems[1]:SetVertexColor(1, 1, 1, 1)
-		C.Color(panel.classEmblems[2], 1, 1, 1, 1)
+		panel.classEmblems[2]:SetVertexColor(1, 1, 1, 1)
 	end
 end
 
