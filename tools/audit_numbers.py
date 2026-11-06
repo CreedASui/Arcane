@@ -124,6 +124,7 @@ def read_toc() -> list[str]:
         fail("Timer.lua must load before Numbers.lua")
     print(f"PASS: TOC contains {len(entries)} existing, unique entries")
     print("PASS: Numbers module load order is preserved")
+    return entries
 
 def check_module_ownership() -> None:
     sources: dict[str, str] = {}
@@ -165,10 +166,93 @@ def check_module_ownership() -> None:
     print("PASS: shared culling helper has one implementation and correct callers")
     print("PASS: Core math helpers are reused instead of duplicated")
 
+
+def count_chunk_level_locals(source: str) -> int:
+    """Count names declared at file scope, excluding locals nested in functions/blocks."""
+    code = mask_comments_and_strings(source)
+    count = 0
+    for line in code.splitlines():
+        if not line.startswith("local "):
+            continue
+        declaration = line[len("local "):].strip()
+        if declaration.startswith("function "):
+            count += 1
+            continue
+        names = declaration.split("=", 1)[0].strip()
+        count += len([name for name in names.split(",") if name.strip()])
+    return count
+
+def check_timer_structure(entries: list[str]) -> None:
+    data_path = ROOT / "Timer_Data.lua"
+    timer_path = ROOT / "Timer.lua"
+    if not data_path.is_file():
+        fail("Timer_Data.lua is missing")
+    if entries.index("Core.lua") > entries.index("Timer_Data.lua"):
+        fail("Core.lua must load before Timer_Data.lua")
+    if entries.index("Timer_Data.lua") > entries.index("Timer.lua"):
+        fail("Timer_Data.lua must load before Timer.lua")
+
+    data = mask_comments_and_strings(data_path.read_text(encoding="utf-8"))
+    timer = mask_comments_and_strings(timer_path.read_text(encoding="utf-8"))
+    if len(re.findall(r"\bAUI\s*\.\s*TimerData\s*=", data)) != 1:
+        fail("Timer_Data.lua must own exactly one AUI.TimerData definition")
+    if len(re.findall(r"\bAUI\s*\.\s*TimerData\s*=", timer)):
+        fail("Timer.lua must consume, not redefine, AUI.TimerData")
+    if len(re.findall(r"\blocal\s+DATA\s*=\s*AUI\s*\.\s*TimerData\b", timer)) != 1:
+        fail("Timer.lua must consume the shared Timer_Data module exactly once")
+
+    fields = (
+        "THEMES", "ZONE_ORDER", "PAL_KEYS", "FALLBACK", "MOTIFS",
+        "HEROIC_COLORS", "ROMAN", "AFFIX_NAMES", "NAME_TO_ZONE", "ZNAME_TO_ZONE",
+    )
+    for field in fields:
+        if not re.search(rf"\b{field}\s*=\s*{field}\b", data):
+            fail(f"Timer_Data.lua does not export {field}")
+        if not re.search(rf"\bDATA\s*\.\s*{field}\b", timer):
+            fail(f"Timer.lua does not consume Timer_Data.{field}")
+
+    # The behavior is shared in Core. Keep Timer's Toward easing local: its snap
+    # threshold intentionally differs from Core.Toward.
+    aliases = {
+        "Clamp": r"local\s+Clamp\s*,\s*Smooth\s*=\s*AUI\s*\.\s*Clamp\s*,\s*AUI\s*\.\s*Smooth",
+        "Spring": r"local\s+Spring\s*,\s*Ease\s*=\s*AUI\s*\.\s*Spring\s*,\s*AUI\s*\.\s*Ease",
+        "Clock": r"local\s+Clock\s*,\s*Call\s*=\s*AUI\s*\.\s*Clock\s*,\s*AUI\s*\.\s*Call",
+        "Tex": r"local\s+Tex\s*,\s*Text\s*=\s*AUI\s*\.\s*Tex\s*,\s*AUI\s*\.\s*Text",
+        "Size": r"local\s+Size\s*,\s*Color\s*,\s*Vis\s*,\s*Alpha\s*=\s*AUI\s*\.\s*Size\s*,\s*AUI\s*\.\s*Color\s*,\s*AUI\s*\.\s*Vis\s*,\s*AUI\s*\.\s*Alpha",
+    }
+    for helper, pattern in aliases.items():
+        if not re.search(pattern, timer):
+            fail(f"Timer must reuse Core's shared {helper} helper group")
+    duplicated = ("Clamp", "Smooth", "Spring", "Ease", "Clock", "Call",
+                  "Tex", "Text", "Size", "Color", "Vis", "Alpha")
+    for helper in duplicated:
+        if re.search(rf"^\s*local\s+function\s+{helper}\b", timer, re.M):
+            fail(f"Timer.lua must not duplicate Core helper {helper}")
+    if not re.search(r"^\s*local\s+function\s+Toward\b", timer, re.M):
+        fail("Timer must retain its intentionally distinct Toward implementation")
+
+    # These are public cross-system contracts: Core controls the timer, Bosses
+    # anchors to its root, and other parts use its live shared palette.
+    for contract in ("AUI.pal = p", "AUI.palStamp = AUI.palStamp + 1",
+                     "AUI.THEMES = THEMES", "AUI.timerRoot = W.root",
+                     "AUI.timerLock = function", "AUI.timerReset = function",
+                     "AUI.timerOptions = function", "AUI.timerSlash = Slash"):
+        if contract not in timer:
+            fail(f"Timer public integration contract is missing: {contract}")
+
+    local_count = count_chunk_level_locals(timer_path.read_text(encoding="utf-8"))
+    if local_count >= 200:
+        fail(f"Timer.lua has {local_count} file-scope locals; Lua 5.0 limit is 200")
+    print("PASS: Timer data is isolated and loads before Timer.lua")
+    print("PASS: Timer reuses Core helpers and keeps distinct easing local")
+    print("PASS: Timer's shared palette and Core/Bosses integration contracts remain")
+    print(f"PASS: Timer has {local_count} file-scope locals (under Lua 5.0 limit)")
+
 def main() -> None:
-    read_toc()
+    entries = read_toc()
     check_module_ownership()
-    print("PASS: Arcane Numbers static architecture audit complete")
+    check_timer_structure(entries)
+    print("PASS: Arcane static architecture audit complete")
 
 if __name__ == "__main__":
     main()

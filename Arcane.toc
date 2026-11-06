@@ -11,6 +11,7 @@ Locale_ja.lua
 Locale_ko.lua
 Locale_pl.lua
 Locale_tr.lua
+Timer_Data.lua
 Timer.lua
 Numbers.lua
 Numbers_Widgets.lua
