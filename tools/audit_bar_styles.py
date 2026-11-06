@@ -102,12 +102,9 @@ def main() -> None:
     bar = source("Bar.lua")
     core = source("Core.lua")
     generator = source("tools/build_hybrid_medallion_variants.py")
-    for asset in ("PanelHybridArcaneWarrior.tga", "PanelHybridArcanePaladin.tga",
-                  "PanelHybridArcaneRogue.tga", "PanelHybridArcanePriest.tga",
-                  "PanelHybridArcaneShaman.tga", "PanelHybridArcaneMage.tga",
-                  "PanelHybridArcaneWarlock.tga"):
-        if asset not in generator:
-            fail(f"Hybrid variant generator is missing output mapping for {asset}")
+    for class_name in ("Warrior", "Paladin", "Rogue", "Priest", "Shaman", "Mage", "Warlock"):
+        if f'"{class_name}"' not in generator:
+            fail(f"Hybrid variant generator is missing the {class_name} palette output")
 
     found = set(re.findall(r"^\t([a-z]+)\s*=\s*\{", data, re.M))
     if found != set(CLASSES):
