@@ -47,10 +47,10 @@ def validate_tga_rle_32(path: Path) -> None:
     header = data[:18]
     width = int.from_bytes(header[12:14], "little")
     height = int.from_bytes(header[14:16], "little")
-    if (header[1] != 0 or header[2] != 10 or width != 256 or height != 256
+    if (header[1] != 0 or header[2] != 10 or width != 512 or height != 512
             or header[16] != 32 or (header[17] & 0x0F) != 8
             or (header[17] & 0x20) == 0):
-        fail(f"Hybrid texture must be top-origin 256x256 32-bit alpha RLE TGA: Art/{path.name}")
+        fail(f"Hybrid texture must be top-origin 512x512 32-bit alpha RLE TGA: Art/{path.name}")
     offset = 18 + header[0]
     alpha_pixels = 0
     for _row in range(height):
@@ -178,7 +178,7 @@ def main() -> None:
         if not path.is_file():
             fail(f"Missing Hybrid Arcane art: Art/{name}")
         validate_tga_rle_32(path)
-    print("PASS: both Hybrid 256x256 alpha TGA textures fully decode without row-crossing packets")
+    print("PASS: both Hybrid 512x512 alpha TGA textures fully decode without row-crossing packets")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))
