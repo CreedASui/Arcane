@@ -142,7 +142,7 @@ def check_module_ownership() -> None:
         for match in re.finditer(r"\bN\s*\.\s*([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)\b", code):
             references.add(f"{match.group(1)}.{match.group(2)}")
         # Config is shared by every Numbers module through local C = N.Config.
-        for match in re.finditer(r"\\bC\\s*\\.\\s*([A-Za-z_]\\w*)\\b", code):
+        for match in re.finditer(r"\bC\s*\.\s*([A-Za-z_]\w*)\b", code):
             references.add(f"Config.{match.group(1)}")
     unresolved = sorted(references - definitions - TUPLE_INITIALIZED)
     if unresolved:
