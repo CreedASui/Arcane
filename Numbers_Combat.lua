@@ -5,7 +5,7 @@ local S = N.Combat
 local C = N.Config
 
 ------------------------------------------------------------------------------
--- Labels: one number on screen and the hits it holds.
+-- Hit identity, crowd grouping and combat rules used by the label system.
 
 S.labels, S.nLabels = {}, 0
 S.byKey, S.missByKey = {}, {}  -- the open number for an enemy (and skill)
