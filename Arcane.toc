@@ -33,6 +33,8 @@ Skulls.lua
 Units.lua
 Party.lua
 Downed.lua
+Bar_Styles_Data.lua
+Bar_Styles.lua
 Bar.lua
 Tally.lua
 LevelUps.lua
