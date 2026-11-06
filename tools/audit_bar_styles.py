@@ -92,16 +92,18 @@ def main() -> None:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
     if 'C.LText(styleLabel, "Skill bar style")' not in core:
         fail("Options hub must label the skill-bar style selector")
-    if 'panel.endLeft or {}' not in styles or 'C.ART .. "PanelSigil"' not in styles:
-        fail("Hybrid must reuse Arcane's original left PanelSigil medallion")
-    if 'texture:SetWidth(HYBRID_SIGIL)' not in styles:
-        fail("Hybrid must scale the original Arcane sigil to the dedicated endcap size")
-    if 'panel.hybridArcane' in styles or 'panel.hybridGem' in styles:
-        fail("Hybrid must not use reconstructed screenshot-derived medallion textures")
-    if 'SetPoint("BOTTOMLEFT", panel.frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)' not in styles:
-        fail("Hybrid Arcane medallion must be anchored on the left")
+    if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
+        fail("Hybrid must use the approved high-resolution Arcane medallion on the left")
+    if 'PanelHybridArcaneGem.tga' not in styles:
+        fail("Hybrid must retain a separate tintable gemstone layer")
+    if 'SetPoint("CENTER", frame, "LEFT", HYBRID_CENTER_X, HYBRID_CENTER_Y)' not in styles:
+        fail("Hybrid Arcane medallion must be centered on the left panel edge")
+    if 'C.Vis(panel.sigils[1], false)' not in styles or 'C.Vis(panel.sigils[2], false)' not in styles:
+        fail("Hybrid must hide both stock Arcane sigils beneath its two distinct endcaps")
     if 'PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)' not in styles:
         fail("Hybrid must place the active class emblem on the right")
+    if 'panel.hybridGem:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)' not in styles:
+        fail("Hybrid Arcane gemstone must use the active class gem color")
     if 'panel.classGems[i]:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)' not in styles:
         fail("Hybrid center diamonds must use the active class gem color")
     if 'table.insert(root.deco.classGems, d)' not in bar:
@@ -126,7 +128,14 @@ def main() -> None:
             fail(f"Missing class-bar art: Art/{name}")
         if path.stat().st_size < 16 or path.read_bytes()[:4] != b"BLP2":
             fail(f"Invalid or empty BLP texture: Art/{name}")
-    print(f"PASS: all {len(assets)} class emblems, rails, glass and original Arcane sigil textures are valid BLP2 assets")
+    print(f"PASS: all {len(assets)} class emblems, rails, glass and Classic sigil textures are valid BLP2 assets")
+
+    for name in ("PanelHybridArcane.tga", "PanelHybridArcaneGem.tga"):
+        path = ROOT / "Art" / name
+        if not path.is_file():
+            fail(f"Missing Hybrid Arcane art: Art/{name}")
+        validate_tga_rle_32(path)
+    print("PASS: both Hybrid 256x256 alpha TGA textures fully decode without row-crossing packets")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))
