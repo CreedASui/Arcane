@@ -118,10 +118,10 @@ def main() -> None:
             fail(f"Missing Hybrid Arcane medallion art: Art/{name}")
         header = path.read_bytes()[:18]
         if (len(header) != 18 or header[2] != 10
-                or int.from_bytes(header[12:14], "little") != 192
-                or int.from_bytes(header[14:16], "little") != 192
+                or int.from_bytes(header[12:14], "little") != 128
+                or int.from_bytes(header[14:16], "little") != 128
                 or header[16] != 32 or (header[17] & 0x0F) != 8):
-            fail(f"Hybrid medallion texture must be 192x192 32-bit alpha RLE TGA: Art/{name}")
+            fail(f"Hybrid medallion texture must be 128x128 32-bit alpha RLE TGA: Art/{name}")
     print("PASS: dedicated Hybrid Arcane medallion and class-tinted gem are valid 32-bit alpha TGAs")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
