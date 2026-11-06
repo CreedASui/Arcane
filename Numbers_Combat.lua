@@ -1,19 +1,18 @@
 -- Damage-number combat model: classify hits, group them and maintain labels.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Combat = N.Combat or {}
 local S = N.Combat
 local C = N.Config
 
 ------------------------------------------------------------------------------
 -- Labels: one number on screen and the hits it holds.
 
-S.labels, S.nLabels= {}, 0
-S.byKey, S.missByKey= {}, {} -- the open number for an enemy (and skill)
+S.labels, S.nLabels = {}, 0
+S.byKey, S.missByKey = {}, {}  -- the open number for an enemy (and skill)
 local nextLabelId = 0
-S.pending, S.nPending= {}, 0
-S.bossNames= {}
-S.frameNow= 0           -- the time of the frame being worked on
+S.pending, S.nPending = {}, 0
+S.bossNames = {}
+S.frameNow = 0            -- the time of the frame being worked on
 local crowdTargets = {}      -- per spell: enemy -> until when it counts as hit
 local dotCrowd, crowdAt, crowdUntil = {}, {}, {}
 
