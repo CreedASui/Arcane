@@ -4,6 +4,7 @@ local N = AUI.Numbers
 N.Config = N.Config or {}
 N.Widgets = N.Widgets or {}
 N.Combat = N.Combat or {}
+N.Icons = N.Icons or {}
 N.CombatAPI = N.CombatAPI or {}
 N.Preview = N.Preview or {}
 N.Anchors = N.Anchors or {}
