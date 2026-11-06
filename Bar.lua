@@ -762,13 +762,15 @@ C.OnInit(function()
 	root.panel:SetPoint("TOPLEFT", root, "TOPLEFT", -(C.PANEL_ROOM or 0), 0)
 	root.panel:SetPoint("BOTTOMRIGHT", root, "BOTTOMRIGHT", C.PANEL_ROOM or 0, 0)
 	root.deco = C.Panel(root.panel, true)
-	-- a gold diamond at the middle of the top and bottom rails, over the bar's middle
+	root.deco.classGems = {}
+	-- paired center diamonds take the active class gemstone color in Hybrid mode.
 	for _, edge in ipairs({ "TOP", "BOTTOM" }) do
 		local d = C.Tex(root.panel, "OVERLAY", C.ART .. "Diamond")
 		d:SetWidth(20)
 		d:SetHeight(20)
 		d:SetPoint("CENTER", root, edge, 0, 0)
 		table.insert(root.deco.metal, d)
+		table.insert(root.deco.classGems, d)
 	end
 	root.dividers = {}
 	for i = 1, 3 do
