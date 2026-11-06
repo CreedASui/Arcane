@@ -94,8 +94,16 @@ def main() -> None:
         fail("Options hub must label the skill-bar style selector")
     if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
         fail("Hybrid must use its own left Arcane medallion endcap")
+    if 'SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)' not in styles:
+        fail("Hybrid Arcane medallion must be anchored on the left")
+    if 'PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)' not in styles:
+        fail("Hybrid must place the active class emblem on the right")
+    if 'panel.classGems[i]:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)' not in styles:
+        fail("Hybrid center diamonds must use the active class gem color")
+    if 'table.insert(root.deco.classGems, d)' not in bar:
+        fail("Bar.lua must register the two center diamonds for class coloring")
     if 'panel.endRight or {}' not in styles:
-        fail("Hybrid must reserve the right side for the class crest")
+        fail("Hybrid must hide the stock right-end frame beneath the class crest")
     if "state.db.style = CLASSIC" not in styles:
         fail("Classic Arcane style must remain the default for existing saved variables")
     if 'C.DB("bar")' not in styles:
