@@ -830,7 +830,7 @@ function C.Panel(frame, sigils)
 		table.insert(p.metal, d)
 	end
 	if sigils then
-		-- Matching Arcane medallions at both ends; the left copy is mirrored for symmetry.
+		-- Matching Arcane medallions at both ends; mirror the right copy so the dragons face inward.
 		p.sigils = {}
 		local out = P_OUT
 		for i, side in ipairs({ "LEFT", "RIGHT" }) do
@@ -839,7 +839,7 @@ function C.Panel(frame, sigils)
 			t:SetWidth(P_SIGIL)
 			t:SetHeight(P_SIGIL)
 			t:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * out, -P_FOOT)
-			if k < 0 then t:SetTexCoord(1, 0, 0, 1) end
+			if k > 0 then t:SetTexCoord(1, 0, 0, 1) end
 			p.sigils[i] = t
 		end
 	end
