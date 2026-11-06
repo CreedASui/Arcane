@@ -1,7 +1,6 @@
 -- Damage-number commands: slash commands, Arcane registration and client events.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Commands = N.Commands or {}
 local S = N.Commands
 local C = N.Config
 
@@ -44,11 +43,11 @@ AUI.NumbersSlash = function(msg)
 		if N.Options.RefreshOptions then
 			N.Options.RefreshOptions()
 		end
-		C.Print(C.L("style: ") .. L(C.PRESET_NAMES[command]) .. ". " .. L(C.PRESET_NOTES[command]))
+		C.Print(C.L("style: ") .. C.L(C.PRESET_NAMES[command]) .. ". " .. C.L(C.PRESET_NOTES[command]))
 	elseif C.MOTION_NAMES[command] then
 		C.db.motion = command
 		N.Options.RefreshOptions()
-		C.Print(C.L("number motion: ") .. L(C.MOTION_NAMES[command]) .. ". " .. L(C.MOTION_NOTES[command]))
+		C.Print(C.L("number motion: ") .. C.L(C.MOTION_NAMES[command]) .. ". " .. C.L(C.MOTION_NOTES[command]))
 	elseif command == "size" then
 		local value = tonumber(rest)
 		if value then
