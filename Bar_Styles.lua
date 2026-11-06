@@ -186,6 +186,7 @@ function M.Apply(panel)
 	EnsureClassEmblems(panel)
 	if mode == HYBRID then
 		C.Vis(panel.sigils[2], false)
+		for i = 1, table.getn(panel.endRight or {}) do C.Vis(panel.endRight[i], false) end
 		PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)
 		return
 	end
