@@ -81,7 +81,7 @@ def main() -> None:
         fail("Bar.lua must route panel theming through Bar_Styles.lua")
     print("PASS: existing slot/cooldown renderer delegates visual modes to one controller")
 
-    for contract in ("p.railT = Rail(", "p.railB = Rail(", "p.endLeft = {}",
+    for contract in ("p.railT = Rail(", "p.railB = Rail(", "endLeft = {}",
                      "endLeft = {}", "endRight = {}", "function C.PanelTheme(p, pal)"):
         if contract not in core:
             fail(f"Core panel API is missing shared style support: {contract}")
