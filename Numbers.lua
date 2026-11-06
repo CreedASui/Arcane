@@ -2,8 +2,17 @@ local AUI = Arcane
 AUI.Numbers = AUI.Numbers or {}
 local N = AUI.Numbers
 N.Config = N.Config or {}
+N.Widgets = N.Widgets or {}
+N.Combat = N.Combat or {}
+N.CombatAPI = N.CombatAPI or {}
+N.Preview = N.Preview or {}
+N.Anchors = N.Anchors or {}
+N.Layout = N.Layout or {}
+N.Animation = N.Animation or {}
+N.Lifecycle = N.Lifecycle or {}
+N.Options = N.Options or {}
+N.Commands = N.Commands or {}
 local C = N.Config
-
 --[[
 Arcane UI: damage numbers (Smooth Numbers) - calmer, cleaner damage numbers for Azeroth Survivors.
 
@@ -32,67 +41,67 @@ table.getn and math.mod, and the this/event/arg1 globals in handlers.
 ]]
 
 -- the words in the language picked (Core); as they are when run on their own
-C.L= AUI.L or function(s) return s end
-C.LText= AUI.LText or function(fs, s) fs:SetText(s) end
-local VERSION = AUI.VERSION
+C.L = AUI.L or function(s) return s end
+C.LText = AUI.LText or function(fs, s) fs:SetText(s) end
+C.VERSION = AUI.VERSION
 
 ------------------------------------------------------------------------------
 -- Look and timing
 
-C.FONT_SIZE= 24            -- every number is drawn at this size, then scaled
-C.FLAT= "Interface\\ChatFrame\\ChatFrameBackground"
+C.FONT_SIZE = 24             -- every number is drawn at this size, then scaled
+C.FLAT = "Interface\\ChatFrame\\ChatFrameBackground"
 
-C.FADE_IN= 0.1             -- seconds to appear
-C.HOLD= 0.5                -- a number stays this long after its last hit
-C.FADE_OUT= 0.55           -- then floats up and melts away this long
-C.CULL_FADE= 0.3           -- a number pushed out (or slipping away) melts this long
-C.CROWD_FADE= 0.18         -- one boxed in by others melts quicker, as it overlaps
-C.SPRING= 14               -- how briskly a number steps aside (a soft spring)
-C.POP_SPRING= 28           -- how briskly a hit's punch swells in
-C.EDGE_FADE= 0.2           -- a number leaving (or coming back into) the view
-C.POP_TIME= 0.18           -- the pop when a number appears
-C.MAX_AGE= 4.6             -- the game keeps a hit's place for 5 seconds
-C.STALE= 0.6               -- hits older than this when read are skipped
-C.BASE_RISE= 16            -- a number starts this far over the enemy
-C.DRIFT= 22                -- and drifts up this much while it lives
-C.FADE_RISE= 18            -- and this much more as it fades, gathering pace
-C.FADE_SHRINK= 0.12        -- and shrinks this much as it fades
-C.CULL_SHRINK= 0.15        -- a number pushed out shrinks this much as it goes
-C.GROUP_RADIUS= 70         -- "one number per group": hits this close share one
-C.CROWD_TIME= 0.06         -- a number boxed in this long fades out
-C.MIN_SHOW= 0.5            -- once shown, a number stays at least this long
-C.ICON_SIZE= 22            -- the skill icon, in the number's own units
-C.ICON_GAP= 4              -- between the icon and the number
-C.DOT_FIRST_HOLD= 3.4      -- a DoT's number waits this long for the next tick at first
-C.DOT_MAX_HOLD= 3.9        -- and never longer (the game keeps a hit's place 5 s)
-C.KILL_HOLD= 1.2           -- a DoT's total stays this long once its enemy dies
-C.KILL_GRACE= 0.4          -- ticks read just after the death still count
-C.CROWD_COUNT= 3           -- a spell hitting this many enemies at once merges
-C.CROWD_TICK= 3.2          -- an enemy counts this long after a DoT's tick on it
-C.CROWD_HIT= 1.6           -- and this long after any other hit
-C.MERGE_WINDOW= 1.0        -- a merged number takes one second of its spell's hits
-C.MAX_SPOTS= 12            -- the enemies a merged number centers over
--- Keep the stack-sizing controls together; the layout code reads this shared tuning record.
-C.STACK= { shrink = 0.88, grow = 0.35, time = 1.5 }
+C.FADE_IN = 0.1              -- seconds to appear
+C.HOLD = 0.5                 -- a number stays this long after its last hit
+C.FADE_OUT = 0.55            -- then floats up and melts away this long
+C.CULL_FADE = 0.3            -- a number pushed out (or slipping away) melts this long
+C.CROWD_FADE = 0.18          -- one boxed in by others melts quicker, as it overlaps
+C.SPRING = 14                -- how briskly a number steps aside (a soft spring)
+C.POP_SPRING = 28            -- how briskly a hit's punch swells in
+C.EDGE_FADE = 0.2            -- a number leaving (or coming back into) the view
+C.POP_TIME = 0.18            -- the pop when a number appears
+C.MAX_AGE = 4.6              -- the game keeps a hit's place for 5 seconds
+C.STALE = 0.6                -- hits older than this when read are skipped
+C.BASE_RISE = 16             -- a number starts this far over the enemy
+C.DRIFT = 22                 -- and drifts up this much while it lives
+C.FADE_RISE = 18             -- and this much more as it fades, gathering pace
+C.FADE_SHRINK = 0.12         -- and shrinks this much as it fades
+C.CULL_SHRINK = 0.15         -- a number pushed out shrinks this much as it goes
+C.GROUP_RADIUS = 70          -- "one number per group": hits this close share one
+C.CROWD_TIME = 0.06          -- a number boxed in this long fades out
+C.MIN_SHOW = 0.5             -- once shown, a number stays at least this long
+C.ICON_SIZE = 22             -- the skill icon, in the number's own units
+C.ICON_GAP = 4               -- between the icon and the number
+C.DOT_FIRST_HOLD = 3.4       -- a DoT's number waits this long for the next tick at first
+C.DOT_MAX_HOLD = 3.9         -- and never longer (the game keeps a hit's place 5 s)
+C.KILL_HOLD = 1.2            -- a DoT's total stays this long once its enemy dies
+C.KILL_GRACE = 0.4           -- ticks read just after the death still count
+C.CROWD_COUNT = 3            -- a spell hitting this many enemies at once merges
+C.CROWD_TICK = 3.2           -- an enemy counts this long after a DoT's tick on it
+C.CROWD_HIT = 1.6            -- and this long after any other hit
+C.MERGE_WINDOW = 1.0         -- a merged number takes one second of its spell's hits
+C.MAX_SPOTS = 12             -- the enemies a merged number centers over
+-- Keep stack-sizing controls together; the layout code reads this shared tuning record.
+C.STACK = { shrink = 0.88, grow = 0.35, time = 1.5 }
 
 -- Icons for hits that come without one: a swing shows the weapon in hand, a
 -- shot the ranged one, a damage shield Thorns (read from your gear when it can).
-C.MELEE_ICON= "Interface\\Icons\\INV_Sword_04"
-C.SHOT_ICON= "Interface\\Icons\\Ability_Whirlwind"
-C.SHIELD_ICON= "Interface\\Icons\\Spell_Nature_Thorns"
+C.MELEE_ICON = "Interface\\Icons\\INV_Sword_04"
+C.SHOT_ICON = "Interface\\Icons\\Ability_Whirlwind"
+C.SHIELD_ICON = "Interface\\Icons\\Spell_Nature_Thorns"
 
-C.FONTS= {
+C.FONTS = {
 	{ name = "Friz Quadrata", path = "Fonts\\FRIZQT__.TTF" },
 	{ name = "Arial Narrow", path = "Fonts\\ARIALN.TTF" },
 	{ name = "Skurri", path = "Fonts\\SKURRI.TTF" },
 	{ name = "Morpheus", path = "Fonts\\MORPHEUS.TTF" },
 }
 
-C.COLOR_NORMAL= { 1.00, 0.96, 0.88 }
-C.COLOR_CRIT= { 1.00, 0.80, 0.18 }
-C.COLOR_DOT= { 0.86, 0.84, 0.80 }
-C.COLOR_MISS= { 0.70, 0.70, 0.72 }
-C.SCHOOL_COLORS= {
+C.COLOR_NORMAL = { 1.00, 0.96, 0.88 }
+C.COLOR_CRIT = { 1.00, 0.80, 0.18 }
+C.COLOR_DOT = { 0.86, 0.84, 0.80 }
+C.COLOR_MISS = { 0.70, 0.70, 0.72 }
+C.SCHOOL_COLORS = {
 	[1] = { 1.00, 0.96, 0.88 },  -- Physical
 	[2] = { 1.00, 0.92, 0.55 },  -- Holy
 	[4] = { 1.00, 0.55, 0.22 },  -- Fire
@@ -103,28 +112,28 @@ C.SCHOOL_COLORS= {
 }
 
 -- The three styles. Picking one sets these; the switches can then be changed.
-C.PRESETS= {
+C.PRESETS = {
 	minimal = { maxLabels = 6, group = true, mergeAge = 1.2, misses = false, minShare = 0.12 },
 	clean = { maxLabels = 12, group = false, mergeAge = 0.9, misses = false, minShare = 0 },
 	detailed = { maxLabels = 20, group = false, mergeAge = 0.5, misses = true, minShare = 0 },
 }
-C.PRESET_ORDER= { "minimal", "clean", "detailed" }
-C.PRESET_NAMES= { minimal = "Minimal", clean = "Clean", detailed = "Detailed" }
-C.PRESET_NOTES= {
+C.PRESET_ORDER = { "minimal", "clean", "detailed" }
+C.PRESET_NAMES = { minimal = "Minimal", clean = "Clean", detailed = "Detailed" }
+C.PRESET_NOTES = {
 	minimal = "Fewest numbers: nearby enemies share one.",
 	clean = "One number per enemy, counting up.",
 	detailed = "More numbers, sooner, plus Miss and Immune.",
 }
-C.MOTION_ORDER= { "smooth", "fountain", "rise", "impact" }
-C.MOTION_NAMES= { smooth = "Smooth", fountain = "Fountain", rise = "Rise", impact = "Impact" }
-C.MOTION_NOTES= {
+C.MOTION_ORDER = { "smooth", "fountain", "rise", "impact" }
+C.MOTION_NAMES = { smooth = "Smooth", fountain = "Fountain", rise = "Rise", impact = "Impact" }
+C.MOTION_NOTES = {
 	smooth = "Numbers drift up gently and melt away.",
 	fountain = "Numbers arc up and fall away to the side.",
 	rise = "Numbers scroll straight up, quickly.",
 	impact = "Numbers punch in big and stay put; crits shake.",
 }
 
-C.DEFAULTS= {
+C.DEFAULTS = {
 	enabled = true,
 	preset = "clean", motion = "smooth",
 	maxLabels = 12, group = false, mergeAge = 0.9, misses = false, minShare = 0,
@@ -133,18 +142,18 @@ C.DEFAULTS= {
 	dotTotals = true, crowd = true, bySpell = false,
 }
 
-C.db = nil-- ArcaneDB.numbers, set up when the addon loads
+C.db = nil -- ArcaneDB.numbers, set up when the addon loads
 
 ------------------------------------------------------------------------------
 -- Small helpers
 
 C.Print = function(msg)
 	if DEFAULT_CHAT_FRAME then
-		DEFAULT_CHAT_FRAME:AddMessage("|cffffcc55Arcane UI|r " .. L("numbers") .. ": " .. msg)
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffcc55Arcane UI|r " .. C.L("numbers") .. ": " .. msg)
 	end
 end
 
--- Shared math helpers come from Core.lua: AUI.Clamp and AUI.Smooth.
+-- Math helpers are shared with Core.lua; there is one implementation of each.
 
 
 C.Capitalize = function(word)
