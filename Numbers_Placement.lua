@@ -1,7 +1,6 @@
 -- Damage-number placement: give visible labels clear, stable positions without overlap.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Placement = N.Placement or {}
 local S = N.Placement
 local C = N.Config
 
