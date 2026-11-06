@@ -11,7 +11,7 @@ local function ScoreOrder(a, b)
 	return a.id > b.id
 end
 
-N.Layout.CullLabel = function(label, now, quick)
+S.CullLabel = function(label, now, quick)
 	label.culled = true
 	label.culledAt = now
 	label.cullTime = C.CULL_FADE
@@ -93,7 +93,7 @@ S.Cull = function(now)
 				if label.back then
 					label.back = false
 				elseif not label.culled then
-					N.Layout.CullLabel(label, now)
+					S.CullLabel(label, now)
 				end
 			end
 		end
@@ -111,7 +111,7 @@ S.Cull = function(now)
 		if not label.culled then
 			local isDot = label.dot and not label.boss
 			if kept >= C.db.maxLabels or (isDot and keptDots >= dotCap) then
-				N.Layout.CullLabel(label, now)
+				S.CullLabel(label, now)
 			else
 				kept = kept + 1
 				if isDot then
@@ -136,7 +136,7 @@ S.Cull = function(now)
 					victim = weakestDot
 				end
 				if victim and label.score > victim.score * 2 then
-					N.Layout.CullLabel(victim, now)
+					S.CullLabel(victim, now)
 					kept = kept - 1
 					if victim.dot and not victim.boss then
 						keptDots = keptDots - 1
