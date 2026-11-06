@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Shaman and Warlock Hybrid medallion variants from canonical Arcane art.
+"""Generate class-colored Hybrid medallion variants from canonical Arcane art.
 
 Only the inner green enamel is hue-shifted. Gold dragon scales, metalwork, foliage,
 the separately tinted lower gem, and the right-hand class emblem remain untouched.
@@ -7,6 +7,7 @@ the separately tinted lower gem, and the right-hand class emblem remain untouche
 from __future__ import annotations
 
 import colorsys
+import math
 import struct
 from array import array
 from collections import deque
@@ -103,42 +104,48 @@ def clean_edge(pixels: bytearray) -> bytearray:
 
 
 def recolor_enamel(pixels: bytearray, target_rgb: tuple[int, int, int]) -> bytearray:
-    """Hue shift the central green enamel, with a soft spatial falloff into its edge."""
-    out = bytearray(pixels)
-    th, ts, _ = colorsys.rgb_to_hsv(*(v / 255.0 for v in target_rgb))
-    # Coordinates are scaled from the 400px transparent source art to the 512px canvas.
-    x0, x1 = 104 * W // 400, 296 * W // 400
-    y0, y1 = 86 * H // 400, 287 * H // 400
-    feather = 3.0
-    for y in range(y0, y1):
-        fy = smooth(min((y - y0 + 1) / feather, (y1 - y) / feather))
-        for x in range(x0, x1):
-            fx = smooth(min((x - x0 + 1) / feather, (x1 - x) / feather))
-            spatial = fx * fy
-            if spatial <= 0:
-                continue
-            off = (y * W + x) * 4
-            b, g, r, a = pixels[off:off + 4]
-            if a == 0:
-                continue
-            hue, sat, val = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
-            deg = hue * 180.0
-            green_band = max(0.0, min(1.0, (deg - 28.0) / 12.0))
-            green_band *= max(0.0, min(1.0, (112.0 - deg) / 14.0))
-            saturation = max(0.0, min(1.0, (sat * 255.0 - 46.0) / 68.0))
-            weight = green_band * saturation * spatial * (a / 255.0)
-            if weight <= 0.001:
-                continue
-            delta = ((th - hue + 0.5) % 1.0) - 0.5
-            nh = (hue + delta * weight) % 1.0
-            ns = sat + (ts - sat) * weight * 0.86
-            nv = min(1.0, val + (20.0 / 255.0) * weight)
-            nr, ng, nb = colorsys.hsv_to_rgb(nh, ns, nv)
-            out[off:off + 4] = bytes((
-                round(nb * 255), round(ng * 255), round(nr * 255), a
-            ))
-    return out
-
+    """Hue-shift inner green enamel and side accents while preserving gold metalwork."""
+    output = bytearray(pixels)
+    target_h, target_s, _ = colorsys.rgb_to_hsv(*(v / 255.0 for v in target_rgb))
+    gem_x, gem_y, gem_rx, gem_ry = 266.0, 418.0, 31.0, 38.0
+    for pixel in range(W * H):
+        offset = pixel * 4
+        alpha = pixels[offset + 3]
+        if not alpha:
+            continue
+        x, y = pixel % W, pixel // W
+        # Central enamel plus two narrow enamel accents beside the dragon crest.
+        central = 133 <= x <= 379 and 110 <= y <= 367
+        left_accent = 82 <= x <= 154 and 216 <= y <= 344
+        right_accent = 358 <= x <= 430 and 216 <= y <= 344
+        if not (central or left_accent or right_accent):
+            continue
+        # Keep the lower gemstone separate so its existing in-game tint layer remains crisp.
+        gem_protect = math.exp(-(((x - gem_x) / gem_rx) ** 2
+                                 + ((y - gem_y) / gem_ry) ** 2) * 1.3)
+        if gem_protect >= 0.98:
+            continue
+        blue, green, red = pixels[offset], pixels[offset + 1], pixels[offset + 2]
+        hue, saturation, value = colorsys.rgb_to_hsv(
+            red / 255.0, green / 255.0, blue / 255.0
+        )
+        hue180 = hue * 180.0
+        hue_in = max(0.0, min(1.0, (hue180 - 28.0) / 12.0))
+        hue_out = max(0.0, min(1.0, (112.0 - hue180) / 14.0))
+        sat_weight = max(0.0, min(1.0, (saturation * 255.0 - 46.0) / 68.0))
+        weight = (hue_in * hue_out * sat_weight
+                  * (1.0 - min(0.98, gem_protect)) * (alpha / 255.0))
+        if weight <= 0.001:
+            continue
+        delta = ((target_h - hue + 0.5) % 1.0) - 0.5
+        new_hue = (hue + delta * weight) % 1.0
+        new_saturation = saturation + (target_s - saturation) * weight * 0.86
+        new_value = min(1.0, value + (20.0 / 255.0) * weight)
+        nr, ng, nb = colorsys.hsv_to_rgb(new_hue, new_saturation, new_value)
+        output[offset] = max(0, min(255, int(nb * 255.0 + 0.5)))
+        output[offset + 1] = max(0, min(255, int(ng * 255.0 + 0.5)))
+        output[offset + 2] = max(0, min(255, int(nr * 255.0 + 0.5)))
+    return output
 
 def add_shaman_edge_wrap(pixels: bytearray, radius: int = 4) -> bytearray:
     """Add a slim sapphire wrap outside the medallion silhouette only."""
@@ -233,13 +240,22 @@ def main() -> None:
     if not source.is_file():
         raise SystemExit(f"Missing canonical Hybrid medallion: {source}")
     base = decode_tga(source)
-    shaman = clean_edge(recolor_enamel(base, (82, 168, 255)))
-    shaman = add_shaman_edge_wrap(shaman)
-    warlock = clean_edge(recolor_enamel(base, (163, 107, 245)))
-    encode_tga(ART / "PanelHybridArcaneShaman.tga", shaman)
-    encode_tga(ART / "PanelHybridArcaneWarlock.tga", warlock)
-    print("Generated Shaman blue edge-wrap and Warlock violet enamel medallion variants.")
-
+    variants = {
+        # Match the dominant Hybrid bar palette; the bottom gemstone stays independent.
+        "Warrior": ((178, 56, 36), False),
+        "Paladin": ((204, 153, 77), False),
+        "Rogue": ((158, 82, 191), False),
+        "Priest": ((214, 219, 235), False),
+        "Shaman": ((82, 168, 255), True),
+        "Mage": ((64, 128, 242), False),
+        "Warlock": ((163, 107, 245), False),
+    }
+    for class_name, (color, add_wrap) in variants.items():
+        output = clean_edge(recolor_enamel(base, color))
+        if add_wrap:
+            output = add_shaman_edge_wrap(output)
+        encode_tga(ART / f"PanelHybridArcane{class_name}.tga", output)
+    print("Generated Warrior red, Paladin gold, Rogue violet, Priest silver, Shaman blue, Mage blue and Warlock violet medallions. Hunter and Druid retain the original green art.")
 
 if __name__ == "__main__":
     main()

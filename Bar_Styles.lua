@@ -176,9 +176,14 @@ local function EnsureHybridArcane(panel)
 end
 
 local function HybridArcaneTexture(key)
+	if key == "warrior" then return C.ART .. "PanelHybridArcaneWarrior.tga" end
+	if key == "paladin" then return C.ART .. "PanelHybridArcanePaladin.tga" end
+	if key == "rogue" then return C.ART .. "PanelHybridArcaneRogue.tga" end
+	if key == "priest" then return C.ART .. "PanelHybridArcanePriest.tga" end
 	if key == "shaman" then return C.ART .. "PanelHybridArcaneShaman.tga" end
+	if key == "mage" then return C.ART .. "PanelHybridArcaneMage.tga" end
 	if key == "warlock" then return C.ART .. "PanelHybridArcaneWarlock.tga" end
-	-- Druid and every other class keep the approved original green Arcane medallion.
+	-- Hunter and Druid keep the approved original green Arcane medallion.
 	return C.ART .. "PanelHybridArcane.tga"
 end
 local function RestoreBasePanel(panel)

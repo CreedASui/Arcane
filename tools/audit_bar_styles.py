@@ -102,7 +102,10 @@ def main() -> None:
     bar = source("Bar.lua")
     core = source("Core.lua")
     generator = source("tools/build_hybrid_medallion_variants.py")
-    for asset in ("PanelHybridArcaneShaman.tga", "PanelHybridArcaneWarlock.tga"):
+    for asset in ("PanelHybridArcaneWarrior.tga", "PanelHybridArcanePaladin.tga",
+                  "PanelHybridArcaneRogue.tga", "PanelHybridArcanePriest.tga",
+                  "PanelHybridArcaneShaman.tga", "PanelHybridArcaneMage.tga",
+                  "PanelHybridArcaneWarlock.tga"):
         if asset not in generator:
             fail(f"Hybrid variant generator is missing output mapping for {asset}")
 
@@ -143,10 +146,12 @@ def main() -> None:
         fail("Hybrid must use the approved high-resolution Arcane medallion on the left")
     if 'PanelHybridArcaneGem.tga' not in styles:
         fail("Hybrid must retain a separate tintable gemstone layer")
-    if 'key == "shaman"' not in styles or 'key == "warlock"' not in styles:
-        fail("Hybrid must choose Shaman and Warlock medallion accents by class")
-    if 'PanelHybridArcaneShaman.tga' not in styles or 'PanelHybridArcaneWarlock.tga' not in styles:
-        fail("Hybrid style controller must route both generated medallion variants")
+    for class_name in ("warrior", "paladin", "rogue", "priest", "shaman", "mage", "warlock"):
+        if f'key == "{class_name}"' not in styles:
+            fail(f"Hybrid medallion selector is missing the {class_name} class route")
+        pretty = class_name[0].upper() + class_name[1:]
+        if f"PanelHybridArcane{pretty}.tga" not in styles:
+            fail(f"Hybrid medallion selector is missing the {pretty} texture")
     if 'SetPoint("CENTER", frame, "LEFT", HYBRID_CENTER_X, HYBRID_CENTER_Y)' not in styles:
         fail("Hybrid Arcane medallion must be centered on the left panel edge")
     if 'C.Vis(panel.sigils[1], false)' not in styles or 'C.Vis(panel.sigils[2], false)' not in styles:
@@ -182,12 +187,15 @@ def main() -> None:
     print(f"PASS: all {len(assets)} class emblems, rails, glass and Classic sigil textures are valid BLP2 assets")
 
     for name in ("PanelHybridArcane.tga", "PanelHybridArcaneGem.tga",
-                 "PanelHybridArcaneShaman.tga", "PanelHybridArcaneWarlock.tga"):
+                 "PanelHybridArcaneWarrior.tga", "PanelHybridArcanePaladin.tga",
+                 "PanelHybridArcaneRogue.tga", "PanelHybridArcanePriest.tga",
+                 "PanelHybridArcaneShaman.tga", "PanelHybridArcaneMage.tga",
+                 "PanelHybridArcaneWarlock.tga"):
         path = ROOT / "Art" / name
         if not path.is_file():
             fail(f"Missing Hybrid Arcane art: Art/{name}")
         validate_tga_rle_32(path)
-    print("PASS: all four Hybrid medallion/gem textures fully decode as 512x512 alpha TGAs")
+    print("PASS: all nine Hybrid base/gem/class medallion textures fully decode as 512x512 alpha TGAs")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))
