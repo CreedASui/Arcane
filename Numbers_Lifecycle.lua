@@ -112,8 +112,8 @@ local function Step(now)
 			label.bump = math.min(0.6, label.bump + 0.35)
 		end
 	end
-	N.Layout.Cull(now)
-	N.Layout.Spread(now, dt)
+	N.Culling.Cull(now)
+	N.Placement.Spread(now, dt)
 	N.Animation.Render(now, dt)
 end
 
