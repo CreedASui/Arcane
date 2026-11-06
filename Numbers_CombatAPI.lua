@@ -1,14 +1,13 @@
 -- Combat-text API adapter: validate the client API and collect incoming events.
 local AUI = Arcane
 local N = AUI.Numbers
-N.CombatAPI = N.CombatAPI or {}
 local S = N.CombatAPI
 local C = N.Config
 
 ------------------------------------------------------------------------------
 -- Reading the game's hits
 
-S.apiReady, S.active, S.registered, S.warnedNoApi= false, false, false, false
+S.apiReady, S.active, S.registered, S.warnedNoApi = false, false, false, false
 S.cursor = nil
 
 S.ApiReady = function()
