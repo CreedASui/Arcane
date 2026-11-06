@@ -1,7 +1,6 @@
 -- Damage-number options: own the settings window and its refresh behavior.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Options = N.Options or {}
 local S = N.Options
 local C = N.Config
 
@@ -170,7 +169,7 @@ local function BuildOptions()
 	C.LText(title, "Damage numbers")
 	local version = Text(o, 10, 0.55, 0.55, 0.6)
 	version:SetPoint("LEFT", title, "RIGHT", 8, -1)
-	version:SetText("v" .. VERSION)
+	version:SetText("v" .. C.VERSION)
 
 	local close = MakeButton(o, 22, 22, "x", function()
 		o:Hide()
