@@ -16,6 +16,7 @@ local state = {
 
 local M = {}
 C.BarStyles = M
+M.CLASSIC, M.HYBRID, M.FULL_CLASS = CLASSIC, HYBRID, FULL_CLASS
 
 local function DB()
 	if not state.db then state.db = C.DB("bar") end
