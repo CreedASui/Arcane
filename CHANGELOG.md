@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Skill bar styles:** add Classic Arcane (default), Hybrid and Full Class presentations. The existing slot/cooldown renderer is shared by all three; class palettes and panel art live in separate modules, with all nine class emblem/crest and rail sets included. The chosen mode is saved in `ArcaneDB.bar.style`.
+
+
 ## v0.2
 
 This release consolidates the current Arcane UI feature set and the previously recorded improvements below. Earlier internal development version labels are intentionally grouped into this release.
