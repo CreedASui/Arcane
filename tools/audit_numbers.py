@@ -194,11 +194,11 @@ def check_timer_structure(entries: list[str]) -> None:
 
     data = mask_comments_and_strings(data_path.read_text(encoding="utf-8"))
     timer = mask_comments_and_strings(timer_path.read_text(encoding="utf-8"))
-    if len(re.findall(r"\\bAUI\\s*\\.\\s*TimerData\\s*=", data)) != 1:
+    if len(re.findall(r"\bAUI\s*\.\s*TimerData\s*=", data)) != 1:
         fail("Timer_Data.lua must own exactly one AUI.TimerData definition")
-    if len(re.findall(r"\\bAUI\\s*\\.\\s*TimerData\\s*=", timer)):
+    if len(re.findall(r"\bAUI\s*\.\s*TimerData\s*=", timer)):
         fail("Timer.lua must consume, not redefine, AUI.TimerData")
-    if len(re.findall(r"\\blocal\\s+DATA\\s*=\\s*AUI\\s*\\.\\s*TimerData\\b", timer)) != 1:
+    if len(re.findall(r"\blocal\s+DATA\s*=\s*AUI\s*\.\s*TimerData\b", timer)) != 1:
         fail("Timer.lua must consume the shared Timer_Data module exactly once")
 
     fields = (
@@ -206,19 +206,19 @@ def check_timer_structure(entries: list[str]) -> None:
         "HEROIC_COLORS", "ROMAN", "AFFIX_NAMES", "NAME_TO_ZONE", "ZNAME_TO_ZONE",
     )
     for field in fields:
-        if not re.search(rf"\\b{field}\\s*=\\s*{field}\\b", data):
+        if not re.search(rf"\b{field}\s*=\s*{field}\b", data):
             fail(f"Timer_Data.lua does not export {field}")
-        if not re.search(rf"\\bDATA\\s*\\.\\s*{field}\\b", timer):
+        if not re.search(rf"\bDATA\s*\.\s*{field}\b", timer):
             fail(f"Timer.lua does not consume Timer_Data.{field}")
 
     # The behavior is shared in Core. Keep Timer's Toward easing local: its snap
     # threshold intentionally differs from Core.Toward.
     aliases = {
-        "Clamp": r"local\\s+Clamp\\s*,\\s*Smooth\\s*=\\s*AUI\\s*\\.\\s*Clamp\\s*,\\s*AUI\\s*\\.\\s*Smooth",
-        "Spring": r"local\\s+Spring\\s*,\\s*Ease\\s*=\\s*AUI\\s*\\.\\s*Spring\\s*,\\s*AUI\\s*\\.\\s*Ease",
-        "Clock": r"local\\s+Clock\\s*,\\s*Call\\s*=\\s*AUI\\s*\\.\\s*Clock\\s*,\\s*AUI\\s*\\.\\s*Call",
-        "Tex": r"local\\s+Tex\\s*,\\s*Text\\s*=\\s*AUI\\s*\\.\\s*Tex\\s*,\\s*AUI\\s*\\.\\s*Text",
-        "Size": r"local\\s+Size\\s*,\\s*Color\\s*,\\s*Vis\\s*,\\s*Alpha\\s*=\\s*AUI\\s*\\.\\s*Size\\s*,\\s*AUI\\s*\\.\\s*Color\\s*,\\s*AUI\\s*\\.\\s*Vis\\s*,\\s*AUI\\s*\\.\\s*Alpha",
+        "Clamp": r"local\s+Clamp\s*,\s*Smooth\s*=\s*AUI\s*\.\s*Clamp\s*,\s*AUI\s*\.\s*Smooth",
+        "Spring": r"local\s+Spring\s*,\s*Ease\s*=\s*AUI\s*\.\s*Spring\s*,\s*AUI\s*\.\s*Ease",
+        "Clock": r"local\s+Clock\s*,\s*Call\s*=\s*AUI\s*\.\s*Clock\s*,\s*AUI\s*\.\s*Call",
+        "Tex": r"local\s+Tex\s*,\s*Text\s*=\s*AUI\s*\.\s*Tex\s*,\s*AUI\s*\.\s*Text",
+        "Size": r"local\s+Size\s*,\s*Color\s*,\s*Vis\s*,\s*Alpha\s*=\s*AUI\s*\.\s*Size\s*,\s*AUI\s*\.\s*Color\s*,\s*AUI\s*\.\s*Vis\s*,\s*AUI\s*\.\s*Alpha",
     }
     for helper, pattern in aliases.items():
         if not re.search(pattern, timer):
@@ -226,9 +226,9 @@ def check_timer_structure(entries: list[str]) -> None:
     duplicated = ("Clamp", "Smooth", "Spring", "Ease", "Clock", "Call",
                   "Tex", "Text", "Size", "Color", "Vis", "Alpha")
     for helper in duplicated:
-        if re.search(rf"^\\s*local\\s+function\\s+{helper}\\b", timer, re.M):
+        if re.search(rf"^\s*local\s+function\s+{helper}\b", timer, re.M):
             fail(f"Timer.lua must not duplicate Core helper {helper}")
-    if not re.search(r"^\\s*local\\s+function\\s+Toward\\b", timer, re.M):
+    if not re.search(r"^\s*local\s+function\s+Toward\b", timer, re.M):
         fail("Timer must retain its intentionally distinct Toward implementation")
 
     # These are public cross-system contracts: Core controls the timer, Bosses
@@ -249,7 +249,7 @@ def check_timer_structure(entries: list[str]) -> None:
     print(f"PASS: Timer has {local_count} file-scope locals (under Lua 5.0 limit)")
 
 def main() -> None:
-    read_toc()
+    entries = read_toc()
     check_module_ownership()
     check_timer_structure(entries)
     print("PASS: Arcane static architecture audit complete")
