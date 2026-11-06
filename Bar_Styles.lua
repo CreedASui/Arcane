@@ -8,6 +8,9 @@ local EMBLEM_W, EMBLEM_H = 512 * EMBLEM_U, 256 * EMBLEM_U
 local EMBLEM_L, EMBLEM_R, EMBLEM_IN = 220, 292, 24
 local RAIL_H, BASE_RAIL_H = 16 * 76 / 110, C.PANEL_RAIL or 8
 local PANEL_CORNER = C.PANEL_CORNER or 16
+local HYBRID_SIGIL = (C.PANEL_SIGIL or 122) * 1.14
+local HYBRID_OUT = HYBRID_SIGIL * 0.40
+local HYBRID_FOOT = HYBRID_SIGIL * 25 / 370
 local state = {
 	db = nil, class = nil, runId = nil, readClock = 0, stamp = 0,
 	palette = {}, paletteBase = nil, palettePalStamp = -1,
@@ -125,7 +128,7 @@ function M.Palette()
 end
 
 function M.PanelMetal(pal)
-	if Mode() == CLASSIC then return C.PanelMetal(pal) end
+	if Mode() == CLASSIC or Mode() == HYBRID then return C.PanelMetal(pal) end
 	local theme = CurrentTheme()
 	return theme.metal[1], theme.metal[2], theme.metal[3]
 end
@@ -152,6 +155,19 @@ local function EnsureClassEmblems(panel)
 	C.Vis(panel.classEmblems[2], false)
 end
 
+local function EnsureHybridArcane(panel)
+	if panel.hybridArcane then return end
+	local frame = panel.frame
+	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane")
+	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem")
+	for _, texture in ipairs({ panel.hybridArcane, panel.hybridGem }) do
+		texture:SetWidth(HYBRID_SIGIL)
+		texture:SetHeight(HYBRID_SIGIL)
+		texture:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", -HYBRID_OUT, -HYBRID_FOOT)
+		C.Vis(texture, false)
+	end
+end
+
 local function RestoreBasePanel(panel)
 	local frame = panel.frame
 	panel.railT:SetTexture(C.ART .. "PanelRailT")
@@ -174,6 +190,8 @@ local function RestoreBasePanel(panel)
 		C.Vis(panel.classEmblems[1], false)
 		C.Vis(panel.classEmblems[2], false)
 	end
+	if panel.hybridArcane then C.Vis(panel.hybridArcane, false) end
+	if panel.hybridGem then C.Vis(panel.hybridGem, false) end
 end
 
 function M.Apply(panel)
@@ -186,7 +204,11 @@ function M.Apply(panel)
 	if mode == CLASSIC then return end
 	EnsureClassEmblems(panel)
 	if mode == HYBRID then
+		EnsureHybridArcane(panel)
+		C.Vis(panel.sigils[1], false)
 		C.Vis(panel.sigils[2], false)
+		C.Vis(panel.hybridArcane, true)
+		C.Vis(panel.hybridGem, true)
 		for i = 1, table.getn(panel.endRight or {}) do C.Vis(panel.endRight[i], false) end
 		PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)
 		return
@@ -219,14 +241,20 @@ function M.Theme(panel, pal)
 		return
 	end
 	local theme = CurrentTheme()
-	local metal = theme.metal
+	local mr, mg, mb
+	if mode == HYBRID then
+		mr, mg, mb = C.PanelMetal(pal)
+	else
+		mr, mg, mb = theme.metal[1], theme.metal[2], theme.metal[3]
+	end
 	for i = 1, table.getn(panel.metal) do
-		panel.metal[i]:SetVertexColor(metal[1], metal[2], metal[3], 1)
+		panel.metal[i]:SetVertexColor(mr, mg, mb, 1)
 	end
 	if mode == HYBRID then
 		local fill = theme.fill
 		panel.fill:SetVertexColor(fill[1] * 0.48, fill[2] * 0.48, fill[3] * 0.48, 0.97)
-		panel.sigils[1]:SetVertexColor(metal[1], metal[2], metal[3], 1)
+		panel.hybridArcane:SetVertexColor(1, 1, 1, 1)
+		panel.hybridGem:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)
 		panel.classEmblems[2]:SetVertexColor(1, 1, 1, 1)
 	else
 		local fill = theme.fill
