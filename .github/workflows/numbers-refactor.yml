@@ -66,7 +66,7 @@ jobs:
           set -euo pipefail
           stage="$RUNNER_TEMP/package"
           addon="$stage/Arcane"
-          archive="$RUNNER_TEMP/Arcane-refactor-ade403e911f0.zip"
+          archive="$RUNNER_TEMP/Arcane-refactor-${GITHUB_SHA:0:12}.zip"
 
           mkdir -p "$addon"
           cp ./*.lua ./*.toc "$addon/"
@@ -82,7 +82,7 @@ jobs:
       - name: Upload test ZIP
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: Arcane-refactor-ade403e911f0b748f0507776de11c680e14c8adc
+          name: Arcane-refactor-${{ github.sha }}
           path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error
           retention-days: 14
