@@ -1,5 +1,7 @@
 # Arcane UI
 
+**Current release: v0.2**
+
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
 ## Preview
@@ -30,9 +32,11 @@ Every part can be turned on or off, sized and moved.
 
 **Languages:** English, French, German, Spanish, Portuguese, Chinese, Russian, Japanese, Korean, Polish and Turkish, picked from the options or with `/Arcane language`.
 
-## Build
+## Repository layout and packaging
 
-Requires Python 3 and FontTools (`python -m pip install fonttools`). From the repository root, run `python3 tools/package.py`. The script validates the addon TOC, required assets, saved-variable name and Arcane branding, updates the bundled fonts' internal family names to Arcane UI in the staged package, then creates `dist/Arcane-<version>.zip`. The ZIP contains only the installable `Arcane/` addon folder, not the development tools.
+The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
+
+The release asset is named `Arcane-v0.2.zip`. There is currently no checked-in `tools/` or `dev/` packaging script; do not expect an automated package build from this repository.
 
 ## Install
 
@@ -44,7 +48,7 @@ Requires Python 3 and FontTools (`python -m pip install fonttools`). From the re
 
 | Command | What it does |
 | --- | --- |
-| `/Arcane` | Opens the options (or click the C on the minimap's edge) |
+| `/Arcane` | Opens the options (or click the **A** on the minimap's edge) |
 | `/Arcane move`, `/Arcane lock` | Frees the frames to drag them, then locks them |
 | `/Arcane reset` | Puts every frame back in its place |
 | `/Arcane language <code>` | Picks the language (`auto` follows the game) |
@@ -55,8 +59,8 @@ Requires Python 3 and FontTools (`python -m pip install fonttools`). From the re
 
 ## Credits
 
-Arcane is developed as an independent project. Project history and retained upstream attribution are documented in [ATTRIBUTION.md](ATTRIBUTION.md). The bundled fonts in `Arcane/Fonts` are modified from Lora and Noto Sans CJK; their SIL Open Font License notices are retained in `Arcane/Fonts/LICENSE.txt`.
+Arcane is developed as an independent project. Project history and retained upstream attribution are documented in [ATTRIBUTION.md](ATTRIBUTION.md). The bundled fonts in `Fonts/` are modified from Lora and Noto Sans CJK; their SIL Open Font License notices are retained in [`Fonts/LICENSE.txt`](Fonts/LICENSE.txt).
 
 ## Working on it
 
-The tools that build and check Arcane UI (a stand-in game client with its tests, the translation, art and font scripts, a preview renderer) are in [`dev`](dev/README.md).
+The source modules are at the repository root. Artwork is in [`Art/`](Art/), bundled fonts and their license are in [`Fonts/`](Fonts/), and the repository preview is in [`docs/images/`](docs/images/).
