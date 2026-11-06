@@ -2,6 +2,10 @@
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
+## Preview
+
+![Arcane UI running in Azeroth Survivors](docs/images/arcane-ui-v0.2.jpg)
+
 ## What's in it
 
 - **Boss timer:** a themed countdown to each boss, with the run's time.
