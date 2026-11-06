@@ -139,7 +139,7 @@ S.Spread = function(now, dt)
 			label.crowd = 0
 		elseif not label.w and not important then
 			goal = 0
-			N.Layout.CullLabel(label, now)
+			N.Culling.CullLabel(label, now)
 		elseif important then
 			goal = label.nudgeGoal or 0
 			label.crowd = 0
@@ -147,7 +147,7 @@ S.Spread = function(now, dt)
 			goal = label.nudgeGoal or 0
 			label.crowd = label.crowd + dt
 			if label.crowd > C.CROWD_TIME then
-				N.Layout.CullLabel(label, now, true)
+				N.Culling.CullLabel(label, now, true)
 			end
 		end
 		label.nudgeGoal = goal
