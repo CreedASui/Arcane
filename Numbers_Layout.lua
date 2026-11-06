@@ -1,7 +1,6 @@
 -- Damage-number layout: decide which labels show and resolve overlap.
 local AUI = Arcane
 local N = AUI.Numbers
-N.Layout = N.Layout or {}
 local S = N.Layout
 local C = N.Config
 
