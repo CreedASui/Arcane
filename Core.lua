@@ -1377,9 +1377,9 @@ local function BuildHub()
 		return button
 	end
 	o.barStyleButtons = {
-		StyleChoice(1, "Arcane", 326),
-		StyleChoice(2, "Hybrid", 429),
-		StyleChoice(3, "Full class", 532),
+		StyleChoice(C.BarStyles.CLASSIC, "Arcane", 326),
+		StyleChoice(C.BarStyles.HYBRID, "Hybrid", 429),
+		StyleChoice(C.BarStyles.FULL_CLASS, "Full class", 532),
 	}
 	-- the language: a button that opens the list of them, each in its own words
 	o.lang = langButton
