@@ -11,7 +11,7 @@ local PANEL_CORNER = C.PANEL_CORNER or 16
 local BASE_SIGIL = C.PANEL_SIGIL or 122
 local BASE_OUT = BASE_SIGIL * 0.40
 local BASE_FOOT = BASE_SIGIL * 25 / 370
--- The approved reference medallion is a 400px cutout placed on a 256px power-of-two TGA.
+-- The approved reference medallion is a 400px cutout in a 512px power-of-two TGA.
 -- Center the visible crest on the panel's left edge; do not scale the old bottom-left offset.
 local HYBRID_SIGIL = BASE_SIGIL * 1.40
 local HYBRID_CENTER_X = HYBRID_SIGIL * 0.10
@@ -163,9 +163,9 @@ end
 local function EnsureHybridArcane(panel)
 	if panel.hybridArcane then return end
 	local frame = panel.frame
-	-- High-resolution transparent crest extracted from the approved Hybrid reference.
+	-- Canonical high-resolution medallion; class variants alter only the inner enamel.
 	panel.hybridArcane = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcane.tga")
-	-- Separate grayscale gemstone layer: only this gem is tinted by the active class palette.
+	-- Separate gemstone layer remains independently tinted from the class gem palette.
 	panel.hybridGem = C.Tex(frame, "OVERLAY", C.ART .. "PanelHybridArcaneGem.tga")
 	for _, texture in ipairs({ panel.hybridArcane, panel.hybridGem }) do
 		texture:SetWidth(HYBRID_SIGIL)
@@ -175,6 +175,12 @@ local function EnsureHybridArcane(panel)
 	end
 end
 
+local function HybridArcaneTexture(key)
+	if key == "shaman" then return C.ART .. "PanelHybridArcaneShaman.tga" end
+	if key == "warlock" then return C.ART .. "PanelHybridArcaneWarlock.tga" end
+	-- Druid and every other class keep the approved original green Arcane medallion.
+	return C.ART .. "PanelHybridArcane.tga"
+end
 local function RestoreBasePanel(panel)
 	local frame = panel.frame
 	panel.railT:SetTexture(C.ART .. "PanelRailT")
@@ -227,6 +233,7 @@ function M.Apply(panel)
 	EnsureClassEmblems(panel)
 	if mode == HYBRID then
 		EnsureHybridArcane(panel)
+		panel.hybridArcane:SetTexture(HybridArcaneTexture(key))
 		C.Vis(panel.sigils[1], false)
 		C.Vis(panel.sigils[2], false)
 		C.Vis(panel.hybridArcane, true)

@@ -45,6 +45,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes lua5.1 zip unzip
 
+      - name: Generate Shaman and Warlock Hybrid medallion variants
+        run: python tools/build_hybrid_medallion_variants.py
+
       - name: Audit TOC order and module ownership
         run: python tools/audit_numbers.py
 
