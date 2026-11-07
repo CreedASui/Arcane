@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - refactor/numbers-modules
+      - feature/class-skill-bar-styles
     paths:
       - "**.lua"
       - "**.toc"
@@ -44,8 +45,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes lua5.1 zip unzip
 
+      - name: Generate Shaman and Warlock Hybrid medallion variants
+        run: python tools/build_hybrid_medallion_variants.py
+
       - name: Audit TOC order and module ownership
         run: python tools/audit_numbers.py
+
+      - name: Audit skill-bar style modules and class artwork
+        run: python tools/audit_bar_styles.py
 
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash

@@ -7,6 +7,7 @@
 -- right corner, which flashes when a card ranks it up.
 
 local C = Arcane
+local Styles = C.BarStyles
 local DEFAULTS = { enabled = true, scale = 1 }
 local SLOT, GAP, RACIAL, JEWEL, SEP = 36, 4, 40, 32, 12
 local INSET, FOOT = 14, 10 -- room for the panel's rail: at the sides, under the slots
@@ -501,18 +502,27 @@ end
 
 local function Theme(pal)
 	local rim = pal.rim
-	C.PanelTheme(root.deco, pal)
-	local mr, mg, mb = C.PanelMetal(pal)
+	Styles.Theme(root.deco, pal)
+	local mr, mg, mb = Styles.PanelMetal(pal)
 	for i = 1, 3 do root.dividers[i]:SetVertexColor(mr, mg, mb) end
 	for i = 1, 7 do
 		local s = slots[i]
-		if s.kind == "racial" then
+		if s.kind == "racial" and Styles.Mode() == Styles.CLASSIC then
 			s.bezel:SetVertexColor(0.95, 0.79, 0.44)
 		else
 			s.bezel:SetVertexColor(rim[1], rim[2], rim[3])
 		end
 	end
-	C.BarTheme(xp, pal)
+	if Styles.Mode() == Styles.CLASSIC then
+		C.BarColors(xp, XP_COLORS[1], XP_COLORS[2], XP_COLORS[3])
+	else
+		C.BarColors(xp, pal.fillA, pal.fillM, pal.fillB)
+	end
+	if Styles.Mode() == Styles.HYBRID then
+		C.BarTheme(xp, C.BRONZE)
+	else
+		C.BarTheme(xp, pal)
+	end
 end
 
 local function JewelRim(j)
@@ -520,7 +530,7 @@ local function JewelRim(j)
 	if c then
 		j.bezel:SetVertexColor(0.45 + c[1] * 0.55, 0.45 + c[2] * 0.55, 0.45 + c[3] * 0.55)
 	else
-		local rim = C.Pal().rim
+		local rim = Styles.Palette().rim
 		j.bezel:SetVertexColor(rim[1] * 0.7, rim[2] * 0.7, rim[3] * 0.7)
 	end
 end
@@ -604,7 +614,7 @@ local function StepXP(dt, now)
 	C.TextColor(xp.text, 1, 0.95 + 0.05 * f, 0.84 + 0.16 * f)
 end
 
-local stamp = -1
+local stamp, styleStamp = -1, -1
 -- While the cards are up (or the game is paused) the run stands still, and so do the cooldowns:
 -- they hold where they were (the game's own numbers jump about then) and go on from there after.
 local FROZEN = { choosing = true, paused = true }
@@ -646,9 +656,11 @@ local function Step(dt)
 			ReadJewelry(not frozen)
 		end
 	end
-	local pal = C.Pal()
-	if stamp ~= C.palStamp then
-		stamp = C.palStamp
+	Styles.Update(dt)
+	local pal = Styles.Palette()
+	local nextStyleStamp = Styles.Stamp()
+	if stamp ~= C.palStamp or styleStamp ~= nextStyleStamp then
+		stamp, styleStamp = C.palStamp, nextStyleStamp
 		Theme(pal)
 		for i = 1, table.getn(jewels) do jewels[i].palStamp = nil end
 	end
@@ -750,13 +762,15 @@ C.OnInit(function()
 	root.panel:SetPoint("TOPLEFT", root, "TOPLEFT", -(C.PANEL_ROOM or 0), 0)
 	root.panel:SetPoint("BOTTOMRIGHT", root, "BOTTOMRIGHT", C.PANEL_ROOM or 0, 0)
 	root.deco = C.Panel(root.panel, true)
-	-- a gold diamond at the middle of the top and bottom rails, over the bar's middle
+	root.deco.classGems = {}
+	-- paired center diamonds take the active class gemstone color in Hybrid mode.
 	for _, edge in ipairs({ "TOP", "BOTTOM" }) do
 		local d = C.Tex(root.panel, "OVERLAY", C.ART .. "Diamond")
 		d:SetWidth(20)
 		d:SetHeight(20)
 		d:SetPoint("CENTER", root, edge, 0, 0)
 		table.insert(root.deco.metal, d)
+		table.insert(root.deco.classGems, d)
 	end
 	root.dividers = {}
 	for i = 1, 3 do

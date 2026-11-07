@@ -5,7 +5,7 @@
 Arcane = {}
 local C = Arcane
 
-C.VERSION = "0.2"
+C.VERSION = "0.3"
 C.ART = "Interface\\AddOns\\Arcane\\Art\\"
 C.FLAT = "Interface\\ChatFrame\\ChatFrameBackground"
 C.FONT = "Fonts\\FRIZQT__.TTF"
@@ -845,16 +845,16 @@ end
 -- and the Arcane A medallion at each end. The transparent gold-and-black sigil overlaps the end
 -- rail and extends outward, leaving the slots clear while making the bar unmistakably Arcane.
 local P_RAIL, P_CORNER, P_SIGIL = 8, 16, 122
+C.PANEL_RAIL, C.PANEL_CORNER, C.PANEL_SIGIL = P_RAIL, P_CORNER, P_SIGIL
 -- Keep the same endcap footprint as the previous artwork so the bar's overall layout stays stable.
 local P_OUT, P_FOOT = P_SIGIL * 0.40, P_SIGIL * 25 / 370
 C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
--- Arcane UI's gold, taken from the user's bar picture (dev/art/source/bar_reference.webp): the panel's
--- metal is its bright rail; its light rail highlight (0.98, 0.85, 0.52) is the gold of titles and
--- tooltip heads everywhere, its rail gold (0.91, 0.70, 0.30) the gold of borders and rims
+-- Arcane UI's gold, taken from the user's bar picture (dev/art/source/bar_reference.webp).
 local GOLD = { 0.95, 0.79, 0.44 }
 function C.Panel(frame, sigils)
-	local p = { frame = frame, metal = {} }
-	p.fill = C.Tex(frame, "BACKGROUND", C.ART .. "PanelFill")
+	local p = { frame = frame, metal = {}, ends = {}, endLeft = {}, endRight = {} }
+	p.baseFill = C.ART .. "PanelFill"
+	p.fill = C.Tex(frame, "BACKGROUND", p.baseFill)
 	p.fill:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
 	p.fill:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
 	local function Rail(art, a1, x1, y1, a2, x2, y2)
@@ -864,33 +864,43 @@ function C.Panel(frame, sigils)
 		table.insert(p.metal, t)
 		return t
 	end
-	Rail("PanelRailT", "TOPLEFT", P_CORNER, 0, "TOPRIGHT", -P_CORNER, 0):SetHeight(P_RAIL)
-	Rail("PanelRailB", "BOTTOMLEFT", P_CORNER, 0, "BOTTOMRIGHT", -P_CORNER, 0):SetHeight(P_RAIL)
-	Rail("PanelRailL", "TOPLEFT", 0, -P_CORNER, "BOTTOMLEFT", 0, P_CORNER):SetWidth(P_RAIL)
-	Rail("PanelRailR", "TOPRIGHT", 0, -P_CORNER, "BOTTOMRIGHT", 0, P_CORNER):SetWidth(P_RAIL)
+	p.railT = Rail("PanelRailT", "TOPLEFT", P_CORNER, 0, "TOPRIGHT", -P_CORNER, 0)
+	p.railT:SetHeight(P_RAIL)
+	p.railB = Rail("PanelRailB", "BOTTOMLEFT", P_CORNER, 0, "BOTTOMRIGHT", -P_CORNER, 0)
+	p.railB:SetHeight(P_RAIL)
+	local railL = Rail("PanelRailL", "TOPLEFT", 0, -P_CORNER, "BOTTOMLEFT", 0, P_CORNER)
+	local railR = Rail("PanelRailR", "TOPRIGHT", 0, -P_CORNER, "BOTTOMRIGHT", 0, P_CORNER)
+	railL:SetWidth(P_RAIL)
+	railR:SetWidth(P_RAIL)
+	table.insert(p.ends, railL)
+	table.insert(p.ends, railR)
+	table.insert(p.endLeft, railL)
+	table.insert(p.endRight, railR)
 	for _, c in ipairs({ { "TOPLEFT", "TL", 1, -1 }, { "TOPRIGHT", "TR", -1, -1 }, { "BOTTOMLEFT", "BL", 1, 1 }, { "BOTTOMRIGHT", "BR", -1, 1 } }) do
 		local t = C.Tex(frame, "BORDER", C.ART .. "PanelCorner" .. c[2])
 		t:SetWidth(P_CORNER)
 		t:SetHeight(P_CORNER)
 		t:SetPoint(c[1], frame, c[1], 0, 0)
 		table.insert(p.metal, t)
-		-- the timer's diamond on the corner
+		table.insert(p.ends, t)
+		local sideEnds = string.find(c[1], "LEFT") and p.endLeft or p.endRight
+		table.insert(sideEnds, t)
 		local d = C.Tex(frame, "ARTWORK", C.ART .. "Diamond")
 		d:SetWidth(13)
 		d:SetHeight(13)
 		d:SetPoint("CENTER", frame, c[1], c[3] * 2, c[4] * 2)
 		table.insert(p.metal, d)
+		table.insert(p.ends, d)
+		table.insert(sideEnds, d)
 	end
 	if sigils then
-		-- Matching Arcane medallions at both ends; mirror the right copy so the dragons face inward.
 		p.sigils = {}
-		local out = P_OUT
 		for i, side in ipairs({ "LEFT", "RIGHT" }) do
 			local k = (side == "LEFT") and -1 or 1
 			local t = C.Tex(frame, "OVERLAY", C.ART .. "PanelSigil")
 			t:SetWidth(P_SIGIL)
 			t:SetHeight(P_SIGIL)
-			t:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * out, -P_FOOT)
+			t:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * P_OUT, -P_FOOT)
 			if k > 0 then t:SetTexCoord(1, 0, 0, 1) end
 			p.sigils[i] = t
 		end
@@ -908,7 +918,7 @@ function C.PanelTheme(p, pal)
 	for i = 1, table.getn(p.metal) do p.metal[i]:SetVertexColor(mr, mg, mb) end
 	p.fill:SetVertexColor(0.5 + tr[1] * 0.3, 0.47 + tr[2] * 0.3, 0.44 + tr[3] * 0.3, 0.95)
 	if p.sigils then
-		for i = 1, 2 do p.sigils[i]:SetVertexColor(1, 1, 1) end -- preserve the medallion's painted gold
+		for i = 1, 2 do p.sigils[i]:SetVertexColor(1, 1, 1) end
 	end
 end
 
@@ -1238,6 +1248,14 @@ RefreshHub = function()
 		b.selected = b.code == C.lang
 		PaintButton(b)
 	end
+	if hub.barStyleButtons and C.BarStyles then
+		local mode = C.BarStyles.Mode()
+		for i = 1, table.getn(hub.barStyleButtons) do
+			local b = hub.barStyleButtons[i]
+			b.selected = b.mode == mode
+			PaintButton(b)
+		end
+	end
 end
 C.RefreshHub = function() RefreshHub() end
 
@@ -1347,6 +1365,26 @@ local function BuildHub()
 	end)
 	C.LText(langButton.text, "Language")
 	langButton:SetPoint("TOPLEFT", o, "TOPLEFT", 168, y)
+	-- A dedicated row keeps the three skill-bar treatments easy to identify.
+	local styleY = y - 30
+	local styleLabel = HubText(o, 9, 0.62, 0.62, 0.68)
+	styleLabel:SetPoint("BOTTOMLEFT", o, "TOPLEFT", 326, styleY + 4)
+	C.LText(styleLabel, "Skill bar style")
+	local function StyleChoice(mode, label, x)
+		local button = C.Button(o, 96, 24, "", function()
+			if C.BarStyles then C.BarStyles.SetMode(mode) end
+			RefreshHub()
+		end)
+		C.LText(button.text, label)
+		button.mode = mode
+		button:SetPoint("TOPLEFT", o, "TOPLEFT", x, styleY)
+		return button
+	end
+	o.barStyleButtons = {
+		StyleChoice(C.BarStyles.CLASSIC, "Arcane", 326),
+		StyleChoice(C.BarStyles.HYBRID, "Hybrid", 429),
+		StyleChoice(C.BarStyles.FULL_CLASS, "Full class", 532),
+	}
 	-- the language: a button that opens the list of them, each in its own words
 	o.lang = langButton
 	local menu = CreateFrame("Frame", "ArcaneLanguageMenu", o)
