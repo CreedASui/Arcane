@@ -243,8 +243,9 @@ function M.Apply(panel)
 		C.Vis(panel.sigils[2], false)
 		C.Vis(panel.hybridArcane, true)
 		C.Vis(panel.hybridGem, true)
+		-- The Arcane medallion replaces the left endcap. Keep the right panel end intact
+		-- underneath the class crest so Hybrid has a finished box edge like Full Class.
 		for i = 1, table.getn(panel.endLeft or {}) do C.Vis(panel.endLeft[i], false) end
-		for i = 1, table.getn(panel.endRight or {}) do C.Vis(panel.endRight[i], false) end
 		PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)
 		return
 	end

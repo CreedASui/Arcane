@@ -152,7 +152,7 @@ def main() -> None:
     if 'SetPoint("CENTER", frame, "LEFT", HYBRID_CENTER_X, HYBRID_CENTER_Y)' not in styles:
         fail("Hybrid Arcane medallion must be centered on the left panel edge")
     if 'C.Vis(panel.sigils[1], false)' not in styles or 'C.Vis(panel.sigils[2], false)' not in styles:
-        fail("Hybrid must hide both stock Arcane sigils beneath its two distinct endcaps")
+        fail("Hybrid must hide both stock Arcane sigils beneath its custom left medallion and right class crest")
     if 'PlaceEmblem(panel.classEmblems[2], panel.frame, "RIGHT", theme.emblem)' not in styles:
         fail("Hybrid must place the active class emblem on the right")
     if 'panel.hybridGem:SetVertexColor(theme.gem[1], theme.gem[2], theme.gem[3], 1)' not in styles:
@@ -161,8 +161,8 @@ def main() -> None:
         fail("Hybrid center diamonds must use the active class gem color")
     if 'table.insert(root.deco.classGems, d)' not in bar:
         fail("Bar.lua must register the two center diamonds for class coloring")
-    if 'panel.endRight or {}' not in styles:
-        fail("Hybrid must hide the stock right-end frame beneath the class crest")
+    if 'panel.endLeft or {}' not in styles or 'panel.endRight or {}' in styles:
+        fail("Hybrid must replace only the left panel end and preserve the complete right endcap beneath the class crest")
     if "state.db.style = CLASSIC" not in styles:
         fail("Classic Arcane style must remain the default for existing saved variables")
     if 'C.DB("bar")' not in styles:
