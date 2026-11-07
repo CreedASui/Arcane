@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## v0.3
 
-- **Skill bar styles:** add Classic Arcane (default), Hybrid and Full Class presentations. The existing slot/cooldown renderer is shared by all three; class palettes and panel art live in separate modules, with all nine class emblem/crest and rail sets included. The chosen mode is saved in `ArcaneDB.bar.style`. Hybrid now has a dedicated forged-metal Arcane medallion on the left, with its central inlay colorized by class; the original class crest remains on the right. Hybrid trim and XP surround are gold while the glass and action-slot accents retain class colors.
-
+- **Three selectable skill-bar styles:** Classic Arcane remains the unchanged default for existing installs; Hybrid combines the gold Arcane A medallion on the left with the active class crest on the right; Full Class uses class-specific paired emblems, rails and tinted glass.
+- **Nine class palettes:** Warrior, Paladin, Hunter, Rogue, Priest, Shaman, Mage, Warlock and Druid receive dedicated skill-bar styling. The selected style persists in `ArcaneDB.bar.style`.
+- **Hybrid medallion treatments:** class-colored enamel variants are supplied for Warrior, Paladin, Rogue, Priest, Shaman, Mage and Warlock. Hunter and Druid retain the approved original green Arcane medallion; the gold dragon/A artwork is preserved.
+- **Hybrid panel edge:** retain the complete right-hand panel endcap beneath the class crest so the bar does not appear cut off.
 
 ## v0.2
 
@@ -84,7 +86,7 @@ Fixes from playtesting:
 
 ## Developer reference
 
-This section records the project's runtime constraints and observed Azeroth Survivors addon API. It is a maintainer reference, not a list of additional v0.2 release changes. API observations should be checked against the live client before depending on them.
+This section records the project's runtime constraints and observed Azeroth Survivors addon API. It is a maintainer reference, not a list of release changes. API observations should be checked against the live client before depending on them.
 
 ### Runtime and coding constraints
 

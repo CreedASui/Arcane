@@ -5,7 +5,7 @@
 Arcane = {}
 local C = Arcane
 
-C.VERSION = "0.2"
+C.VERSION = "0.3"
 C.ART = "Interface\\AddOns\\Arcane\\Art\\"
 C.FLAT = "Interface\\ChatFrame\\ChatFrameBackground"
 C.FONT = "Fonts\\FRIZQT__.TTF"

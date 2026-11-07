@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.2**
+**Current release: v0.3**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -16,7 +16,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
 - **Your frame, your target and your party:** in class colors, portraits in metal rings.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
-- **Skill bar:** your abilities (each with its rank, flashing when a card ranks it up) and jewelry, your XP a second, on a gold-framed panel with a transparent gold-and-black Arcane A medallion on each end.
+- **Skill bar:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the familiar look; Hybrid pairs the gold Arcane A medallion on the left with the active class crest on the right and class-colored glass/enamel; Full Class uses class-specific rails, tinted glass and paired class emblems for all nine classes. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
@@ -36,7 +36,7 @@ Every part can be turned on or off, sized and moved.
 
 The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `Arcane-v0.2.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.3.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
