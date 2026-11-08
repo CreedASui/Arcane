@@ -34,6 +34,37 @@ local KIND_TAGS = {
 }
 local ENEMY_KINDS = { final = true, boss = true, guardian = true, elite = true, normal = true }
 
+-- Keep the classic gold elite ring for bosses and the silver rare ring for guardians.
+-- The texture is sliced around its four health-bar seams so the portrait ring remains whole.
+local DRAGONS = { boss = "UI-TargetingFrame-Elite", final = "UI-TargetingFrame-Elite", guardian = "UI-TargetingFrame-Rare" }
+local DRAGON_PIECES = { { 130, 0, 20 }, { 145, 20, 26 }, { 140, 26, 39 }, { 145, 39, 45 },
+	{ 140, 45, 50 }, { 145, 50, 56 }, { 140, 56, 62 }, { 145, 62, 68 }, { 130, 68, 100 } }
+local DRAGON_SCALE = 66 / 72
+
+local function SetDragon(u, kind)
+	local file = kind and DRAGONS[kind]
+	if u.dragonFile == file then return end
+	u.dragonFile = file
+	if not u.dragon then
+		u.dragon = {}
+		local scale = DRAGON_SCALE
+		for i = 1, table.getn(DRAGON_PIECES) do
+			local p = DRAGON_PIECES[i]
+			local texture = u.faceTop:CreateTexture(nil, "ARTWORK")
+			texture:SetWidth((256 - p[1]) * scale)
+			texture:SetHeight((p[3] - p[2]) * scale)
+			texture:SetPoint("TOPLEFT", u.face, "CENTER", -74 * scale, (46 - p[2]) * scale)
+			texture:SetTexCoord(1, p[1] / 256, p[2] / 128, p[3] / 128)
+			u.dragon[i] = texture
+		end
+	end
+	for i = 1, table.getn(u.dragon) do
+		if file then u.dragon[i]:SetTexture("Interface\\TargetingFrame\\" .. file) end
+		C.Vis(u.dragon[i], file and true or false)
+	end
+	C.Vis(u.ring, not file)
+end
+
 local Call = C.Call -- no stray nil arguments (see Core)
 
 local function HPText(hp, hpm)
@@ -247,6 +278,7 @@ local function StepTarget(u, dt, now, pal)
 	C.Alpha(u.root, C.Smooth(u.alpha))
 	if not exists then return end -- fading out: keep the last picture
 
+	SetDragon(u, (not dead) and kind or nil)
 	local name = Call(UnitName, "target") or t.name or "?"
 	local hp, hpm
 	if enemy and tonumber(t.hpm) and t.hpm > 0 then

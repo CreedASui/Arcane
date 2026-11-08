@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.3**
+**Current release: v0.4**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -15,6 +15,8 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
 - **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
 - **Your frame, your target and your party:** in class colors, portraits in metal rings.
+- **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
+- **Target portrait rings:** bosses use the gold elite dragon ring; guardians use the silver rare ring, with the full original ring preserved.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
 - **Skill bar:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the familiar look; Hybrid pairs the gold Arcane A medallion on the left with the active class crest on the right and class-colored glass/enamel; Full Class uses class-specific rails, tinted glass and paired class emblems for all nine classes. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
@@ -22,10 +24,12 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
 - **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
-- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills). The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows.
+- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
+- **Standalone Stats window:** independently track the run's 29 stats in customizable groups; choose which values appear and see changes flash green or red.
 - **Chat:** dressed to match, and kept clear of the skill bar's full Arcane medallion.
 - **Damage numbers:** calm and readable; a spell hitting a crowd adds up into one number a second, and a number that keeps stacking grows.
+- **Damage-number customization:** six optional custom typefaces and six selectable critical-hit backdrops (Flame, Frost, Arcane, Holy, Shadow and Storm); existing defaults remain unchanged.
 - **Run summary:** when a run ends, your time, level, kills, bosses, damage dealt and taken, gold and caches on one panel.
 
 Every part can be turned on or off, sized and moved.
@@ -36,7 +40,7 @@ Every part can be turned on or off, sized and moved.
 
 The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.3.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.4.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 

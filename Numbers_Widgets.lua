@@ -65,7 +65,10 @@ local function NewWidget()
 	text:SetJustifyV("MIDDLE")
 	text:SetShadowColor(0, 0, 0, 0.9)
 	text:SetShadowOffset(1, -1)
-	local w = { holder = holder, visual = visual, text = text, icon = icon, edge = edge }
+	local back = visual:CreateTexture(nil, "BACKGROUND")
+	back:SetPoint("CENTER", visual, "CENTER", 0, 0)
+	back:Hide()
+	local w = { holder = holder, visual = visual, text = text, icon = icon, edge = edge, back = back }
 	ApplyFont(w)
 	nAllWidgets = nAllWidgets + 1
 	allWidgets[nAllWidgets] = w
@@ -123,6 +126,7 @@ end
 
 S.ReleaseWidget = function(w)
 	w.holder:Hide()
+	if w.back then w.back:Hide(); w.backShown = false end
 	w.shown = false
 	nWidgetPool = nWidgetPool + 1
 	widgetPool[nWidgetPool] = w
