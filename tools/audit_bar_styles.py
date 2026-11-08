@@ -85,7 +85,7 @@ def validate_tga_rle_32(path: Path) -> None:
 def main() -> None:
     toc = [line.strip() for line in source("Arcane.toc").splitlines()
            if line.strip() and not line.lstrip().startswith("#")]
-    required_order = ("Bar_Styles_Data.lua", "Bar_Styles.lua", "Bar.lua")
+    required_order = ("SkillBar/StylesData.lua", "SkillBar/Styles.lua", "SkillBar/Bar.lua")
     positions = []
     for name in required_order:
         if name not in toc:
@@ -97,10 +97,11 @@ def main() -> None:
         fail("Skill-bar style data/controller must load before Bar.lua")
     print("PASS: skill-bar style modules load in dependency order")
 
-    data = source("Bar_Styles_Data.lua")
-    styles = source("Bar_Styles.lua")
-    bar = source("Bar.lua")
-    core = source("Core.lua")
+    data = source("SkillBar/StylesData.lua")
+    styles = source("SkillBar/Styles.lua")
+    bar = source("SkillBar/Bar.lua")
+    core = source("Core/Panels.lua")
+    options = source("Core/Options.lua")
     generator = source("tools/build_hybrid_medallion_variants.py")
     for class_name in ("Warrior", "Paladin", "Rogue", "Priest", "Shaman", "Mage", "Warlock"):
         if f'"{class_name}"' not in generator:
@@ -135,9 +136,9 @@ def main() -> None:
     for contract in ('StyleChoice(C.BarStyles.CLASSIC, "Arcane"',
                      'StyleChoice(C.BarStyles.HYBRID, "Hybrid"',
                      'StyleChoice(C.BarStyles.FULL_CLASS, "Full class"'):
-        if contract not in core:
+        if contract not in options:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
-    if 'C.LText(styleLabel, "Skill bar style")' not in core:
+    if 'C.LText(styleLabel, "Skill bar style")' not in options:
         fail("Options hub must label the skill-bar style selector")
     if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
         fail("Hybrid must use the approved high-resolution Arcane medallion on the left")
@@ -205,7 +206,7 @@ def main() -> None:
         validate_tga_rle_32(path)
     print("PASS: the Classic default and all nine Hybrid base/gem/class medallion textures fully decode as 128x128, 256x256 or 512x512 alpha TGAs")
 
-    for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
+    for name in ("Core.lua", "Core/Panels.lua", "Core/Options.lua", "SkillBar/Bar.lua", "SkillBar/Styles.lua", "SkillBar/StylesData.lua"):
         count = count_chunk_level_locals(source(name))
         if count >= 180:
             fail(f"{name} has {count} file-scope locals; keep a safety margin below Lua's 200 limit")
