@@ -1,12 +1,12 @@
 # Arcane UI
 
-**Current release: v0.4**
+**Current release: v0.5**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
 ## Preview
 
-![Arcane UI running in Azeroth Survivors](docs/images/arcane-ui-v0.2.png)
+![Arcane UI running in Azeroth Survivors](docs/images/arcane-ui-v0.5.webp)
 
 ## What's in it
 
@@ -18,7 +18,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
 - **Target portrait rings:** bosses use the gold elite dragon ring; guardians use the silver rare ring, with the full original ring preserved.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
-- **Skill bar:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the familiar look; Hybrid pairs the gold Arcane A medallion on the left with the active class crest on the right and class-colored glass/enamel; Full Class uses class-specific rails, tinted glass and paired class emblems for all nine classes. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
+- **Skill bar:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic uses the supplied gold dragon/A artwork, including its built-in amber gemstone, on both ends; Hybrid pairs the class-treated Arcane A medallion on the left with the active class crest on the right and class-colored glass/enamel; Full Class uses class-specific rails, tinted glass and paired class emblems for all nine classes. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
@@ -40,7 +40,7 @@ Every part can be turned on or off, sized and moved.
 
 The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.4.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.5.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 

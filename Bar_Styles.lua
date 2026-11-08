@@ -9,13 +9,14 @@ local EMBLEM_L, EMBLEM_R, EMBLEM_IN = 220, 292, 24
 local RAIL_H, BASE_RAIL_H = 16 * 76 / 110, C.PANEL_RAIL or 8
 local PANEL_CORNER = C.PANEL_CORNER or 16
 local BASE_SIGIL = C.PANEL_SIGIL or 122
-local BASE_OUT = BASE_SIGIL * 0.40
-local BASE_FOOT = BASE_SIGIL * 25 / 370
 -- The approved reference medallion is a 400px cutout in a 512px power-of-two TGA.
--- Center the visible crest on the panel's left edge; do not scale the old bottom-left offset.
+-- Center the visible crest on the panel edge; do not scale the old bottom-left offset.
 local HYBRID_SIGIL = BASE_SIGIL * 1.40
 local HYBRID_CENTER_X = HYBRID_SIGIL * 0.10
 local HYBRID_CENTER_Y = HYBRID_SIGIL * 18 / 400
+local DEFAULT_SIGIL = C.PANEL_MEDALLION or HYBRID_SIGIL
+local DEFAULT_CENTER_X = C.PANEL_MEDALLION_X or HYBRID_CENTER_X
+local DEFAULT_CENTER_Y = C.PANEL_MEDALLION_Y or HYBRID_CENTER_Y
 local state = {
 	db = nil, class = nil, runId = nil, readClock = 0, stamp = 0,
 	palette = {}, paletteBase = nil, palettePalStamp = -1,
@@ -202,14 +203,16 @@ local function RestoreBasePanel(panel)
 	for i = 1, table.getn(panel.ends) do C.Vis(panel.ends[i], true) end
 	if panel.sigils then
 		for i, side in ipairs({ "LEFT", "RIGHT" }) do
+			local right = side == "RIGHT"
+			local x = right and -DEFAULT_CENTER_X or DEFAULT_CENTER_X
 			local texture = panel.sigils[i]
 			if texture then
-				local k = (side == "LEFT") and -1 or 1
-				texture:SetWidth(BASE_SIGIL)
-				texture:SetHeight(BASE_SIGIL)
+				texture:SetTexture(C.ART .. "PanelDefaultMedallion.tga")
+				texture:SetWidth(DEFAULT_SIGIL)
+				texture:SetHeight(DEFAULT_SIGIL)
 				texture:ClearAllPoints()
-				texture:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * BASE_OUT, -BASE_FOOT)
-				if k > 0 then
+				texture:SetPoint("CENTER", frame, side, x, DEFAULT_CENTER_Y)
+				if right then
 					texture:SetTexCoord(1, 0, 0, 1)
 				else
 					texture:SetTexCoord(0, 1, 0, 1)

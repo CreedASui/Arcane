@@ -846,7 +846,18 @@ end
 -- rail and extends outward, leaving the slots clear while making the bar unmistakably Arcane.
 local P_RAIL, P_CORNER, P_SIGIL = 8, 16, 122
 C.PANEL_RAIL, C.PANEL_CORNER, C.PANEL_SIGIL = P_RAIL, P_CORNER, P_SIGIL
--- Keep the same endcap footprint as the previous artwork so the bar's overall layout stays stable.
+-- Keep the slightly enlarged Classic artwork, but use the exact Hybrid left-medallion
+-- anchor offsets. The right Classic medallion mirrors the same anchor from the right edge.
+local HYBRID_MEDALLION_SIZE = P_SIGIL * 1.40
+C.PANEL_MEDALLION = HYBRID_MEDALLION_SIZE * 401 / 388 * 1.025
+-- Match visible artwork centers, not just the square texture origins.
+-- Default art alpha center: (250, 256); Hybrid art alpha center: (255.5, 279).
+C.PANEL_MEDALLION_X = HYBRID_MEDALLION_SIZE * 0.10
+	+ (6 * C.PANEL_MEDALLION - 0.5 * HYBRID_MEDALLION_SIZE) / 512
+-- The default art is vertically centered; Hybrid's visible art sits 23px lower.
+-- WoW's positive Y offset moves up, so cancel that difference here.
+C.PANEL_MEDALLION_Y = -8
+-- Keep the original endcap clearance; the new medallions fit inside that reserved room.
 local P_OUT, P_FOOT = P_SIGIL * 0.40, P_SIGIL * 25 / 370
 C.PANEL_ROOM = math.floor(P_SIGIL - P_OUT + 6)
 -- Arcane UI's gold, taken from the user's bar picture (dev/art/source/bar_reference.webp).
@@ -896,12 +907,13 @@ function C.Panel(frame, sigils)
 	if sigils then
 		p.sigils = {}
 		for i, side in ipairs({ "LEFT", "RIGHT" }) do
-			local k = (side == "LEFT") and -1 or 1
-			local t = C.Tex(frame, "OVERLAY", C.ART .. "PanelSigil")
-			t:SetWidth(P_SIGIL)
-			t:SetHeight(P_SIGIL)
-			t:SetPoint("BOTTOM" .. side, frame, "BOTTOM" .. side, k * P_OUT, -P_FOOT)
-			if k > 0 then t:SetTexCoord(1, 0, 0, 1) end
+			local right = side == "RIGHT"
+			local x = right and -C.PANEL_MEDALLION_X or C.PANEL_MEDALLION_X
+			local t = C.Tex(frame, "OVERLAY", C.ART .. "PanelDefaultMedallion.tga")
+			t:SetWidth(C.PANEL_MEDALLION)
+			t:SetHeight(C.PANEL_MEDALLION)
+			t:SetPoint("CENTER", frame, side, x, C.PANEL_MEDALLION_Y)
+			if right then t:SetTexCoord(1, 0, 0, 1) end
 			p.sigils[i] = t
 		end
 	end

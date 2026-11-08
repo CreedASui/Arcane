@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5 — November 8, 2026
+
+- **Classic skill bar medallions:** use the supplied high-resolution gold dragon/A artwork on both default endcaps, mirrored on the right and aligned against Hybrid's lower ornamental tails. The bar rails, slots, spacing and other styles remain unchanged.
+- **README preview:** replace the older preview image with a current in-game screenshot showing the v0.5 HUD.
+
 ## v0.4 — November 8, 2026
 
 - **Standalone Stats window:** a movable, resizable tracker for 29 run stats, grouped by Offense, Survival, Area and DoTs, and Run. Choose the stats to show; increases and decreases briefly flash green and red.

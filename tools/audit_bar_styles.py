@@ -40,46 +40,46 @@ def count_chunk_level_locals(text: str) -> int:
 
 
 def validate_tga_rle_32(path: Path) -> None:
-    """Fully decode row-bounded 32-bit alpha RLE TGA data used by Hybrid."""
+    """Fully decode row-bounded 32-bit alpha RLE TGA data used by the Classic default and Hybrid styles."""
     data = path.read_bytes()
     if len(data) < 18:
-        fail(f"Hybrid TGA is truncated: Art/{path.name}")
+        fail(f"Medallion TGA is truncated: Art/{path.name}")
     header = data[:18]
     width = int.from_bytes(header[12:14], "little")
     height = int.from_bytes(header[14:16], "little")
-    if (header[1] != 0 or header[2] != 10 or width != 512 or height != 512
+    if (header[1] != 0 or header[2] != 10 or width != height or width not in (128, 256, 512)
             or header[16] != 32 or (header[17] & 0x0F) != 8
             or (header[17] & 0x20) == 0):
-        fail(f"Hybrid texture must be top-origin 512x512 32-bit alpha RLE TGA: Art/{path.name}")
+        fail(f"Texture must be top-origin 128x128, 256x256 or 512x512 32-bit alpha RLE TGA: Art/{path.name}")
     offset = 18 + header[0]
     alpha_pixels = 0
     for _row in range(height):
         row_pixels = 0
         while row_pixels < width:
             if offset >= len(data):
-                fail(f"Hybrid TGA RLE data ends early: Art/{path.name}")
+                fail(f"Medallion TGA RLE data ends early: Art/{path.name}")
             packet = data[offset]
             offset += 1
             count = (packet & 0x7F) + 1
             if row_pixels + count > width:
-                fail(f"Hybrid TGA RLE packet crosses a row: Art/{path.name}")
+                fail(f"Medallion TGA RLE packet crosses a row: Art/{path.name}")
             if packet & 0x80:
                 if offset + 4 > len(data):
-                    fail(f"Hybrid TGA RLE run is truncated: Art/{path.name}")
+                    fail(f"Medallion TGA RLE run is truncated: Art/{path.name}")
                 alpha_pixels += count if data[offset + 3] else 0
                 offset += 4
             else:
                 byte_count = count * 4
                 if offset + byte_count > len(data):
-                    fail(f"Hybrid TGA raw packet is truncated: Art/{path.name}")
+                    fail(f"Medallion TGA raw packet is truncated: Art/{path.name}")
                 alpha_pixels += sum(1 for i in range(offset + 3, offset + byte_count, 4)
                                     if data[i])
                 offset += byte_count
             row_pixels += count
     if offset != len(data):
-        fail(f"Hybrid TGA has unexpected trailing bytes: Art/{path.name}")
+        fail(f"Medallion TGA has unexpected trailing bytes: Art/{path.name}")
     if alpha_pixels == 0:
-        fail(f"Hybrid TGA has no visible pixels: Art/{path.name}")
+        fail(f"Medallion TGA has no visible pixels: Art/{path.name}")
 
 
 def main() -> None:
@@ -163,6 +163,17 @@ def main() -> None:
         fail("Bar.lua must register the two center diamonds for class coloring")
     if 'panel.endLeft or {}' not in styles or 'panel.endRight or {}' in styles:
         fail("Hybrid must replace only the left panel end and preserve the complete right endcap beneath the class crest")
+    if ("local HYBRID_MEDALLION_SIZE = P_SIGIL * 1.40" not in core
+            or "C.PANEL_MEDALLION = HYBRID_MEDALLION_SIZE * 401 / 388 * 1.025" not in core
+            or "C.PANEL_MEDALLION_X = HYBRID_MEDALLION_SIZE * 0.10" not in core
+            or "+ (6 * C.PANEL_MEDALLION - 0.5 * HYBRID_MEDALLION_SIZE) / 512" not in core
+            or "C.PANEL_MEDALLION_Y = -8" not in core
+            or "PanelDefaultMedallion.tga" not in core
+            or "PanelDefaultMedallion.tga" not in styles
+            or "p.sigilsGem" in core + styles):
+        fail("Classic must use the exact supplied artwork as one untinted texture on each end")
+    if 'texture:SetPoint("CENTER", frame, side, x, DEFAULT_CENTER_Y)' not in styles:
+        fail("Classic medallions must retain the approved placement and scale")
     if "state.db.style = CLASSIC" not in styles:
         fail("Classic Arcane style must remain the default for existing saved variables")
     if 'C.DB("bar")' not in styles:
@@ -183,16 +194,16 @@ def main() -> None:
             fail(f"Invalid or empty BLP texture: Art/{name}")
     print(f"PASS: all {len(assets)} class emblems, rails, glass and Classic sigil textures are valid BLP2 assets")
 
-    for name in ("PanelHybridArcane.tga", "PanelHybridArcaneGem.tga",
+    for name in ("PanelDefaultMedallion.tga", "PanelHybridArcane.tga", "PanelHybridArcaneGem.tga",
                  "PanelHybridArcaneWarrior.tga", "PanelHybridArcanePaladin.tga",
                  "PanelHybridArcaneRogue.tga", "PanelHybridArcanePriest.tga",
                  "PanelHybridArcaneShaman.tga", "PanelHybridArcaneMage.tga",
                  "PanelHybridArcaneWarlock.tga"):
         path = ROOT / "Art" / name
         if not path.is_file():
-            fail(f"Missing Hybrid Arcane art: Art/{name}")
+            fail(f"Missing Arcane medallion art: Art/{name}")
         validate_tga_rle_32(path)
-    print("PASS: all nine Hybrid base/gem/class medallion textures fully decode as 512x512 alpha TGAs")
+    print("PASS: the Classic default and all nine Hybrid base/gem/class medallion textures fully decode as 128x128, 256x256 or 512x512 alpha TGAs")
 
     for name in ("Core.lua", "Bar.lua", "Bar_Styles.lua", "Bar_Styles_Data.lua"):
         count = count_chunk_level_locals(source(name))

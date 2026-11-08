@@ -40,13 +40,19 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install Pillow for the Classic medallion texture build
+        run: python -m pip install --disable-pip-version-check Pillow
+
       - name: Install Lua 5.1 compiler
         run: |
           sudo apt-get update
           sudo apt-get install --yes lua5.1 zip unzip
 
-      - name: Generate Shaman and Warlock Hybrid medallion variants
+      - name: Generate class-specific Hybrid medallion variants
         run: python tools/build_hybrid_medallion_variants.py
+
+      - name: Build the single-source Classic medallion texture
+        run: python tools/build_default_medallion.py
 
       - name: Audit TOC order and module ownership
         run: python tools/audit_numbers.py
