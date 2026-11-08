@@ -274,6 +274,61 @@ local function Read(r, d, sample)
 	d.offline = (type(UnitIsConnected) == "function" and not connected) and true or false
 end
 
+-- Party shields use the same glass-and-stripe overlay as the player's own health bar.
+local SHIELDS = {
+	spell_holy_powerwordshield = true, spell_ice_lament = true, spell_shadow_detectlesserinvisibility = true,
+	spell_frost_frostward = true, spell_fire_firearmor = true, spell_shadow_sacrificialshield = true,
+	spell_holy_divineintervention = true, spell_holy_restoration = true, spell_holy_sealofprotection = true,
+}
+local SHIELD_SEEN = 0.2
+local shieldScan
+
+local function ShieldAmount(unit, index)
+	if shieldScan == nil then
+		local ok, tip = pcall(CreateFrame, "GameTooltip", "ArcanePartyShieldScan", UIParent, "GameTooltipTemplate")
+		shieldScan = ok and tip or false
+	end
+	if not shieldScan then return nil end
+	shieldScan:SetOwner(WorldFrame, "ANCHOR_NONE")
+	shieldScan:ClearLines()
+	if not pcall(shieldScan.SetUnitBuff, shieldScan, unit, index) then
+		shieldScan:Hide()
+		return nil
+	end
+	local largest
+	for lineIndex = 2, shieldScan:NumLines() do
+		local line = getglobal("ArcanePartyShieldScanTextLeft" .. lineIndex)
+		local text = line and line:GetText()
+		if text then
+			for value in string.gfind(text, "%d+") do
+				value = tonumber(value)
+				if value and (not largest or value > largest) then largest = value end
+			end
+		end
+	end
+	shieldScan:Hide()
+	return largest
+end
+
+local function ShieldOf(unit, maxHealth)
+	if type(UnitBuff) ~= "function" then return 0 end
+	local amount, found = 0, false
+	for index = 1, 32 do
+		local texture = Call(UnitBuff, unit, index)
+		if not texture then break end
+		if type(texture) == "string" then
+			local _, _, name = string.find(string.lower(texture), "([^\\/]+)$")
+			if name and SHIELDS[name] then
+				found = true
+				amount = amount + (ShieldAmount(unit, index) or 0)
+			end
+		end
+	end
+	if not found then return 0 end
+	if amount > 0 then return C.Clamp(amount / math.max(maxHealth, 1), 0.04, 1) end
+	return SHIELD_SEEN
+end
+
 ------------------------------------------------------------------------ drawing a row
 local function StepRow(r, d, slotY, dt, now)
 	if not r.y then r.y = slotY - 8 end
@@ -283,6 +338,11 @@ local function StepRow(r, d, slotY, dt, now)
 
 	local hpm = d.hpm > 0 and d.hpm or 1
 	local hp = d.dead and 0 or d.hp
+	r.shieldClock = (r.shieldClock or 0) - dt
+	if r.shieldClock <= 0 then
+		r.shieldClock = 0.5
+		r.hp.shield = (d.dead or d.offline) and 0 or ShieldOf(r.unit, hpm)
+	end
 	C.BarStep(r.hp, d.offline and 1 or C.Clamp(hp / hpm, 0, 1), dt, now)
 	-- the class's color; grey while offline
 	local key = d.offline and "offline" or (d.class or "none")

@@ -18,3 +18,9 @@ The Tiny Plates feature adapts the MIT-licensed nameplate implementation by Valo
 The optional nine-class skill-bar treatment reuses the class emblems, crests and rail textures from the synced `JamieeLee/CreedUI-for-AS-` working base. Those assets retain the same project provenance and original rights notices described above; Arcane keeps its own panel branding, slot renderer and settings namespace.
 
 The Hybrid-only Arcane medallion is original generated artwork adapted for Arcane's identity. Its forged-metal base and separately colorized gem layer are new Hybrid assets; the original Classic Arcane sigil is unchanged. The class-specific right-hand emblems remain sourced from the synced Creed reference above.
+
+## Damage-number fonts and critical-hit artwork
+
+The optional damage-number font choices include six bundled fonts adapted from the corresponding open font releases. Their original copyright notices and SIL Open Font License terms are retained in [Fonts/NumberFonts-LICENSE.txt](Fonts/NumberFonts-LICENSE.txt); the font files are not relicensed by Arcane.
+
+The optional critical-hit backdrops reuse six effect textures from the synced Creed working base. They are only used behind critical damage numbers when selected; they do not recolor Arcane's panels, bars, medallions, or overall bronze/gold theme.

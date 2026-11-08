@@ -196,6 +196,31 @@ local function Animate(label, now, dt, ratio)
 		alpha = alpha * AUI.Smooth(shownAge / C.FADE_IN)
 	end
 	alpha = AUI.Clamp(alpha, 0, 1)
+	local back = label.crit and C.CRIT_BACKDROPS.tex[C.db.backdrop or "none"]
+	if back and w.back then
+		if w.backTex ~= back then
+			w.back:SetTexture(AUI.ART .. back)
+			w.backTex = back
+		end
+		local grow = AUI.Smooth(shownAge / 0.16)
+		local settle = AUI.Smooth((shownAge - 0.16) / 0.22)
+		local burst = 0.6 + 0.55 * grow - 0.15 * settle
+		local backWidth = math.floor(((w.block or 60) * 1.6 + 46) * burst)
+		if w.backW ~= backWidth then
+			w.back:SetWidth(backWidth)
+			w.back:SetHeight(math.min(math.floor(backWidth * 0.5 + 0.5), C.FONT_SIZE * 3.4))
+			w.backW = backWidth
+		end
+		local glow = 0.78 + 0.22 * (1 - AUI.Smooth(shownAge / 0.45)) + 0.06 * math.sin(now * 5 + (label.born or 0))
+		if not w.backA or math.abs(w.backA - glow) > 0.01 then
+			w.back:SetAlpha(AUI.Clamp(glow, 0, 1))
+			w.backA = glow
+		end
+		if not w.backShown then w.back:Show(); w.backShown = true end
+	elseif w.backShown then
+		w.back:Hide()
+		w.backShown = false
+	end
 	if not w.alpha or math.abs(w.alpha - alpha) > 0.004 then
 		w.holder:SetAlpha(alpha)
 		w.alpha = alpha

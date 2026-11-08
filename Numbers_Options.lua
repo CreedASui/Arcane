@@ -129,6 +129,7 @@ S.RefreshOptions = function()
 	o.motionNote:SetText(C.L(C.MOTION_NOTES[C.db.motion] or ""))
 	o.sizeText:SetText(string.format("%d%%", math.floor(C.db.size * 100 + 0.5)))
 	o.fontText:SetText(C.FONTS[C.db.font].name)
+	o.backText:SetText(C.L(C.CRIT_BACKDROPS.names[C.db.backdrop or "none"] or "None"))
 	for i = 1, table.getn(o.checks) do
 		local check = o.checks[i]
 		if C.db[check.key] then
@@ -143,7 +144,7 @@ local function BuildOptions()
 	local o = CreateFrame("Frame", "ArcaneNumbersOptions", UIParent)
 	options = o
 	o:SetWidth(300)
-	o:SetHeight(620)
+	o:SetHeight(660)
 	o:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 	if AUI.AboveHub then AUI.AboveHub(o) else o:SetFrameStrata("DIALOG") end
 	o:SetBackdrop({ bgFile = C.FLAT, edgeFile = C.FLAT, edgeSize = 1, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
@@ -245,28 +246,50 @@ local function BuildOptions()
 	end)
 	nextFont:SetPoint("LEFT", previous, "RIGHT", 80, 0)
 
+	local backdropHead = Text(o, 12, 0.85, 0.85, 0.9)
+	backdropHead:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -230)
+	C.LText(backdropHead, "Critical hit backdrop")
+	local function ChangeBackdrop(step)
+		local order = C.CRIT_BACKDROPS.order
+		local index = 1
+		for i = 1, table.getn(order) do
+			if order[i] == C.db.backdrop then index = i; break end
+		end
+		index = math.mod(index - 1 + step, table.getn(order)) + 1
+		C.db.backdrop = order[index]
+		S.RefreshOptions()
+	end
+	local previousBackdrop = MakeButton(o, 26, 22, "<", function() ChangeBackdrop(-1) end)
+	previousBackdrop:SetPoint("TOPLEFT", o, "TOPLEFT", 126, -226)
+	o.backText = Text(o, 11, 1, 1, 1)
+	o.backText:SetPoint("LEFT", previousBackdrop, "RIGHT", 0, 0)
+	o.backText:SetWidth(80)
+	o.backText:SetJustifyH("CENTER")
+	local nextBackdrop = MakeButton(o, 26, 22, ">", function() ChangeBackdrop(1) end)
+	nextBackdrop:SetPoint("LEFT", previousBackdrop, "RIGHT", 80, 0)
+
 	local divider = Fill(o, "ARTWORK", 1, 1, 1, 0.08)
-	divider:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -228)
+	divider:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -260)
 	divider:SetWidth(272)
 	divider:SetHeight(1)
 
 	o.checks = {
-		MakeCheck(o, -238, "Skill icons (one number per skill)", "icons"),
-		MakeCheck(o, -262, "DoT totals until the enemy dies", "dotTotals"),
-		MakeCheck(o, -286, "Short numbers (12.3K)", "short"),
-		MakeCheck(o, -310, "One number per group of enemies", "group"),
-		MakeCheck(o, -334, "Move overlapping numbers apart", "spread"),
-		MakeCheck(o, -358, "Show hit count (x5)", "count"),
-		MakeCheck(o, -382, "Color by spell school", "school"),
-		MakeCheck(o, -406, "Show Miss and Immune", "misses"),
-		MakeCheck(o, -430, "Merge a spell on 3+ enemies: one number a second", "crowd"),
-		MakeCheck(o, -454, "Merge every spell: one number a second", "bySpell"),
+		MakeCheck(o, -270, "Skill icons (one number per skill)", "icons"),
+		MakeCheck(o, -294, "DoT totals until the enemy dies", "dotTotals"),
+		MakeCheck(o, -318, "Short numbers (12.3K)", "short"),
+		MakeCheck(o, -342, "One number per group of enemies", "group"),
+		MakeCheck(o, -366, "Move overlapping numbers apart", "spread"),
+		MakeCheck(o, -390, "Show hit count (x5)", "count"),
+		MakeCheck(o, -414, "Color by spell school", "school"),
+		MakeCheck(o, -438, "Show Miss and Immune", "misses"),
+		MakeCheck(o, -462, "Merge a spell on 3+ enemies: one number a second", "crowd"),
+		MakeCheck(o, -486, "Merge every spell: one number a second", "bySpell"),
 	}
 
 	local preview = MakeButton(o, 132, 26, "Preview", function()
 		N.Preview.StartTest()
 	end)
-	preview:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -488)
+	preview:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -520)
 	C.LText(preview.text, "Preview")
 	local reset = MakeButton(o, 132, 26, "Reset", function()
 		for key, value in pairs(C.DEFAULTS) do
@@ -279,11 +302,11 @@ local function BuildOptions()
 		S.RefreshOptions()
 		C.Print(C.L("settings reset."))
 	end)
-	reset:SetPoint("TOPLEFT", o, "TOPLEFT", 154, -488)
+	reset:SetPoint("TOPLEFT", o, "TOPLEFT", 154, -520)
 	C.LText(reset.text, "Reset settings")
 
 	local motionHead = Text(o, 12, 0.85, 0.85, 0.9)
-	motionHead:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -524)
+	motionHead:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -556)
 	C.LText(motionHead, "Motion")
 	o.motions = {}
 	for i = 1, table.getn(C.MOTION_ORDER) do
@@ -294,11 +317,11 @@ local function BuildOptions()
 		end)
 		button.motion = name
 		C.LText(button.text, C.MOTION_NAMES[name])
-		button:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + (i - 1) * 69, -542)
+		button:SetPoint("TOPLEFT", o, "TOPLEFT", 14 + (i - 1) * 69, -574)
 		o.motions[i] = button
 	end
 	o.motionNote = Text(o, 10, 0.6, 0.6, 0.65)
-	o.motionNote:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -572)
+	o.motionNote:SetPoint("TOPLEFT", o, "TOPLEFT", 14, -604)
 	o.motionNote:SetWidth(272)
 	o.motionNote:SetJustifyH("LEFT")
 

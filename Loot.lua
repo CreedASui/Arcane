@@ -102,17 +102,23 @@ local function Rarity(hex)
 	return nil
 end
 
-local TO_QUALITY = { [0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [7] = 3 }
+local TO_QUALITY = { [0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [7] = 4 }
+
 local function RarityOfName(name)
 	if type(name) ~= "string" then return nil end
+	-- Exact weapon names win: a Tier 0.5 weapon can be legendary even though its set is epic.
 	local rarity = C.lootWeapons and C.lootWeapons[name]
-	if not rarity and C.lootSets then
+	if rarity then return TO_QUALITY[rarity] end
+	if C.lootSets then
 		local best = 0
 		for set, value in pairs(C.lootSets) do
 			local n = string.len(set)
 			if n > best and string.find(name, set, 1, true) then best, rarity = n, value end
 		end
 	end
+	-- The Tier 0.5 top-set names map to legendary in the source data, but the set armor
+	-- is Epic in-game. Their exact named weapons above retain Legendary.
+	if rarity == 4 then return 4 end
 	return rarity and TO_QUALITY[rarity]
 end
 

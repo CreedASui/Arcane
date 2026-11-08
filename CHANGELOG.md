@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Standalone Stats window:** a movable, resizable tracker for 29 run stats, grouped by Offense, Survival, Area and DoTs, and Run. Choose the stats to show; increases and decreases briefly flash green and red.
+- **Party shields:** party health bars now show detected absorb shields using Arcane's existing animated glass-and-stripe overlay.
+- **Target portrait rings:** bosses and final bosses receive the original gold elite dragon ring; guardians receive the silver rare ring. The corrected segmented texture keeps the full ring intact.
+- **Damage-number choices:** six optional custom fonts join the four built-in faces; six optional critical-hit backdrops add Flame, Frost, Arcane, Holy, Shadow and Storm treatments. The default backdrop remains None.
+- **Minimap readability:** cache and lair markers fade near the player's arrow and return to full strength with distance.
+- **Loot rarity correction:** Tier 0.5 set armor is identified as Epic (purple), while exact named Tier 0.5 weapons retain their Legendary rarity.
+
 ## v0.3
 
 - **Three selectable skill-bar styles:** Classic Arcane remains the unchanged default for existing installs; Hybrid combines the gold Arcane A medallion on the left with the active class crest on the right; Full Class uses class-specific paired emblems, rails and tinted glass.

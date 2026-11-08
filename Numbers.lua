@@ -103,6 +103,18 @@ C.FONTS = {
 	{ name = "Arial Narrow", path = "Fonts\\ARIALN.TTF" },
 	{ name = "Skurri", path = "Fonts\\SKURRI.TTF" },
 	{ name = "Morpheus", path = "Fonts\\MORPHEUS.TTF" },
+	{ name = "Cinzel", path = "Interface\\AddOns\\Arcane\\Fonts\\NumCinzel.ttf", own = true },
+	{ name = "Bangers", path = "Interface\\AddOns\\Arcane\\Fonts\\NumBangers.ttf", own = true },
+	{ name = "Creepster", path = "Interface\\AddOns\\Arcane\\Fonts\\NumCreepster.ttf", own = true },
+	{ name = "Uncial Antiqua", path = "Interface\\AddOns\\Arcane\\Fonts\\NumUncial.ttf", own = true },
+	{ name = "Black Ops One", path = "Interface\\AddOns\\Arcane\\Fonts\\NumBlackOps.ttf", own = true },
+	{ name = "Pirata One", path = "Interface\\AddOns\\Arcane\\Fonts\\NumPirata.ttf", own = true },
+}
+
+C.CRIT_BACKDROPS = {
+	order = { "none", "flame", "frost", "arcane", "holy", "shadow", "storm" },
+	names = { none = "None", flame = "Flame", frost = "Frost", arcane = "Arcane", holy = "Holy", shadow = "Shadow", storm = "Storm" },
+	tex = { flame = "NumFlame", frost = "NumFrost", arcane = "NumArcane", holy = "NumHoly", shadow = "NumShadow", storm = "NumStorm" },
 }
 
 C.COLOR_NORMAL = { 1.00, 0.96, 0.88 }
@@ -143,7 +155,7 @@ C.MOTION_NOTES = {
 
 C.DEFAULTS = {
 	enabled = true,
-	preset = "clean", motion = "smooth",
+	preset = "clean", motion = "smooth", backdrop = "none",
 	maxLabels = 12, group = false, mergeAge = 0.9, misses = false, minShare = 0,
 	size = 1.0, font = 1,
 	short = true, spread = true, count = false, school = false, icons = true,
@@ -242,6 +254,9 @@ C.InitDB = function()
 	C.db.minShare = AUI.Clamp(C.db.minShare, 0, 0.9)
 	if not C.FONTS[C.db.font] then
 		C.db.font = 1
+	end
+	if not C.CRIT_BACKDROPS.names[C.db.backdrop or ""] then
+		C.db.backdrop = "none"
 	end
 end
 

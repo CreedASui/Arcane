@@ -49,6 +49,7 @@ Pets.lua
 Luck.lua
 Summary.lua
 Character.lua
+Stats.lua
 Talents.lua
 Chat.lua
 LootSets.lua
