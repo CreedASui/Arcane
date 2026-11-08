@@ -38,9 +38,9 @@ Every part can be turned on or off, sized and moved.
 
 ## Repository layout and packaging
 
-The addon's Lua modules, `Arcane.toc`, `Art/` and `Fonts/` are stored at the **repository root**. The repository itself is not the install folder. For a release ZIP, place those addon files and folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
+The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Plates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.5.zip`. There is no local package-build script, but GitHub Actions runs the Numbers architecture audit, compiles the Lua chunks with Lua 5.1, and creates a test ZIP for matching pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.5.zip`. GitHub Actions runs the Core, Numbers, timer and skill-bar architecture audits, compiles every Lua chunk with Lua 5.1, and recursively creates a test ZIP for pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
@@ -67,4 +67,4 @@ Arcane is developed as an independent project. Project history and retained upst
 
 ## Project files
 
-The source modules are at the repository root. Artwork is in [`Art/`](Art/), bundled fonts and their license are in [`Fonts/`](Fonts/), and the repository preview is in [`docs/images/`](docs/images/).
+The source modules are grouped by subsystem; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the module map and load-order rules. Artwork is in [`Art/`](Art/), bundled fonts and their license are in [`Fonts/`](Fonts/), and the repository preview is in [`docs/images/`](docs/images/).

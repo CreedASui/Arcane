@@ -82,7 +82,11 @@ jobs:
           archive="$RUNNER_TEMP/Arcane-refactor-${GITHUB_SHA:0:12}.zip"
 
           mkdir -p "$addon"
-          cp ./*.lua ./*.toc "$addon/"
+          while IFS= read -r -d '' file; do
+            relative="${file#./}"
+            mkdir -p "$addon/$(dirname "$relative")"
+            cp "$file" "$addon/$relative"
+          done < <(find . -type f \( -name '*.lua' -o -name '*.toc' \) -not -path './.git/*' -print0)
           cp -R Art Fonts "$addon/"
           cp ATTRIBUTION.md ArcanePlates-LICENSE.txt "$addon/"
 

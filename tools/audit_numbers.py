@@ -7,28 +7,37 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_NUMBERS_ORDER = [
-    "Numbers.lua", "Numbers_Widgets.lua", "Numbers_Combat.lua",
-    "Numbers_Icons.lua", "Numbers_Labels.lua", "Numbers_CombatAPI.lua",
-    "Numbers_Preview.lua", "Numbers_Anchors.lua", "Numbers_Layout.lua",
-    "Numbers_Culling.lua", "Numbers_Placement.lua", "Numbers_Animation.lua",
-    "Numbers_Lifecycle.lua", "Numbers_Options.lua", "Numbers_Commands.lua",
+    "Numbers/Numbers.lua", "Numbers/Widgets.lua", "Numbers/Combat.lua",
+    "Numbers/Icons.lua", "Numbers/Labels.lua", "Numbers/CombatAPI.lua",
+    "Numbers/Preview.lua", "Numbers/Anchors.lua", "Numbers/Layout.lua",
+    "Numbers/Culling.lua", "Numbers/Placement.lua", "Numbers/Animation.lua",
+    "Numbers/Lifecycle.lua", "Numbers/Options.lua", "Numbers/Commands.lua",
 ]
+CORE_ORDER = [
+    "Core/Math.lua", "Core/Rendering.lua", "Core/Localization.lua",
+    "Core/Theme.lua", "Core/Storage.lua", "Core/HUD.lua",
+    "Core/Bars.lua", "Core/Sizing.lua", "Core/Panels.lua",
+    "Core/SafeCalls.lua", "Core/Movement.lua", "Core/Options.lua",
+    "Core/Commands.lua", "Core/Cards.lua", "Core/UnitFrames.lua",
+    "Core/Startup.lua",
+]
+
 MODULES = {
-    "Numbers.lua": ("Config", "C"),
-    "Numbers_Widgets.lua": ("Widgets", "S"),
-    "Numbers_Combat.lua": ("Combat", "S"),
-    "Numbers_Icons.lua": ("Icons", "I"),
-    "Numbers_Labels.lua": ("Combat", "S"),
-    "Numbers_CombatAPI.lua": ("CombatAPI", "S"),
-    "Numbers_Preview.lua": ("Preview", "S"),
-    "Numbers_Anchors.lua": ("Anchors", "S"),
-    "Numbers_Layout.lua": ("Layout", "S"),
-    "Numbers_Culling.lua": ("Culling", "S"),
-    "Numbers_Placement.lua": ("Placement", "S"),
-    "Numbers_Animation.lua": ("Animation", "S"),
-    "Numbers_Lifecycle.lua": ("Lifecycle", "S"),
-    "Numbers_Options.lua": ("Options", "S"),
-    "Numbers_Commands.lua": ("Commands", "S"),
+    "Numbers/Numbers.lua": ("Config", "C"),
+    "Numbers/Widgets.lua": ("Widgets", "S"),
+    "Numbers/Combat.lua": ("Combat", "S"),
+    "Numbers/Icons.lua": ("Icons", "I"),
+    "Numbers/Labels.lua": ("Combat", "S"),
+    "Numbers/CombatAPI.lua": ("CombatAPI", "S"),
+    "Numbers/Preview.lua": ("Preview", "S"),
+    "Numbers/Anchors.lua": ("Anchors", "S"),
+    "Numbers/Layout.lua": ("Layout", "S"),
+    "Numbers/Culling.lua": ("Culling", "S"),
+    "Numbers/Placement.lua": ("Placement", "S"),
+    "Numbers/Animation.lua": ("Animation", "S"),
+    "Numbers/Lifecycle.lua": ("Lifecycle", "S"),
+    "Numbers/Options.lua": ("Options", "S"),
+    "Numbers/Commands.lua": ("Commands", "S"),
 }
 # Multi-variable assignments such as S.labels, S.nLabels = {}, 0.
 TUPLE_INITIALIZED = {
@@ -118,9 +127,9 @@ def read_toc() -> list[str]:
         positions.append(entries.index(name))
     if positions != sorted(positions):
         fail("Numbers modules are not in their required dependency/load order")
-    if entries.index("Core.lua") > entries.index("Numbers.lua"):
+    if entries.index("Core.lua") > entries.index("Numbers/Numbers.lua"):
         fail("Core.lua must load before Numbers.lua")
-    if entries.index("Timer.lua") > entries.index("Numbers.lua"):
+    if entries.index("Timer/Timer.lua") > entries.index("Numbers/Numbers.lua"):
         fail("Timer.lua must load before Numbers.lua")
     print(f"PASS: TOC contains {len(entries)} existing, unique entries")
     print("PASS: Numbers module load order is preserved")
@@ -148,23 +157,54 @@ def check_module_ownership() -> None:
     unresolved = sorted(references - definitions - TUPLE_INITIALIZED)
     if unresolved:
         fail("Unresolved Numbers namespace references: " + ", ".join(unresolved))
-    culling = sources["Numbers_Culling.lua"]
+    culling = sources["Numbers/Culling.lua"]
     if len(re.findall(r"\bS\s*\.\s*CullLabel\s*=\s*function\b", culling)) != 1:
         fail("Numbers_Culling.lua must own exactly one S.CullLabel implementation")
-    for caller in ("Numbers_Placement.lua", "Numbers_Animation.lua"):
+    for caller in ("Numbers/Placement.lua", "Numbers/Animation.lua"):
         code = sources[caller]
         if "N.Culling.CullLabel(" not in code:
             fail(f"{caller} must call the shared N.Culling.CullLabel implementation")
         if "N.Layout.CullLabel" in code:
             fail(f"{caller} still references obsolete N.Layout.CullLabel")
-    numbers_code = sources["Numbers.lua"]
+    numbers_code = sources["Numbers/Numbers.lua"]
     if re.search(r"\blocal\s+function\s+(Clamp|Smooth)\b", numbers_code):
         fail("Numbers.lua must reuse Core's Clamp/Smooth helpers, not duplicate them")
-    if "AUI.Clamp(" not in numbers_code or "AUI.Smooth(" not in sources["Numbers_Layout.lua"]:
+    if "AUI.Clamp(" not in numbers_code or "AUI.Smooth(" not in sources["Numbers/Layout.lua"]:
         fail("Numbers must reuse Core's shared Clamp/Smooth helpers")
     print(f"PASS: {len(references)} namespace references resolve to one owner")
     print("PASS: shared culling helper has one implementation and correct callers")
     print("PASS: Core math helpers are reused instead of duplicated")
+
+
+def check_core_structure(entries: list[str]) -> None:
+    if "Core.lua" not in entries:
+        fail("Core.lua bootstrap is missing")
+    positions = []
+    for name in CORE_ORDER:
+        if name not in entries or not (ROOT / name).is_file():
+            fail(f"Core module is missing from the TOC or repository: {name}")
+        positions.append(entries.index(name))
+    if positions != sorted(positions):
+        fail("Core modules are not in their required dependency/load order")
+    if entries.index("Core.lua") > positions[0]:
+        fail("Core.lua must create Arcane before Core services load")
+    if entries.index("Core/Startup.lua") < entries.index("Core/Cards.lua"):
+        fail("Core/Startup.lua must load after the card-screen handler")
+    print(f"PASS: {len(CORE_ORDER)} Core modules load in dependency order")
+
+def check_shared_unit_frame_helpers() -> None:
+    shared = (ROOT / "Core/UnitFrames.lua").read_text(encoding="utf-8")
+    if len(re.findall(r"function C\.UnitFrames\.HealthText", shared)) != 1:
+        fail("Core/UnitFrames.lua must own the shared health-text formatter exactly once")
+    for name in ("Frames/Units.lua", "Frames/Party.lua"):
+        code = (ROOT / name).read_text(encoding="utf-8")
+        if "local Unit = C.UnitFrames" not in code:
+            fail(f"{name} must use the shared unit-frame helpers")
+        if "Unit.HealthText(" not in code or "Unit.POWER_COLORS[" not in code:
+            fail(f"{name} must use the shared health formatter and power palette")
+        if re.search(r"local\s+function\s+HPText\b|local\s+POWER_COLORS\s*=", code):
+            fail(f"{name} still duplicates the shared unit-frame helpers")
+    print("PASS: player/target and party frames share health formatting and power colors")
 
 
 def count_chunk_level_locals(source: str) -> int:
@@ -183,13 +223,13 @@ def count_chunk_level_locals(source: str) -> int:
     return count
 
 def check_timer_structure(entries: list[str]) -> None:
-    data_path = ROOT / "Timer_Data.lua"
-    timer_path = ROOT / "Timer.lua"
+    data_path = ROOT / "Timer/Data.lua"
+    timer_path = ROOT / "Timer/Timer.lua"
     if not data_path.is_file():
         fail("Timer_Data.lua is missing")
-    if entries.index("Core.lua") > entries.index("Timer_Data.lua"):
+    if entries.index("Core.lua") > entries.index("Timer/Data.lua"):
         fail("Core.lua must load before Timer_Data.lua")
-    if entries.index("Timer_Data.lua") > entries.index("Timer.lua"):
+    if entries.index("Timer/Data.lua") > entries.index("Timer/Timer.lua"):
         fail("Timer_Data.lua must load before Timer.lua")
 
     data = mask_comments_and_strings(data_path.read_text(encoding="utf-8"))
@@ -250,6 +290,8 @@ def check_timer_structure(entries: list[str]) -> None:
 
 def main() -> None:
     entries = read_toc()
+    check_core_structure(entries)
+    check_shared_unit_frame_helpers()
     check_module_ownership()
     check_timer_structure(entries)
     print("PASS: Arcane static architecture audit complete")

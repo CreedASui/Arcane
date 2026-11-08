@@ -4,6 +4,7 @@
 -- TargetFrame are tucked away; turning a part off brings its frame back.
 
 local C = Arcane
+local Unit = C.UnitFrames
 local DEFAULTS = { player = true, target = true, playerScale = 1, targetScale = 1 }
 local W, H = 300, 74
 local HP_W, HP_H = 200, 14
@@ -22,12 +23,7 @@ local LOW_COLORS = {
 local ENEMY_COLORS = {
 	{ 0.30, 0.02, 0.02 }, { 0.72, 0.05, 0.04 }, { 1.00, 0.30, 0.14 },
 }
-local POWER_COLORS = {
-	[0] = { { 0.03, 0.10, 0.36 }, { 0.10, 0.34, 0.86 }, { 0.48, 0.74, 1.00 } }, -- mana
-	[1] = { { 0.34, 0.02, 0.02 }, { 0.76, 0.08, 0.06 }, { 1.00, 0.38, 0.26 } }, -- rage
-	[2] = { { 0.36, 0.16, 0.02 }, { 0.84, 0.44, 0.08 }, { 1.00, 0.72, 0.32 } }, -- focus
-	[3] = { { 0.40, 0.33, 0.02 }, { 0.86, 0.74, 0.10 }, { 1.00, 0.96, 0.46 } }, -- energy
-}
+
 local KIND_TAGS = {
 	final = { "Final boss", 1, 0.32, 0.22 }, boss = { "Boss", 1, 0.32, 0.22 },
 	guardian = { "Guardian", 1, 0.72, 0.30 }, elite = { "Elite", 1, 0.84, 0.36 },
@@ -67,10 +63,7 @@ end
 
 local Call = C.Call -- no stray nil arguments (see Core)
 
-local function HPText(hp, hpm)
-	if hpm >= 100000 then return C.Short(hp) .. " / " .. C.Short(hpm) end
-	return C.Commas(hp) .. " / " .. C.Commas(hpm)
-end
+
 
 local function Mix(a, b, t, out)
 	out[1] = a[1] + (b[1] - a[1]) * t
@@ -190,7 +183,7 @@ local function StepPlayer(u, dt, now, pal)
 		C.BarColors(u.hp, Mix(HP_COLORS[1], LOW_COLORS[1], t, u.colA), Mix(HP_COLORS[2], LOW_COLORS[2], t, u.colM),
 			Mix(HP_COLORS[3], LOW_COLORS[3], t, u.colB))
 	end
-	local text = HPText(math.floor(hp + 0.5), math.floor(hpm + 0.5))
+	local text = Unit.HealthText(math.floor(hp + 0.5), math.floor(hpm + 0.5))
 	if sh and sh > 0 then text = text .. "  |cffbde6ff+" .. C.Short(sh) .. "|r" end
 	C.SetText(u.hpText, text)
 
@@ -199,7 +192,7 @@ local function StepPlayer(u, dt, now, pal)
 	local mp, mpm = Call(UnitMana, "player") or 0, Call(UnitManaMax, "player") or 0
 	if u.power ~= power then
 		u.power = power
-		local cols = POWER_COLORS[power] or POWER_COLORS[0]
+		local cols = Unit.POWER_COLORS[power] or Unit.POWER_COLORS[0]
 		C.BarColors(u.res, cols[1], cols[2], cols[3])
 	end
 	if mpm > 0 then
@@ -296,7 +289,7 @@ local function StepTarget(u, dt, now, pal)
 		C.BarColors(u.hp, cols[1], cols[2], cols[3])
 	end
 	if enemy or hpm > 100 then
-		C.SetText(u.hpText, HPText(math.floor(hp + 0.5), math.floor(hpm + 0.5)))
+		C.SetText(u.hpText, Unit.HealthText(math.floor(hp + 0.5), math.floor(hpm + 0.5)))
 	else
 		C.SetText(u.hpText, math.floor(hp / hpm * 100 + 0.5) .. "%")
 	end

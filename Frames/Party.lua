@@ -4,6 +4,7 @@
 -- game's party frames are tucked away; turning it off brings them back.
 
 local C = Arcane
+local Unit = C.UnitFrames
 local DEFAULTS = { enabled = true, scale = 1 }
 local ROW_W, ROW_H, GAP = 232, 44, 6
 local HP_W, HP_H, POW_H = 160, 11, 5
@@ -14,12 +15,7 @@ local CLASS_COLORS = {
 	DRUID = { 1.00, 0.49, 0.04 }, SHAMAN = { 0.00, 0.44, 0.87 }, WARRIOR = { 0.78, 0.61, 0.43 },
 }
 local NO_CLASS = { 0.55, 0.55, 0.58 }
-local POWER_COLORS = {
-	[0] = { { 0.03, 0.10, 0.36 }, { 0.10, 0.34, 0.86 }, { 0.48, 0.74, 1.00 } }, -- mana
-	[1] = { { 0.34, 0.02, 0.02 }, { 0.76, 0.08, 0.06 }, { 1.00, 0.38, 0.26 } }, -- rage
-	[2] = { { 0.36, 0.16, 0.02 }, { 0.84, 0.44, 0.08 }, { 1.00, 0.72, 0.32 } }, -- focus
-	[3] = { { 0.40, 0.33, 0.02 }, { 0.86, 0.74, 0.10 }, { 1.00, 0.96, 0.46 } }, -- energy
-}
+
 local GREY = { { 0.10, 0.10, 0.11 }, { 0.30, 0.30, 0.32 }, { 0.50, 0.50, 0.52 } }
 local SAMPLES = {
 	{ name = "Jaina", class = "MAGE", level = 20, hp = 1840, hpm = 2300, power = 0, mp = 900, mpm = 1400 },
@@ -33,10 +29,7 @@ local S = { alpha = 0, stamp = -1, levelled = false, portraitClock = 0 }
 
 local Call = C.Call -- no stray nil arguments (see Core)
 
-local function HPText(hp, hpm)
-	if hpm >= 100000 then return C.Short(hp) .. " / " .. C.Short(hpm) end
-	return C.Commas(hp) .. " / " .. C.Commas(hpm)
-end
+
 
 -- a class color as the bar's three-stop fill: deep, true, bright, all in the class's own hue. The
 -- color is made richer first (pulled away from grey), and the bright end stays the class's color
@@ -354,7 +347,7 @@ local function StepRow(r, d, slotY, dt, now)
 		local f3 = fill[3]
 		C.Color(r.hp.flowTex, f3[1], f3[2], f3[3], 1)
 	end
-	local cols = POWER_COLORS[d.power] or POWER_COLORS[0]
+	local cols = Unit.POWER_COLORS[d.power] or Unit.POWER_COLORS[0]
 	if r.powerFor ~= d.power then
 		r.powerFor = d.power
 		C.BarColors(r.pow, cols[1], cols[2], cols[3])
@@ -377,7 +370,7 @@ local function StepRow(r, d, slotY, dt, now)
 	elseif r.tHp ~= hp or r.tHpm ~= d.hpm then
 		r.tHp, r.tHpm = hp, d.hpm
 		if d.hpm > 100 then
-			C.SetText(r.hpText, HPText(math.floor(hp + 0.5), math.floor(d.hpm + 0.5)))
+			C.SetText(r.hpText, Unit.HealthText(math.floor(hp + 0.5), math.floor(d.hpm + 0.5)))
 		else
 			C.SetText(r.hpText, math.floor(hp / hpm * 100 + 0.5) .. "%")
 		end
