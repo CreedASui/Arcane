@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4 — November 8, 2026
 
 - **Standalone Stats window:** a movable, resizable tracker for 29 run stats, grouped by Offense, Survival, Area and DoTs, and Run. Choose the stats to show; increases and decreases briefly flash green and red.
 - **Party shields:** party health bars now show detected absorb shields using Arcane's existing animated glass-and-stripe overlay.
