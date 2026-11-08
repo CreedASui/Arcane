@@ -6,7 +6,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 
 ## Preview
 
-![Arcane UI running in Azeroth Survivors](docs/images/arcane-ui-v0.5.webp)
+![Arcane UI running in Azeroth Survivors](docs/images/ArcaneUI.png)
 
 ## What's in it
 
