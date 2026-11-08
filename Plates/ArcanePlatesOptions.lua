@@ -10,7 +10,6 @@ local panel
 
 local DEFAULTS = {
 	showDebuffs = true,
-	hideShrunkPlates = false,
 	hideBossName = false,
 	showShrunkName = false,
 	showHealthText = true,
@@ -210,11 +209,7 @@ local function BuildPanel(parent)
 	panel:EnableMouse(true)
 	panel:SetFrameStrata(parent and parent:GetFrameStrata() or "DIALOG")
 	panel:Hide()
-	if parent then
-		parent:SetScript("OnHide", function()
-			if panel then panel:Hide() end
-		end)
-	end
+	-- The panel is a child of the hub; the game's frame hierarchy hides it with the hub.
 	C.AboveHub(panel)
 	if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "ArcanePlatesOptions") end
 
@@ -228,8 +223,7 @@ local function BuildPanel(parent)
 	Checkbox(panel, "hideBossName", "Hide boss / guardian names", "Hide the name label above special plates.", 18, -87)
 
 	PanelText(panel, "Regular plates", 16, -121, 280, 10, { 0.72, 0.68, 0.58 })
-	Checkbox(panel, "hideShrunkPlates", "Hide regular plates", "Hide ordinary mob plates entirely. Requires overlapping nameplates.", 18, -137)
-	Checkbox(panel, "showShrunkName", "Show names on nameplates", "Show each regular mob name above its shrunken plate.", 18, -162)
+	Checkbox(panel, "showShrunkName", "Show names on nameplates", "Show each regular mob name above its shrunken plate.", 18, -137)
 
 	PanelText(panel, "Health display", 16, -198, 280, 10, { 0.72, 0.68, 0.58 })
 	Checkbox(panel, "showHealthText", "Show health numbers", "Show current / maximum health numbers inside each plate. The colored health bars remain visible either way.", 18, -214)

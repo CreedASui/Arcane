@@ -1,4 +1,10 @@
-# Changelog
+## v0.6 — November 8, 2026
+
+- **Tiny Plates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.
+- **Native visibility ownership:** the game's `V` command remains the only enemy-plate visibility control. Arcane's replacement is attached to the same pooled native plate buttons, with no second enable/hide switch or stock-renderer fallback.
+- **Safer native restoration:** capture and restore only native child visibility and alpha; leave the game's projected plate position and geometry untouched. Avoid blanket show-all recovery when the original state is unknown.
+- **Pooled-frame and update fixes:** identify only the game's native plate buttons, refresh reused pool slots without stale state, retry incomplete styling, cache special-target/debuff lookups, and isolate errors to the affected plate.
+- **Regression coverage:** add a dedicated Tiny Plates audit to the repository's CI checks.
 
 ## v0.5 — November 8, 2026
 

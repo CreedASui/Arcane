@@ -43,4 +43,18 @@ Use a shared helper when the behavior and its contract are genuinely the same. D
 
 ## Next candidates for smaller modules
 
-The largest feature files are still candidates for later, isolated extractions: `Timer/Timer.lua`, `Plates/ArcanePlates.lua`, `Windows/Meter.lua` and `Windows/Character.lua`. Each currently owns a coherent feature but contains multiple internal responsibilities. Split those by data intake, presentation, interaction and lifecycle only when the boundaries can be kept explicit and the live client can verify the result.
+The largest remaining feature files are candidates for later, isolated extractions: `Timer/Timer.lua`, `Windows/Meter.lua` and `Windows/Character.lua`. Each owns a coherent feature but may still contain internal responsibilities worth separating when the boundaries are clear. Split those by data intake, presentation, interaction and lifecycle only when the boundaries can be kept explicit and the live client can verify the result.
+
+## Tiny Plates
+
+Tiny Plates is split by responsibility rather than by individual helper:
+- `Plates/State.lua` owns native plate discovery, child-state snapshots and safe visibility restoration.
+- `Plates/SpecialTargets.lua` owns boss/guardian identity and debuff presentation.
+- `Plates/Visuals.lua` owns replacement bars, labels and plate styling.
+- `Plates/ArcanePlates.lua` owns discovery cadence, update scheduling and addon lifecycle.
+- `Plates/ArcanePlatesOptions.lua` owns the settings UI and saved option access.
+
+The controller delegates to these modules in TOC order. Tiny Plates is not a separately toggleable Arcane part: it is the UX's enemy-plate renderer and remains active whenever Arcane is loaded. The game's native `V` command owns enemy-plate visibility. Azeroth Survivors creates anonymous `Button` children under `WorldFrame`, hides retired plates, and reuses free pool slots. The Arcane replacement bar is parented to the same button, so it follows the game's show/hide state without binding or overriding `V`. The registry is therefore bounded by the game's high-water plate pool; no guessed cleanup timer is needed. There is no second hide checkbox and no stock-renderer fallback.
+
+
+Tiny Plates does not own the `WorldFrame` plate root's dimensions, scale or projected position. Azeroth Survivors updates the root anchor as units move; Tiny Plates anchors its overlay to the native health bar and restores only native child visibility/alpha that it changed.

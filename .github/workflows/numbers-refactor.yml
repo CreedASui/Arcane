@@ -60,6 +60,9 @@ jobs:
       - name: Audit skill-bar style modules and class artwork
         run: python tools/audit_bar_styles.py
 
+      - name: Audit Tiny Plates state and module ownership
+        run: python tools/audit_plates.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
