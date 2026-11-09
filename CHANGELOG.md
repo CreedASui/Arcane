@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Full Class palette propagation:** Full Class now applies the active class palette across Arcane's shared UI, including player and party frames, the minimap, Stats, Damage meter, Luck, Character window, pet and stored-level-up panels. Arcane and Hybrid keep their existing bronze UI outside the skill-bar treatment; the boss timer keeps its own zone palette.
+- **UI style selector:** the Options hub now labels the selector by its full scope rather than implying it only changes the skill bar.
+
 - **Remove the redundant target pane:** keep the player frame, Tiny Plates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
 - **Party layout:** move the default party-frame stack directly below the player frame.
 - **Remove unused legacy access:** B no longer opens the backpack or bags while Arcane is active; other B bindings and the saved key map are left alone. Keep the game's Honor tab hidden whether Arcane's Character panel is enabled or disabled.
