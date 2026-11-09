@@ -2,6 +2,8 @@
 
 - **Stats default position:** Stats now resets directly above the Damage meter on the right side, aligned to the meter's right edge. The Damage meter and Luck keep their original right-side default positions.
 
+- **Stock gameplay notification text:** keep the native message feed transparent and borderless; its text uses the active Arcane UX palette in Arcane, Hybrid and Full Class modes. The feed remains movable through Arcane's Move frames system, while genuine Lua script errors stay in their separate error window.
+
 - **Stock error-frame controls:** the original `UIErrorsFrame` can now be shown or hidden from Arcane Options and repositioned with Arcane's Move frames mode. Hiding it is visual only; its original error, info and system-message event handling stays intact for A/B testing.
 
 - **Full Class palette propagation:** Full Class now applies the active class palette across Arcane's shared UI, including player and party frames, the minimap, Stats, Damage meter, Luck, Character window, pet and stored-level-up panels. Arcane and Hybrid keep their existing bronze UI outside the skill-bar treatment; the boss timer keeps its own zone palette.
