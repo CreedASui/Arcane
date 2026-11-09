@@ -73,28 +73,28 @@ local function Build(name, key, label, default)
 	u.name = C.Text(u.hp.top, C.FONT, 13, "OUTLINE", "LEFT", HP_W)
 	u.name:SetPoint("BOTTOMLEFT", u.hp.frame, "TOPLEFT", 4, 6)
 
-		u.res = C.NewBar(f, HP_W - 24, RES_H, false)
-		u.res.frame:SetPoint("TOPLEFT", u.hp.frame, "BOTTOMLEFT", 0, -9)
-		u.resText = C.Text(u.res.top, C.FONT, 9, "OUTLINE", "CENTER", HP_W)
-		u.resText:SetPoint("CENTER", u.res.frame, "CENTER", 0, 0)
-		-- the class meter: up to six gems under the bars
-		u.pipFrame = CreateFrame("Frame", nil, f)
-		u.pipFrame:SetAllPoints(f)
-		u.pips = {}
-		for i = 1, 6 do
-			local p = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Diamond")
-			p:SetWidth(14)
-			p:SetHeight(14)
-			p:SetPoint("CENTER", u.res.frame, "BOTTOMLEFT", 7 + (i - 1) * 16, -11)
-			u.pips[i] = { tex = p, lit = 0 }
-		end
-		u.pipText = C.Text(u.pipFrame, C.FONT, 10, "OUTLINE", "LEFT", 140)
-		u.pipText:SetPoint("LEFT", u.res.frame, "BOTTOMLEFT", 0, -10)
-		-- extra lives, beside the name
-		u.lifeGem = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Gem")
-		u.lifeGem:SetWidth(14)
-		u.lifeGem:SetHeight(14)
-		u.lifeText = C.Text(u.hp.top, C.FONT, 11, "OUTLINE", "LEFT", 40)
+	u.res = C.NewBar(f, HP_W - 24, RES_H, false)
+	u.res.frame:SetPoint("TOPLEFT", u.hp.frame, "BOTTOMLEFT", 0, -9)
+	u.resText = C.Text(u.res.top, C.FONT, 9, "OUTLINE", "CENTER", HP_W)
+	u.resText:SetPoint("CENTER", u.res.frame, "CENTER", 0, 0)
+	-- the class meter: up to six gems under the bars
+	u.pipFrame = CreateFrame("Frame", nil, f)
+	u.pipFrame:SetAllPoints(f)
+	u.pips = {}
+	for i = 1, 6 do
+		local p = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Diamond")
+		p:SetWidth(14)
+		p:SetHeight(14)
+		p:SetPoint("CENTER", u.res.frame, "BOTTOMLEFT", 7 + (i - 1) * 16, -11)
+		u.pips[i] = { tex = p, lit = 0 }
+	end
+	u.pipText = C.Text(u.pipFrame, C.FONT, 10, "OUTLINE", "LEFT", 140)
+	u.pipText:SetPoint("LEFT", u.res.frame, "BOTTOMLEFT", 0, -10)
+	-- extra lives, beside the name
+	u.lifeGem = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Gem")
+	u.lifeGem:SetWidth(14)
+	u.lifeGem:SetHeight(14)
+	u.lifeText = C.Text(u.hp.top, C.FONT, 11, "OUTLINE", "LEFT", 40)
 
 	f:Hide()
 	u.mover = C.Movable(f, key, label, default)
