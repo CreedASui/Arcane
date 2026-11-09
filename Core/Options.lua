@@ -271,7 +271,7 @@ local function BuildHub()
 	local styleY = y - 30
 	local styleLabel = HubText(o, 9, 0.62, 0.62, 0.68)
 	styleLabel:SetPoint("BOTTOMLEFT", o, "TOPLEFT", 326, styleY + 4)
-	C.LText(styleLabel, "Skill bar style")
+	C.LText(styleLabel, "UI style")
 	local function StyleChoice(mode, label, x)
 		local button = C.Button(o, 96, 24, "", function()
 			if C.BarStyles then C.BarStyles.SetMode(mode) end
