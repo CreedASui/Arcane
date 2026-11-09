@@ -10,7 +10,7 @@ local W, H = 180, 30
 
 local db
 local root
-local S = { alpha = 0, n = 0, pop = nil, takeClock = 0, broken = false }
+local S = { alpha = 0, n = 0, pop = nil, takeClock = 0, broken = false, stamp = -1 }
 
 local function Waiting()
 	if type(AZS_GetStoredLevels) ~= "function" then return 0 end
@@ -34,6 +34,13 @@ local function ShowTip()
 	C.ShowTip()
 end
 
+local function Theme(pal)
+	C.PanelTheme(root.deco, pal)
+	local g, t = pal.glow, pal.title
+	root.glow:SetVertexColor(g[1], g[2], g[3])
+	root.label:SetTextColor(t[1], t[2], t[3])
+end
+
 local function Step(dt, now)
 	local n = Waiting()
 	if n > S.n then S.pop = now end -- one more: it pulses
@@ -46,6 +53,11 @@ local function Step(dt, now)
 	end
 	C.Vis(root, true)
 	C.Alpha(root, S.alpha)
+	local pal = C.Pal()
+	if S.stamp ~= C.palStamp then
+		S.stamp = C.palStamp
+		Theme(pal)
+	end
 	C.SetText(root.count, tostring(n))
 	-- a slow breath of light, and a bright pulse when one more comes
 	local pop = 0
@@ -87,7 +99,6 @@ C.OnInit(function()
 	root.glow:SetPoint("CENTER", root, "CENTER", 0, 0)
 	root.glow:SetVertexColor(1, 0.72, 0.22)
 	root.deco = C.Panel(root, false)
-	C.PanelTheme(root.deco, C.Pal())
 	root.label = C.Text(root, C.FONT, 14, "OUTLINE", "CENTER", W - 40)
 	root.label:SetPoint("CENTER", root, "CENTER", -12, 0)
 	root.label:SetTextColor(0.98, 0.85, 0.52)
