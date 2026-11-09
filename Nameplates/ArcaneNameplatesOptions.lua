@@ -1,5 +1,5 @@
--- Arcane Tiny Plates settings. All state lives under ArcaneDB.nameplates.
--- The settings are embedded in Arcane's options flow; there is no ArcanePlates minimap button
+-- Arcane Nameplates settings. All state lives under ArcaneDB.nameplates.
+-- The settings are embedded in Arcane's options flow; there is no ArcaneNameplates minimap button
 -- or second standalone settings window.
 
 local C = Arcane
@@ -40,13 +40,13 @@ local function Color(category)
 	return { tonumber(c[1]) or 1, tonumber(c[2]) or 1, tonumber(c[3]) or 1 }
 end
 
-function C.ArcanePlatesOption(key)
+function C.ArcaneNameplatesOption(key)
 	local d = DB()
 	if d[key] == nil then return DEFAULTS[key] end
 	return d[key] and true or false
 end
 
-function C.ArcanePlatesBarColor(category)
+function C.ArcaneNameplatesBarColor(category)
 	return Color(category)
 end
 
@@ -64,7 +64,7 @@ end
 
 local function Checkbox(parent, key, label, note, x, y)
 	local b = CreateFrame("CheckButton", nil, parent)
-	b.arcanePlatesOptionKey = key
+	b.arcaneNameplatesOptionKey = key
 	b:SetWidth(20)
 	b:SetHeight(20)
 	b:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -88,8 +88,8 @@ local function Checkbox(parent, key, label, note, x, y)
 	b.note = note
 	b:SetScript("OnClick", function()
 		DB()[key] = this:GetChecked() and true or false
-		if C.ArcanePlatesRefresh then C.ArcanePlatesRefresh(true) end
-		C.ArcanePlatesRefreshOptions()
+		if C.ArcaneNameplatesRefresh then C.ArcaneNameplatesRefresh(true) end
+		C.ArcaneNameplatesRefreshOptions()
 	end)
 	b:SetScript("OnEnter", function()
 		if not note or not GameTooltip then return end
@@ -105,7 +105,7 @@ end
 
 local function Swatch(parent, category, color, x, y, primary)
 	local b = CreateFrame("Button", nil, parent)
-	if primary then b.arcanePlatesPrimarySwatch = category end
+	if primary then b.arcaneNameplatesPrimarySwatch = category end
 	b:SetWidth(16)
 	b:SetHeight(16)
 	b:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -126,8 +126,8 @@ local function Swatch(parent, category, color, x, y, primary)
 			local cr, cg, cb = picker:GetColorRGB()
 			d[category .. "BarColor"] = { cr, cg, cb }
 			d[category .. "BarColorOn"] = true
-			C.ArcanePlatesRefresh(true)
-			C.ArcanePlatesRefreshOptions()
+			C.ArcaneNameplatesRefresh(true)
+			C.ArcaneNameplatesRefreshOptions()
 		end
 		local function Cancel(previous)
 			if type(previous) == "table" then
@@ -136,8 +136,8 @@ local function Swatch(parent, category, color, x, y, primary)
 				d[category .. "BarColor"] = old
 			end
 			d[category .. "BarColorOn"] = oldEnabled
-			C.ArcanePlatesRefresh(true)
-			C.ArcanePlatesRefreshOptions()
+			C.ArcaneNameplatesRefresh(true)
+			C.ArcaneNameplatesRefreshOptions()
 		end
 		picker:Hide()
 		picker.hasOpacity = nil
@@ -158,8 +158,8 @@ local function MakeColorRow(parent, category, title, y)
 	local reset = C.Button(parent, 48, 18, "Reset", function()
 		DB()[category .. "BarColorOn"] = false
 		DB()[category .. "BarColor"] = { PRESETS[1][1], PRESETS[1][2], PRESETS[1][3] }
-		C.ArcanePlatesRefresh(true)
-		C.ArcanePlatesRefreshOptions()
+		C.ArcaneNameplatesRefresh(true)
+		C.ArcaneNameplatesRefreshOptions()
 	end)
 	reset:SetPoint("TOPLEFT", parent, "TOPLEFT", 232, y - 19)
 	local picks = {}
@@ -167,8 +167,8 @@ local function MakeColorRow(parent, category, title, y)
 		return function()
 			DB()[cat .. "BarColor"] = { preset[1], preset[2], preset[3] }
 			DB()[cat .. "BarColorOn"] = true
-			C.ArcanePlatesRefresh(true)
-			C.ArcanePlatesRefreshOptions()
+			C.ArcaneNameplatesRefresh(true)
+			C.ArcaneNameplatesRefreshOptions()
 		end
 	end
 	for i = 1, table.getn(PRESETS) do
@@ -199,7 +199,7 @@ end
 
 local function BuildPanel(parent)
 	if panel then return end
-	panel = CreateFrame("Frame", "ArcanePlatesOptions", parent or UIParent)
+	panel = CreateFrame("Frame", "ArcaneNameplatesOptions", parent or UIParent)
 	panel:SetWidth(310)
 	panel:SetHeight(430)
 	panel:SetPoint("TOPLEFT", parent or UIParent, "TOPLEFT", 324, -62)
@@ -211,9 +211,9 @@ local function BuildPanel(parent)
 	panel:Hide()
 	-- The panel is a child of the hub; the game's frame hierarchy hides it with the hub.
 	C.AboveHub(panel)
-	if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "ArcanePlatesOptions") end
+	if type(UISpecialFrames) == "table" then table.insert(UISpecialFrames, "ArcaneNameplatesOptions") end
 
-	local title = PanelText(panel, "Tiny Plates", 16, -14, 280, 16, { 0.98, 0.85, 0.52 })
+	local title = PanelText(panel, "Arcane Nameplates", 16, -14, 280, 16, { 0.98, 0.85, 0.52 })
 	C.SetFace(title, C.TITLE_FONT, 17)
 	local close = C.Button(panel, 22, 20, "x", function() panel:Hide() end)
 	close:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -10, -10)
@@ -233,11 +233,11 @@ local function BuildPanel(parent)
 	UpdateControls()
 end
 
-function C.ArcanePlatesRefreshOptions()
+function C.ArcaneNameplatesRefreshOptions()
 	UpdateControls()
 end
 
-function C.ArcanePlatesToggleOptions(parent)
+function C.ArcaneNameplatesToggleOptions(parent)
 	if not panel then BuildPanel(parent) end
 	if panel:IsShown() then panel:Hide() else
 		if parent and panel:GetParent() ~= parent then panel:SetParent(parent) end
@@ -247,6 +247,6 @@ function C.ArcanePlatesToggleOptions(parent)
 	end
 end
 
-C.arcanePlatesOptions = C.ArcanePlatesToggleOptions
+C.arcaneNameplatesOptions = C.ArcaneNameplatesToggleOptions
 
 C.OnInit(function() DB() end)

@@ -11,7 +11,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 ## What's in it
 
 - **Boss timer:** a themed countdown to each boss, with the run's time.
-- **Tiny Plates:** Arcane's built-in replacement for the game's enemy plates, with half-size regular enemies, Arcane's shared FRIZQT typography and layered health bars; bosses and guardians keep their full size with the same styling and their debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Health numbers can be shown or hidden independently in Tiny Plates options.
+- **Arcane Nameplates:** Arcane's built-in replacement for the game's enemy plates, with half-size regular enemies, Arcane's shared FRIZQT typography and layered health bars; bosses and guardians keep their full size with the same styling and their debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Health numbers can be shown or hidden independently in Arcane Nameplates options.
 - **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
 - **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
@@ -36,7 +36,7 @@ Every part can be turned on or off, sized and moved.
 
 ## Repository layout and packaging
 
-The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Plates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
+The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
 The release asset is named `ArcaneV0.6.zip`. GitHub Actions runs the Core, Numbers, timer and skill-bar architecture audits, compiles every Lua chunk with Lua 5.1, and recursively creates a test ZIP for pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
 

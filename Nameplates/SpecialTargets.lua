@@ -1,7 +1,7 @@
 -- Boss/guardian identity, labels and debuff presentation.
 local C = Arcane
-C.Plates = C.Plates or {}
-local P = C.Plates
+C.Nameplates = C.Nameplates or {}
+local P = C.Nameplates
 P.Special = {}
 
 local bossGuardianNames = {}
@@ -42,11 +42,11 @@ end
 local function ClearPlateFlags(orderedPlates)
 	for i = 1, table.getn(orderedPlates) do
 		local frame = orderedPlates[i]
-		frame.arcanePlatesBossGuardian = nil
-		frame.arcanePlatesBossGuardianName = nil
-		frame.arcanePlatesDebuffUnitID = nil
-		frame.arcanePlatesDebuffSignature = nil
-		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+		frame.arcaneNameplatesBossGuardian = nil
+		frame.arcaneNameplatesBossGuardianName = nil
+		frame.arcaneNameplatesDebuffUnitID = nil
+		frame.arcaneNameplatesDebuffSignature = nil
+		if frame.arcaneNameplatesDebuffRow then frame.arcaneNameplatesDebuffRow:Hide() end
 	end
 end
 
@@ -96,30 +96,30 @@ local function IsBossOrGuardianName(name)
 end
 
 local function IsBossOrGuardianPlate(frame)
-	local name = frame.arcanePlatesPlateName
+	local name = frame.arcaneNameplatesPlateName
 	if not name then
-		frame.arcanePlatesBossGuardian = false
-		frame.arcanePlatesBossGuardianName = nil
+		frame.arcaneNameplatesBossGuardian = false
+		frame.arcaneNameplatesBossGuardianName = nil
 		return false
 	end
-	if frame.arcanePlatesBossGuardianName ~= name then
-		frame.arcanePlatesDebuffUnitID = nil
-		frame.arcanePlatesDebuffSignature = nil
-		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+	if frame.arcaneNameplatesBossGuardianName ~= name then
+		frame.arcaneNameplatesDebuffUnitID = nil
+		frame.arcaneNameplatesDebuffSignature = nil
+		if frame.arcaneNameplatesDebuffRow then frame.arcaneNameplatesDebuffRow:Hide() end
 	end
 	if IsBossOrGuardianName(name) then
-		frame.arcanePlatesBossGuardian = true
-		frame.arcanePlatesBossGuardianName = name
+		frame.arcaneNameplatesBossGuardian = true
+		frame.arcaneNameplatesBossGuardianName = name
 		return true
 	end
-	frame.arcanePlatesBossGuardian = false
-	frame.arcanePlatesBossGuardianName = nil
+	frame.arcaneNameplatesBossGuardian = false
+	frame.arcaneNameplatesBossGuardianName = nil
 	return false
 end
 
 local function UpdateBossGuardianLabel(frame)
-	local name = frame.arcanePlatesPlateName
-	local holder = frame.arcanePlatesBossGuardianLabelHolder
+	local name = frame.arcaneNameplatesPlateName
+	local holder = frame.arcaneNameplatesBossGuardianLabelHolder
 	if not name or name == "" then
 		if holder then holder:Hide() end
 		return
@@ -131,11 +131,11 @@ local function UpdateBossGuardianLabel(frame)
 		local label = C.Text(holder, C.FONT, 11, "OUTLINE", "CENTER", 180)
 		label:SetHeight(14)
 		label:SetTextColor(1, 0.86, 0.78)
-		frame.arcanePlatesBossGuardianLabelHolder = holder
-		frame.arcanePlatesBossGuardianLabel = label
+		frame.arcaneNameplatesBossGuardianLabelHolder = holder
+		frame.arcaneNameplatesBossGuardianLabel = label
 	end
-	local label = frame.arcanePlatesBossGuardianLabel
-	local bar = frame.arcanePlatesOverlay or frame.arcanePlatesSourceBar
+	local label = frame.arcaneNameplatesBossGuardianLabel
+	local bar = frame.arcaneNameplatesOverlay or frame.arcaneNameplatesSourceBar
 	label:ClearAllPoints()
 	if bar then
 		label:SetPoint("BOTTOM", bar, "TOP", 0, 3)
@@ -148,7 +148,7 @@ local function UpdateBossGuardianLabel(frame)
 end
 
 local function ApplyBossGuardianLabelFont(frame)
-	local label = frame.arcanePlatesBossGuardianLabel
+	local label = frame.arcaneNameplatesBossGuardianLabel
 	if not label then return end
 	C.SetFace(label, C.FONT, 11, "OUTLINE")
 	C.TextColor(label, 1, 0.86, 0.78)
@@ -216,7 +216,7 @@ end
 local function FindBossGuardianUnit(frame, name)
 	local candidates = name and bossGuardianUnitsByName[name]
 	if not candidates or table.getn(candidates) == 0 then return nil end
-	local bar = frame.arcanePlatesSourceBar
+	local bar = frame.arcaneNameplatesSourceBar
 	local currentHealthRatio
 	if bar and bar.GetValue and bar.GetMinMaxValues then
 		local value = bar:GetValue()
@@ -258,29 +258,29 @@ local function GetDebuffs(unitID, unit)
 end
 
 local function UpdateBossGuardianDebuffs(frame)
-	local name = frame.arcanePlatesPlateName
+	local name = frame.arcaneNameplatesPlateName
 	local unit = FindBossGuardianUnit(frame, name)
 	local unitID = unit and unit.id or nil
-	if unitID ~= frame.arcanePlatesDebuffUnitID then
-		frame.arcanePlatesDebuffUnitID = unitID
-		frame.arcanePlatesDebuffSignature = nil
+	if unitID ~= frame.arcaneNameplatesDebuffUnitID then
+		frame.arcaneNameplatesDebuffUnitID = unitID
+		frame.arcaneNameplatesDebuffSignature = nil
 	end
 	if not unitID then
-		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+		if frame.arcaneNameplatesDebuffRow then frame.arcaneNameplatesDebuffRow:Hide() end
 		return
 	end
 	local debuffs = GetDebuffs(unitID, unit)
 	if type(debuffs) ~= "table" then
-		if frame.arcanePlatesDebuffRow then frame.arcanePlatesDebuffRow:Hide() end
+		if frame.arcaneNameplatesDebuffRow then frame.arcaneNameplatesDebuffRow:Hide() end
 		return
 	end
 
-	local row = frame.arcanePlatesDebuffRow
+	local row = frame.arcaneNameplatesDebuffRow
 	if not row then
 		row = CreateFrame("Frame", nil, frame)
 		row:SetHeight(DEBUFF_ICON_SIZE)
 		row:SetFrameLevel(frame:GetFrameLevel() + 5)
-		frame.arcanePlatesDebuffRow = row
+		frame.arcaneNameplatesDebuffRow = row
 	end
 
 	-- Build a dense signature even if the API ever returns a sparse debuff array.
@@ -296,11 +296,11 @@ local function UpdateBossGuardianDebuffs(frame)
 		end
 	end
 	local signature = table.concat(signatureParts, "|")
-	local changed = frame.arcanePlatesDebuffSignature ~= signature
-	frame.arcanePlatesDebuffSignature = signature
+	local changed = frame.arcaneNameplatesDebuffSignature ~= signature
+	frame.arcaneNameplatesDebuffSignature = signature
 
-	local icons = frame.arcanePlatesDebuffIcons
-	if not icons then icons = {}; frame.arcanePlatesDebuffIcons = icons end
+	local icons = frame.arcaneNameplatesDebuffIcons
+	if not icons then icons = {}; frame.arcaneNameplatesDebuffIcons = icons end
 	local visibleIndex = 0
 	local runTime
 	local runTimeRead = false
@@ -348,8 +348,8 @@ local function UpdateBossGuardianDebuffs(frame)
 	if visibleIndex == 0 then row:Hide(); return end
 	local width = visibleIndex * DEBUFF_ICON_SIZE + (visibleIndex - 1) * DEBUFF_ICON_GAP
 	if row:GetWidth() ~= width then row:SetWidth(width) end
-	local bar = frame.arcanePlatesOverlay or frame.arcanePlatesBossGuardianBar
-		or frame.arcanePlatesStyledVisual or frame
+	local bar = frame.arcaneNameplatesOverlay or frame.arcaneNameplatesBossGuardianBar
+		or frame.arcaneNameplatesStyledVisual or frame
 	local point, relativeTo, relativePoint, x, y = row:GetPoint()
 	if point ~= "TOP" or relativeTo ~= bar or relativePoint ~= "BOTTOM" or x ~= 0 or y ~= -3 then
 		row:ClearAllPoints()
@@ -359,8 +359,8 @@ local function UpdateBossGuardianDebuffs(frame)
 end
 
 local function HideDebuffs(frame)
-	if frame.arcanePlatesDebuffRow and frame.arcanePlatesDebuffRow:IsShown() then
-		frame.arcanePlatesDebuffRow:Hide()
+	if frame.arcaneNameplatesDebuffRow and frame.arcaneNameplatesDebuffRow:IsShown() then
+		frame.arcaneNameplatesDebuffRow:Hide()
 	end
 end
 

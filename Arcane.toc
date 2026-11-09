@@ -64,11 +64,11 @@ Windows/Tally.lua
 Frames/LevelUps.lua
 Minimap/Minimap.lua
 Minimap/Button.lua
-Plates/State.lua
-Plates/SpecialTargets.lua
-Plates/Visuals.lua
-Plates/ArcanePlates.lua
-Plates/ArcanePlatesOptions.lua
+Nameplates/State.lua
+Nameplates/SpecialTargets.lua
+Nameplates/Visuals.lua
+Nameplates/ArcaneNameplates.lua
+Nameplates/ArcaneNameplatesOptions.lua
 Minimap/Chests.lua
 Windows/Meter.lua
 Windows/Hurt.lua

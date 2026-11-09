@@ -1,4 +1,4 @@
-name: Numbers refactor audit and test package
+name: Arcane architecture audits and test package
 
 on:
   push:
@@ -60,8 +60,8 @@ jobs:
       - name: Audit skill-bar style modules and class artwork
         run: python tools/audit_bar_styles.py
 
-      - name: Audit Tiny Plates state and module ownership
-        run: python tools/audit_plates.py
+      - name: Audit release metadata consistency\n        run: python tools/audit_release_metadata.py\n\n      - name: Audit Arcane Nameplates state and module ownership
+        run: python tools/audit_nameplates.py
 
       - name: Audit stock error-frame controls
         run: python tools/audit_stock_frame_controls.py
@@ -97,7 +97,7 @@ jobs:
             cp "$file" "$addon/$relative"
           done < <(find . -type f \( -name '*.lua' -o -name '*.toc' \) -not -path './.git/*' -print0)
           cp -R Art Fonts "$addon/"
-          cp ATTRIBUTION.md ArcanePlates-LICENSE.txt "$addon/"
+          cp ATTRIBUTION.md ArcaneNameplates-LICENSE.txt "$addon/"
 
           cd "$stage"
           zip -qr "$archive" Arcane
