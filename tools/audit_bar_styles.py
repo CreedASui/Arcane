@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static architecture checks for Arcane's optional class skill-bar styles."""
+"""Static architecture checks for Arcane's three visual modes and Full Class UI palette."""
 from __future__ import annotations
 
 import re
@@ -82,6 +82,58 @@ def validate_tga_rle_32(path: Path) -> None:
         fail(f"Medallion TGA has no visible pixels: Art/{path.name}")
 
 
+def check_full_class_palette_propagation() -> None:
+    theme = source("Core/Theme.lua")
+    styles = source("SkillBar/Styles.lua")
+    panels = source("Core/Panels.lua")
+
+    if "function C.BasePal()" not in theme or "return C.BasePal()" not in theme:
+        fail("Core theme must retain a non-recursive base palette for Arcane and Hybrid")
+    if not re.search(
+        r"function C\.Pal\(\).*?styles\.Mode\(\) == styles\.FULL_CLASS"
+        r".*?return styles\.Palette\(\).*?return C\.BasePal\(\)",
+        theme, re.S,
+    ):
+        fail("The shared UI palette must use the class palette only in Full Class mode")
+    if "local base = C.BasePal()" not in styles or "local base = C.Pal()" in styles:
+        fail("The class palette must build from BasePal to avoid recursive C.Pal resolution")
+    if "C.palStamp = C.palStamp + 1" not in styles:
+        fail("Changing the style or active Full Class must refresh shared palette consumers")
+    if "if Mode() == FULL_CLASS then C.palStamp = C.palStamp + 1 end" not in styles:
+        fail("A newly resolved run class must refresh the Full Class UI palette")
+    if "return styles.PanelMetal(pal)" not in panels:
+        fail("Full Class panels must use the active class's metal accent")
+
+    dynamic_consumers = (
+        "Frames/Units.lua", "Frames/Party.lua", "Frames/Bosses.lua",
+        "Minimap/Minimap.lua", "Minimap/Button.lua",
+        "Windows/Stats.lua", "Windows/Meter.lua", "Windows/Luck.lua",
+        "Windows/Character.lua",
+    )
+    for name in dynamic_consumers:
+        code = source(name)
+        if "C.Pal()" not in code or "C.palStamp" not in code:
+            fail(f"{name} must consume and refresh from the shared active UI palette")
+
+    for name in ("Frames/LevelUps.lua", "Windows/Pets.lua"):
+        code = source(name)
+        if "C.Pal()" not in code or "S.stamp ~= C.palStamp" not in code or "Theme(pal)" not in code:
+            fail(f"{name} must refresh its one-time panel construction when the UI palette changes")
+    party = source("Frames/Party.lua")
+    if "C.PanelTheme(menu.deco, pal)" not in party:
+        fail("The party context menu must refresh its panel accent with the active UI palette")
+    character = source("Windows/Character.lua")
+    if "W.name:SetTextColor(pal.title[1], pal.title[2], pal.title[3])" not in character:
+        fail("Character window headings must use the active class title accent")
+    if "W.level:SetTextColor(pal.title[1], pal.title[2], pal.title[3])" not in character:
+        fail("Character window level text must use the active class title accent")
+    meter = source("Windows/Meter.lua")
+    if "C.TextColor(root.rate, pal.title[1], pal.title[2], pal.title[3])" not in meter:
+        fail("Damage meter rate text must use the active class title accent")
+    print("PASS: Full Class palette reaches frames, plates, minimap, and shared panels")
+    print("PASS: Arcane and Hybrid retain the base bronze palette; Full Class uses class metal and accents")
+
+
 def main() -> None:
     toc = [line.strip() for line in source("Arcane.toc").splitlines()
            if line.strip() and not line.lstrip().startswith("#")]
@@ -138,8 +190,8 @@ def main() -> None:
                      'StyleChoice(C.BarStyles.FULL_CLASS, "Full class"'):
         if contract not in options:
             fail(f"Arcane options hub is missing a mode choice: {contract}")
-    if 'C.LText(styleLabel, "Skill bar style")' not in options:
-        fail("Options hub must label the skill-bar style selector")
+    if 'C.LText(styleLabel, "UI style")' not in options:
+        fail("Options hub must label the full UI style selector")
     if 'panel.endLeft or {}' not in styles or 'PanelHybridArcane.tga' not in styles:
         fail("Hybrid must use the approved high-resolution Arcane medallion on the left")
     if 'PanelHybridArcaneGem.tga' not in styles:
@@ -211,7 +263,8 @@ def main() -> None:
         if count >= 180:
             fail(f"{name} has {count} file-scope locals; keep a safety margin below Lua's 200 limit")
         print(f"PASS: {name} has {count} file-scope locals (safety ceiling: 179)")
-    print("PASS: Arcane skill-bar style architecture audit complete")
+    check_full_class_palette_propagation()
+    print("PASS: Arcane visual-mode architecture audit complete")
 
 
 if __name__ == "__main__":
