@@ -92,7 +92,7 @@ end
 
 local db
 local root
-local S = { slots = {}, alpha = 0, broken = false, mode = nil }
+local S = { slots = {}, alpha = 0, broken = false, mode = nil, stamp = -1 }
 
 ------------------------------------------------------------------------ what there is
 -- the game's pet buttons: { index, name, icon, active, auto, autoAllowed } each, or nil for none
@@ -245,6 +245,10 @@ local function Cooldown(s, size)
 	end
 end
 
+local function Theme(pal)
+	C.PanelTheme(root.deco, pal)
+end
+
 ------------------------------------------------------------------------ each frame
 local function Step(dt, now)
 	local n, x = 0, K.pad
@@ -317,6 +321,10 @@ local function Step(dt, now)
 	C.Width(root, math.max(x - K.gap + K.pad, K.slot + 2 * K.pad))
 	C.Alpha(root, S.alpha)
 	C.Vis(root, true)
+	if S.stamp ~= C.palStamp then
+		S.stamp = C.palStamp
+		Theme(C.Pal())
+	end
 end
 
 local function Apply()
@@ -334,7 +342,6 @@ C.OnInit(function()
 	root:SetFrameStrata("MEDIUM")
 	root:SetScale(db.scale)
 	root.deco = C.Panel(root, false)
-	C.PanelTheme(root.deco, C.Pal())
 	C.Vis(root, false)
 	C.Movable(root, "pets", "Pet bar", function(f)
 		f:ClearAllPoints()
