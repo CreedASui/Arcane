@@ -41,7 +41,6 @@ local STATS = {
 	{ "Pickup", 4, function(s) return s.pick end, function(v) return string.format("%.0f yd", v) end },
 	{ "Experience", 4, function(s) return s.xp and s.xp - 1 end, Pct },
 	{ "Gold", 4, function(s) return s.gold and s.gold - 1 end, Pct },
-	{ "Luck", 4, function(s) return s.luck end, Pct },
 }
 -- the groups, as the character window names them, each in its own color
 local GROUPS = {
@@ -52,10 +51,10 @@ local GROUPS = {
 }
 -- what it shows until you pick: the stats most players watch
 local TRACK = { ["Damage"] = true, ["Crit"] = true, ["Crit Dmg"] = true, ["Haste"] = true, ["Echo"] = true,
-	["Health"] = true, ["Armor"] = true, ["Regen"] = true, ["Lifesteal"] = true, ["Speed"] = true, ["Luck"] = true }
+	["Health"] = true, ["Armor"] = true, ["Regen"] = true, ["Lifesteal"] = true, ["Speed"] = true }
 -- while moving the frames with no run: numbers to show its size by
 local SAMPLE = { dmg = 2.57, crit = 0.404, cm = 2.97, cd = 0.71, echo = 0.32, hp = 2480, arm = 0.39, reg = 4.5,
-	lch = 0.015, spd = 1.58, luck = 0.2, area = 1.3, cnt = 2, xp = 1.2, gold = 1.27, pick = 9, heal = 0, thn = 0,
+	lch = 0.015, spd = 1.58, area = 1.3, cnt = 2, xp = 1.2, gold = 1.27, pick = 9, heal = 0, thn = 0,
 	liv = 1, bp = 0.3, dots = 1, doth = 0, big = 0, exe = 0.3, cc = 0, dotd = 0.15, shd = 0, auto = 0, pet = 0 }
 
 local db, root, menu
@@ -363,6 +362,8 @@ end
 
 C.OnInit(function()
 	db = C.DB("stats", DEFAULTS)
+	-- Luck has its own dedicated plate; discard the old Stats-window preference.
+	if type(db.track) == "table" then db.track.Luck = nil end
 	db.scale = C.Clamp(tonumber(db.scale) or 1, 0.6, 1.6)
 	Build()
 	local mover = C.Movable(root, "stats", "Stats", Anchor)
