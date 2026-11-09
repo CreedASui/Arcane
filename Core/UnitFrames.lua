@@ -1,4 +1,4 @@
--- Shared health-text formatting and power-bar palettes for player, target and party frames.
+-- Shared health-text formatting and power-bar palettes for player and party frames.
 local C = Arcane
 
 C.UnitFrames = C.UnitFrames or {}
