@@ -17,6 +17,7 @@
 
 ## v0.6 — November 8, 2026
 
+- **Arcane Nameplates identity:** move the integrated enemy-plate renderer into Arcane-owned modules, namespace and frame-state names. Preserve the game's `AZS_*` integration and the existing `ArcaneDB.nameplates` saved settings for upgrades.
 - **Arcane Nameplates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.
 - **Native visibility ownership:** the game's `V` command remains the only enemy-plate visibility control. Arcane's replacement is attached to the same pooled native plate buttons, with no second enable/hide switch or stock-renderer fallback.
 - **Safer native restoration:** capture and restore only native child visibility and alpha; leave the game's projected plate position and geometry untouched. Avoid blanket show-all recovery when the original state is unknown.

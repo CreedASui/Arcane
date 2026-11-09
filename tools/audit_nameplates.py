@@ -28,6 +28,7 @@ special = sources["Nameplates/SpecialTargets.lua"]
 visuals = sources["Nameplates/Visuals.lua"]
 controller = sources["Nameplates/ArcaneNameplates.lua"]
 options = sources["Nameplates/ArcaneNameplatesOptions.lua"]
+core_options = (ROOT / "Core/Options.lua").read_text(encoding="utf-8")
 
 require("CapturePoints" not in state and "RestorePoints" not in state,
         "Arcane Nameplates must not snapshot or restore game-owned WorldFrame anchors")
@@ -119,4 +120,9 @@ require('arg1 ~= "AZSUNITS"' in controller and "AZS_UNITS" in special,
         "game-facing addon message and unit table identifiers must remain unchanged")
 require('CreateFrame("Frame", "ArcaneNameplatesDriver")' in controller,
         "the controller frame must use Arcane-owned naming")
+require("C.ArcaneNameplatesToggleOptions" in core_options
+        and "C.arcaneNameplatesOptions" not in core_options + options,
+        "the options hub must call the canonical Arcane-owned options entry point")
+require(all("C.Nameplates" in source for source in sources.values()),
+        "all nameplate modules must share the Arcane-owned subsystem namespace")
 print("Arcane Nameplates ownership and regression audits passed.")
