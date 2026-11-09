@@ -66,6 +66,9 @@ jobs:
       - name: Audit stock error-frame controls
         run: python tools/audit_stock_frame_controls.py
 
+      - name: Audit run summary lifecycle
+        run: python tools/audit_run_summary.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
