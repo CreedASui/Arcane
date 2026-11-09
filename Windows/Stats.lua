@@ -354,10 +354,15 @@ local function Step(dt)
 end
 
 ------------------------------------------------------------------------ setup
--- by the left edge, over the chat
+-- atop the Damage meter, completing the centered Stats → Damage meter → Luck stack.
 local function Anchor(f)
 	f:ClearAllPoints()
-	f:SetPoint("LEFT", UIParent, "LEFT", 18, 40)
+	local meter = getglobal("ArcaneMeter")
+	if type(meter) == "table" then
+		f:SetPoint("BOTTOM", meter, "TOP", 0, 14)
+	else
+		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 338)
+	end
 end
 
 C.OnInit(function()

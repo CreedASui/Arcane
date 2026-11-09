@@ -37,6 +37,22 @@ if 'C.OnLogout(function()' not in code or 'C.RestoreStock("UIErrorsFrame") end' 
 if "UnregisterEvent" in code or 'SetScript("OnEvent"' in code:
     fail("Arcane must not remove or replace the stock frame's event handling")
 
+# The default window arrangement is one centered vertical stack, and reset must
+# settle dependent anchors after moving their reference frames.
+luck = (ROOT / "Windows/Luck.lua").read_text(encoding="utf-8")
+meter = (ROOT / "Windows/Meter.lua").read_text(encoding="utf-8")
+stats = (ROOT / "Windows/Stats.lua").read_text(encoding="utf-8")
+movement = (ROOT / "Core/Movement.lua").read_text(encoding="utf-8")
+if 'f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 60)' not in luck:
+    fail("Luck must anchor at the base of the centered default window stack")
+if 'f:SetPoint("BOTTOMRIGHT", ArcaneLuck, "TOPRIGHT", 0, 8)' not in meter:
+    fail("Damage meter must sit directly above and align with Luck")
+if 'f:SetPoint("BOTTOM", meter, "TOP", 0, 14)' not in stats:
+    fail("Stats must sit directly above the Damage meter")
+if "for pass = 1, 2 do" not in movement:
+    fail("Reset positions must reapply dependent default anchors so stacked windows settle together")
+
 print("PASS: stock error frame has a reversible Arcane Options toggle")
 print("PASS: stock error frame uses Arcane's Move frames position system")
-print("PASS: reset/default anchor sits beneath Arcane's boss bars; original event handling is untouched")
+print("PASS: stock error frame defaults beneath Arcane's boss bars; original event handling is untouched")
+print("PASS: Stats, Damage meter and Luck reset into one centered vertical stack")

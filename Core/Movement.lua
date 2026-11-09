@@ -102,7 +102,12 @@ end
 function C.ResetPositions()
 	local root = C.Root()
 	root.pos = {}
-	for i = 1, table.getn(C.movers) do C.ApplyPos(C.movers[i]) end
+	-- Some defaults are intentionally stacked relative to another movable frame
+	-- (Luck → Damage meter → Stats, timer → boss bars). Reapply once after their
+	-- anchors have all returned to defaults so the full stack settles in one reset.
+	for pass = 1, 2 do
+		for i = 1, table.getn(C.movers) do C.ApplyPos(C.movers[i]) end
+	end
 	if C.timerReset then C.timerReset() end
 end
 

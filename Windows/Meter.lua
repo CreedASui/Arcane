@@ -1186,9 +1186,12 @@ end
 local function Anchor(f)
 	f:ClearAllPoints()
 	if ArcaneLuck then
+		-- Match Luck's width and sit directly above it.
 		f:SetPoint("BOTTOMRIGHT", ArcaneLuck, "TOPRIGHT", 0, 8)
 	else
-		f:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -58, 282)
+		-- Luck's default top is 188 UI units above the bottom; keep the stack aligned
+		-- even during the brief initialization interval before ArcaneLuck is created.
+		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 196)
 	end
 end
 

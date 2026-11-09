@@ -384,10 +384,10 @@ local function Step(dt)
 end
 
 ------------------------------------------------------------------------ setup
--- by the bottom right corner, clear of the kills and gold strip (the meter sits on top of it)
+-- base of the shared Stats → Damage meter → Luck stack, centered slightly right as in the HUD layout.
 local function Anchor(f)
 	f:ClearAllPoints()
-	f:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -58, 60)
+	f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 60)
 end
 
 -- sizing: its sides make it wider or narrower (the gems spread), its corners bigger or smaller,
