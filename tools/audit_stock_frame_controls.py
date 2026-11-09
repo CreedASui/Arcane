@@ -51,6 +51,8 @@ if 'f:SetPoint("BOTTOM", meter, "TOP", 0, 14)' not in stats:
     fail("Stats must sit directly above the Damage meter")
 if "for pass = 1, 2 do" not in movement:
     fail("Reset positions must reapply dependent default anchors so stacked windows settle together")
+if movement.index("if C.timerReset then C.timerReset() end") > movement.index("for pass = 1, 2 do"):
+    fail("the boss timer must reset before dependent frame anchors are reapplied")
 
 print("PASS: stock error frame has a reversible Arcane Options toggle")
 print("PASS: stock error frame uses Arcane's Move frames position system")
