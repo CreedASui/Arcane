@@ -1,3 +1,8 @@
+## Unreleased
+
+- **Remove the redundant target pane:** keep the player frame, Tiny Plates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
+- **Party layout:** move the default party-frame stack directly below the player frame.
+
 ## v0.6 — November 8, 2026
 
 - **Tiny Plates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.
