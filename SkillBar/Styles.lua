@@ -1,5 +1,5 @@
--- Arcane UI: the skill bar's three visual treatments.
--- Slot logic stays in Bar.lua; this module owns only class selection, palettes and panel art.
+-- Arcane UI: three visual treatments and the shared Full Class palette.
+-- Slot logic stays in Bar.lua; this module owns class selection, palette resolution and panel art.
 local C = Arcane
 local THEMES = C.BarStyleData
 local CLASSIC, HYBRID, FULL_CLASS = 1, 2, 3
@@ -50,12 +50,14 @@ local function ClassKey(value)
 end
 
 local function CurrentTheme()
-	local key = state.class or ClassKey(DB().heroClass)
+	-- Prefer this character's actual class over the last class saved by another character.
+	-- A live run's loadout remains authoritative when it has supplied one.
+	local key = state.class
 	if not key and type(UnitClass) == "function" then
 		local _, class = UnitClass("player")
 		key = ClassKey(class)
 	end
-	key = key or "warrior"
+	key = key or ClassKey(DB().heroClass) or "warrior"
 	return THEMES[key], key
 end
 
@@ -73,6 +75,7 @@ local function ReadRunClass()
 		state.class = key
 		DB().heroClass = key
 		state.stamp = state.stamp + 1
+		if Mode() == FULL_CLASS then C.palStamp = C.palStamp + 1 end
 	end
 end
 
@@ -89,6 +92,7 @@ function M.SetMode(mode)
 	state.stamp = state.stamp + 1
 	state.paletteBase = nil
 	state.readClock = 0
+	C.palStamp = C.palStamp + 1 -- every palette consumer must repaint when the UI style changes
 	if mode ~= CLASSIC then M.Update(0, true) end
 	return true
 end
@@ -107,7 +111,8 @@ function M.Update(dt, force)
 end
 
 function M.Palette()
-	local base = C.Pal()
+	-- Use the underlying zone/bronze palette: C.Pal() may call back into this in Full Class mode.
+	local base = C.BasePal()
 	local mode = Mode()
 	if mode == CLASSIC then return base end
 	local theme, key = CurrentTheme()
