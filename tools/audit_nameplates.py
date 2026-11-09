@@ -123,6 +123,12 @@ require('CreateFrame("Frame", "ArcaneNameplatesDriver")' in controller,
 require("C.ArcaneNameplatesToggleOptions" in core_options
         and "C.arcaneNameplatesOptions" not in core_options + options,
         "the options hub must call the canonical Arcane-owned options entry point")
-require(all("C.Nameplates" in source for source in sources.values()),
-        "all nameplate modules must share the Arcane-owned subsystem namespace")
+require(all("C.Nameplates" in source for source in (state, special, visuals, controller)),
+        "the runtime nameplate modules must share the Arcane-owned subsystem namespace")
+owned_source = controller + options + state + special + visuals
+require(("arcane" + "Plates") not in owned_source
+        and ("Arcane" + "Plates") not in owned_source,
+        "retired Arcane-owned nameplate identifiers must not remain in runtime modules")
+require("Plates/" not in TOC,
+        "the retired module directory must not remain in the addon's load map")
 print("Arcane Nameplates ownership and regression audits passed.")
