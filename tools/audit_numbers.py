@@ -221,6 +221,25 @@ def check_selected_target_pane_removed() -> None:
     print("PASS: no selected-target pane; native targeting remains available and stock target UI stays hidden")
 
 
+def check_unused_backpack_and_honor_access_removed() -> None:
+    startup = (ROOT / "Core/Startup.lua").read_text(encoding="utf-8")
+    character = (ROOT / "Windows/Character.lua").read_text(encoding="utf-8")
+    if 'GetBindingAction, "B"' not in startup or 'pcall(SetBinding, "B")' not in startup:
+        fail("Arcane must suppress B when it is bound to an unused bag-opening action")
+    if "TOGGLEBACKPACK = true" not in startup or "OPENALLBAGS = true" not in startup:
+        fail("Arcane must recognize the native backpack and all-bags bindings")
+    if "SaveBindings" in startup:
+        fail("Arcane must not persistently overwrite the player's saved key bindings")
+    if "W.honorTab:Show()" in character:
+        fail("Windows/Character.lua must not restore the unused Honor tab")
+    if 'Chain(CharacterFrame, "OnShow", HideHonorTab)' not in character:
+        fail("The Honor tab must stay hidden when the stock Character window opens")
+    if "HideHonorTab()" not in character:
+        fail("The Character window must hide the Honor tab independently of its custom panel")
+    print("PASS: B cannot open unused bags while Arcane is active; saved bindings remain untouched")
+    print("PASS: Honor tab stays hidden with the Character panel either on or off")
+
+
 def count_chunk_level_locals(source: str) -> int:
     """Count names declared at file scope, excluding locals nested in functions/blocks."""
     code = mask_comments_and_strings(source)
@@ -307,6 +326,7 @@ def main() -> None:
     check_core_structure(entries)
     check_shared_unit_frame_helpers()
     check_selected_target_pane_removed()
+    check_unused_backpack_and_honor_access_removed()
     check_module_ownership()
     check_timer_structure(entries)
     print("PASS: Arcane static architecture audit complete")
