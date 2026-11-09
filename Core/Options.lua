@@ -140,7 +140,7 @@ RefreshHub = function()
 	PaintButton(hub.calm)
 	local locked = ArcaneDB and ArcaneDB.lockWindows and true or false
 	hub.lock.selected = locked
-	C.LText(hub.lock.text, locked and "Meter and luck windows: locked" or "Meter and luck windows: drag them to move")
+	C.LText(hub.lock.text, locked and "Meter and luck windows: resizing locked" or "Meter and luck windows: resizing enabled")
 	PaintButton(hub.lock)
 	C.SetText(hub.lang.text, C.F("Language: {1}", C.LangName(C.lang)))
 	hub.lang.selected = hub.langMenu:IsShown()
