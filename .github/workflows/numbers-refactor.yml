@@ -63,6 +63,9 @@ jobs:
       - name: Audit Tiny Plates state and module ownership
         run: python tools/audit_plates.py
 
+      - name: Audit stock error-frame controls
+        run: python tools/audit_stock_frame_controls.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
