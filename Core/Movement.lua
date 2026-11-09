@@ -102,8 +102,15 @@ end
 function C.ResetPositions()
 	local root = C.Root()
 	root.pos = {}
-	for i = 1, table.getn(C.movers) do C.ApplyPos(C.movers[i]) end
+	-- Reset the separately managed timer before its dependent boss bars.
 	if C.timerReset then C.timerReset() end
+	-- Some defaults are intentionally stacked relative to another movable frame
+	-- (Luck → Damage meter → Stats, timer → boss bars → stock error messages).
+	-- Reapply once after their anchors have all returned to defaults so every
+	-- linked stack settles in one reset.
+	for pass = 1, 2 do
+		for i = 1, table.getn(C.movers) do C.ApplyPos(C.movers[i]) end
+	end
 end
 
 ------------------------------------------------------------------------ parts, for the hub
