@@ -1,4 +1,4 @@
--- Arcane UI: the nine class palettes used by the optional skill-bar skins.
+-- Arcane UI: the nine shared class palettes used by Full Class and the skill-bar skins.
 -- Values are adapted from the synced Creed base; the class art keeps its original paint.
 Arcane.BarStyleData = {
 	warrior = {
