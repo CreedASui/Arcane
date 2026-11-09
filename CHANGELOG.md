@@ -55,7 +55,7 @@ This release consolidates the current Arcane UI feature set and the previously r
 
 - **Lua 5.0 compatibility:** the addon source targets the client's Lua 5.0 runtime.
 - **Repository layout:** addon source modules and assets live at the repository root; release packages place them inside the required `Arcane/` install folder.
-- **Arcane Nameplates:** regular nameplates now use Arcane's shared FRIZQT face, hostile-name color and layered enemy-red bars; bosses and guardians use the same bar style at full size. The health numbers inside the bars have their own Show health numbers toggle, independent of bar visibility. The game's health values, V visibility toggle and native restoration when Arcane Nameplates is off are preserved.
+- **Arcane Nameplates:** regular nameplates now use Arcane's shared FRIZQT face, hostile-name color and layered enemy-red bars; bosses and guardians use the same bar style at full size. The health numbers inside the bars have their own Show health numbers toggle, independent of bar visibility. The game's health values, V visibility toggle and captured native child visibility and alpha are restored during pooled-frame reuse and logout.
 - **Bronze gold everywhere:** every frame's metal (your frame, your target and party, the boss bars, the minimap ring, the meter, the luck window and the rest) is the skill bar's bronze gold in every zone, instead of taking the zone's colors. The boss timer keeps its own.
 - **Dragons:** both face out now, perched on the bar's ends with the end rail behind them.
 - **The skill bar keeps one size:** it no longer grows when a run starts and the kills, gold and cache show up, or as their numbers get longer.

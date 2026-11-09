@@ -42,7 +42,7 @@ The release asset is named `ArcaneV0.6.zip`. GitHub Actions runs the Core, Numbe
 
 ## Install
 
-1. Download the latest `Arcane-<version>.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.6.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 

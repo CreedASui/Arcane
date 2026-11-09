@@ -3,13 +3,14 @@ name: Arcane architecture audits and test package
 on:
   push:
     branches:
-      - refactor/numbers-modules
-      - feature/class-skill-bar-styles
+      - main
+      - "refactor/**"
+      - "feature/**"
     paths:
       - "**.lua"
       - "**.toc"
       - "tools/**"
-      - ".github/workflows/numbers-refactor.yml"
+      - ".github/workflows/arcane-audit.yml"
   pull_request:
     branches:
       - main
@@ -17,7 +18,7 @@ on:
       - "**.lua"
       - "**.toc"
       - "tools/**"
-      - ".github/workflows/numbers-refactor.yml"
+      - ".github/workflows/arcane-audit.yml"
   workflow_dispatch:
 
 permissions:
@@ -54,13 +55,16 @@ jobs:
       - name: Build the single-source Classic medallion texture
         run: python tools/build_default_medallion.py
 
-      - name: Audit TOC order and module ownership
+      - name: Audit damage-number module ownership and load order
         run: python tools/audit_numbers.py
 
       - name: Audit skill-bar style modules and class artwork
         run: python tools/audit_bar_styles.py
 
-      - name: Audit release metadata consistency\n        run: python tools/audit_release_metadata.py\n\n      - name: Audit Arcane Nameplates state and module ownership
+      - name: Audit v0.6 release metadata consistency
+        run: python tools/audit_release_metadata.py
+
+      - name: Audit Arcane Nameplates state and module ownership
         run: python tools/audit_nameplates.py
 
       - name: Audit stock error-frame controls
@@ -88,7 +92,7 @@ jobs:
           set -euo pipefail
           stage="$RUNNER_TEMP/package"
           addon="$stage/Arcane"
-          archive="$RUNNER_TEMP/Arcane-refactor-${GITHUB_SHA:0:12}.zip"
+          archive="$RUNNER_TEMP/Arcane-v0.6-test-${GITHUB_SHA:0:12}.zip"
 
           mkdir -p "$addon"
           while IFS= read -r -d '' file; do
@@ -108,7 +112,7 @@ jobs:
       - name: Upload test ZIP
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: Arcane-refactor-${{ github.sha }}
+          name: Arcane-v0.6-test-${{ github.sha }}
           path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error
           retention-days: 14

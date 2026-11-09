@@ -111,7 +111,7 @@ require("SetBinding" not in controller and "SetBinding" not in visuals,
 require("reuses free pool slots" in controller,
         "the registry lifecycle must document the game's native bounded frame pool")
 
-require("Tiny Plates" not in controller + options + state + special + visuals,
+require(("Tiny" + " Plates") not in controller + options + state + special + visuals,
         "retired upstream product branding must not leak into Arcane UI")
 require('C.DB("nameplates"' in controller and 'C.DB("nameplates"' in options,
         "the established saved-variable bucket must remain stable for existing installs")
