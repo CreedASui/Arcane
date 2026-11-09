@@ -24,12 +24,14 @@ contracts = (
     ('C.OnWorld(Apply)', "the saved visibility state must be reapplied on world entry"),
     ('C.RegisterPart({', "the visibility switch must appear in Arcane's own Options hub"),
     ('key = "errors"', "the stock frame must have an Arcane part command"),
-    ('f:SetPoint("TOP", UIParent, "TOP", 0, -122)', "the default position must match the 1.12 stock frame anchor"),
+    ('f:SetPoint("TOP", bosses, "BOTTOM", 0, -22)', "the default position must sit immediately beneath Arcane's boss and mini-boss stack"),
 )
 for contract, message in contracts:
     if contract not in code:
         fail(message)
 
+if 'getglobal("ArcaneBosses")' not in code or 'f:SetPoint("TOP", UIParent, "TOP", 0, -122)' not in code:
+    fail("the stock frame must use Arcane's boss stack as its default anchor, with a safe fallback")
 if 'C.OnLogout(function()' not in code or 'C.RestoreStock("UIErrorsFrame") end' not in code:
     fail("a disabled stock frame must be restored during logout cleanup")
 if "UnregisterEvent" in code or 'SetScript("OnEvent"' in code:
@@ -37,4 +39,4 @@ if "UnregisterEvent" in code or 'SetScript("OnEvent"' in code:
 
 print("PASS: stock error frame has a reversible Arcane Options toggle")
 print("PASS: stock error frame uses Arcane's Move frames position system")
-print("PASS: original events remain registered; visibility is the only behavior changed")
+print("PASS: reset/default anchor sits beneath Arcane's boss bars; original event handling is untouched")

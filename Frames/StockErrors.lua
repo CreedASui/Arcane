@@ -19,7 +19,13 @@ C.OnInit(function()
 	if type(frame) == "table" then
 		C.Movable(frame, "stockErrors", "Stock error messages", function(f)
 			f:ClearAllPoints()
-			f:SetPoint("TOP", UIParent, "TOP", 0, -122)
+			local bosses = getglobal("ArcaneBosses")
+			if type(bosses) == "table" then
+				-- The reset/default position belongs immediately beneath Arcane's boss stack.
+				f:SetPoint("TOP", bosses, "BOTTOM", 0, -22)
+			else
+				f:SetPoint("TOP", UIParent, "TOP", 0, -122)
+			end
 		end)
 	end
 	Apply()
