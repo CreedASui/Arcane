@@ -204,7 +204,21 @@ def check_shared_unit_frame_helpers() -> None:
             fail(f"{name} must use the shared health formatter and power palette")
         if re.search(r"local\s+function\s+HPText\b|local\s+POWER_COLORS\s*=", code):
             fail(f"{name} still duplicates the shared unit-frame helpers")
-    print("PASS: player/target and party frames share health formatting and power colors")
+    print("PASS: player and party frames share health formatting and power colors")
+
+
+def check_selected_target_pane_removed() -> None:
+    units = (ROOT / "Frames/Units.lua").read_text(encoding="utf-8")
+    party = (ROOT / "Frames/Party.lua").read_text(encoding="utf-8")
+    for retired in ("ArcaneTarget", "StepTarget", 'key = "target"'):
+        if retired in units:
+            fail(f"Frames/Units.lua still contains retired target-pane code: {retired}")
+    for stock in ('C.HideStock("TargetFrame")', 'C.HideStock("ComboFrame")'):
+        if stock not in units:
+            fail(f"Frames/Units.lua must keep the unused stock target UI hidden: {stock}")
+    if "Call(TargetUnit, unit)" not in party:
+        fail("Party-member target selection must remain available")
+    print("PASS: no selected-target pane; native targeting remains available and stock target UI stays hidden")
 
 
 def count_chunk_level_locals(source: str) -> int:
@@ -292,6 +306,7 @@ def main() -> None:
     entries = read_toc()
     check_core_structure(entries)
     check_shared_unit_frame_helpers()
+    check_selected_target_pane_removed()
     check_module_ownership()
     check_timer_structure(entries)
     print("PASS: Arcane static architecture audit complete")
