@@ -240,6 +240,23 @@ def check_unused_backpack_and_honor_access_removed() -> None:
     print("PASS: Honor tab stays hidden with the Character panel either on or off")
 
 
+def check_frame_drag_requires_move_mode() -> None:
+    movement = (ROOT / "Core/Movement.lua").read_text(encoding="utf-8")
+    draggable = re.search(
+        r"function C\.Draggable\(frame, mover\)(.*?)\nend",
+        movement, re.S,
+    )
+    if not draggable:
+        fail("Core/Movement.lua must keep the shared draggable-window helper")
+    if not re.search(r"function d\.start\(\)\s*if not C\.unlocked then return end", draggable.group(1)):
+        fail("Window drag handles must require Move frames mode")
+    if "ArcaneDB.lockWindows" in draggable.group(1):
+        fail("Window dragging must not depend on the separate resize-lock preference")
+    if "m.box:Show()" not in movement or "m.box:Hide()" not in movement:
+        fail("Move frames mode must keep showing and hiding the explicit mover handles")
+    print("PASS: Stats, Luck and Damage meter drag handles require Move frames mode")
+
+
 def count_chunk_level_locals(source: str) -> int:
     """Count names declared at file scope, excluding locals nested in functions/blocks."""
     code = mask_comments_and_strings(source)
@@ -327,6 +344,7 @@ def main() -> None:
     check_shared_unit_frame_helpers()
     check_selected_target_pane_removed()
     check_unused_backpack_and_honor_access_removed()
+    check_frame_drag_requires_move_mode()
     check_module_ownership()
     check_timer_structure(entries)
     print("PASS: Arcane static architecture audit complete")
