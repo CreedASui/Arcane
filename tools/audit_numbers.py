@@ -243,12 +243,12 @@ def check_unused_backpack_and_honor_access_removed() -> None:
 def check_frame_drag_requires_move_mode() -> None:
     movement = (ROOT / "Core/Movement.lua").read_text(encoding="utf-8")
     draggable = re.search(
-        r"function C\\.Draggable\\(frame, mover\\)(.*?)\\nend",
+        r"function C\.Draggable\(frame, mover\)(.*?)\nend",
         movement, re.S,
     )
     if not draggable:
         fail("Core/Movement.lua must keep the shared draggable-window helper")
-    if not re.search(r"function d\\.start\\(\\)\\s*if not C\\.unlocked then return end", draggable.group(1)):
+    if not re.search(r"function d\.start\(\)\s*if not C\.unlocked then return end", draggable.group(1)):
         fail("Window drag handles must require Move frames mode")
     if "ArcaneDB.lockWindows" in draggable.group(1):
         fail("Window dragging must not depend on the separate resize-lock preference")
