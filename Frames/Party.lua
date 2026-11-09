@@ -109,7 +109,8 @@ local function BuildMenu()
 	C.PanelTheme(m.deco, C.Pal())
 	m.title = C.Text(m, C.FONT, 12, "OUTLINE", "CENTER", 120)
 	m.title:SetPoint("TOP", m, "TOP", 0, -9)
-	m.title:SetTextColor(0.98, 0.85, 0.52)
+	local title = C.Pal().title
+	m.title:SetTextColor(title[1], title[2], title[3])
 	local acts = {
 		{ "Inspect", function() Inspect(m.unit) end },
 		{ "Follow", function() Follow(m.unit) end },
@@ -408,6 +409,10 @@ local function Step(dt)
 	if S.stamp ~= C.palStamp then
 		S.stamp = C.palStamp
 		for i = 1, 4 do Theme(rows[i], pal) end
+		if menu then
+			C.PanelTheme(menu.deco, pal)
+			C.TextColor(menu.title, pal.title[1], pal.title[2], pal.title[3])
+		end
 	end
 	S.portraitClock = S.portraitClock - dt
 	local refresh = S.portraitClock <= 0

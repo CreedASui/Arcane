@@ -83,6 +83,10 @@ function C.Panel(frame, sigils)
 end
 
 function C.PanelMetal(pal)
+	local styles = C.BarStyles
+	if styles and styles.Mode and styles.PanelMetal and styles.Mode() == styles.FULL_CLASS then
+		return styles.PanelMetal(pal)
+	end
 	return GOLD[1], GOLD[2], GOLD[3]
 end
 

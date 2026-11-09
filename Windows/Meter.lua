@@ -1170,7 +1170,7 @@ local function Step(dt)
 		S.rateShown, S.rateUnit = S.rate, tab.unit
 		C.SetText(root.rate, S.rate and (Amount(S.rate) .. " " .. tab.unit) or "")
 	end
-	C.TextColor(root.rate, 1, 0.9, 0.62)
+	C.TextColor(root.rate, pal.title[1], pal.title[2], pal.title[3])
 	FitHead(tab)
 	if not db.collapsed then StepRows(dt, now) end
 	if S.tipRow then
