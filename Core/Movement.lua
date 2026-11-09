@@ -59,12 +59,12 @@ function C.Movable(frame, key, label, default)
 	return m
 end
 
--- A window you can drag straight away (the meter, luck): each handle starts moving it, letting go
--- saves its place. "Lock windows" in the hub stops it.
+-- A window with drag handles, active only while Move frames is enabled. In normal play
+-- its contents remain interactive, but dragging cannot change the saved position.
 function C.Draggable(frame, mover)
 	local d = { endedAt = 0 }
 	function d.start()
-		if ArcaneDB and ArcaneDB.lockWindows then return end
+		if not C.unlocked then return end
 		d.moving = true
 		if d.onStart then d.onStart() end
 		frame:StartMoving()
