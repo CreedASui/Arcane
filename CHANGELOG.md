@@ -1,6 +1,6 @@
 ## Unreleased
 
-- **Default window layout:** Stats, Damage meter and Luck now reset into one centered vertical stack, with Stats above the meter and Luck below. Reset reapplies dependent frame anchors so the stack lands together.
+- **Stats default position:** Stats now resets directly above the Damage meter on the right side, aligned to the meter's right edge. The Damage meter and Luck keep their original right-side default positions.
 
 - **Stock error-frame controls:** the original `UIErrorsFrame` can now be shown or hidden from Arcane Options and repositioned with Arcane's Move frames mode. Hiding it is visual only; its original error, info and system-message event handling stays intact for A/B testing.
 

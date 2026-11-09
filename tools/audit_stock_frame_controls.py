@@ -37,18 +37,20 @@ if 'C.OnLogout(function()' not in code or 'C.RestoreStock("UIErrorsFrame") end' 
 if "UnregisterEvent" in code or 'SetScript("OnEvent"' in code:
     fail("Arcane must not remove or replace the stock frame's event handling")
 
-# The default window arrangement is one centered vertical stack, and reset must
-# settle dependent anchors after moving their reference frames.
+# Preserve the existing right-side Damage meter/Luck defaults; only Stats is
+# newly stacked above the meter. Reset must settle dependent anchors together.
 luck = (ROOT / "Windows/Luck.lua").read_text(encoding="utf-8")
 meter = (ROOT / "Windows/Meter.lua").read_text(encoding="utf-8")
 stats = (ROOT / "Windows/Stats.lua").read_text(encoding="utf-8")
 movement = (ROOT / "Core/Movement.lua").read_text(encoding="utf-8")
-if 'f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 60)' not in luck:
-    fail("Luck must anchor at the base of the centered default window stack")
+if 'f:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -58, 60)' not in luck:
+    fail("Luck must retain its original bottom-right default position")
 if 'f:SetPoint("BOTTOMRIGHT", ArcaneLuck, "TOPRIGHT", 0, 8)' not in meter:
-    fail("Damage meter must sit directly above and align with Luck")
-if 'f:SetPoint("BOTTOM", meter, "TOP", 0, 14)' not in stats:
-    fail("Stats must sit directly above the Damage meter")
+    fail("Damage meter must retain its original position directly above Luck")
+if 'f:SetPoint("BOTTOMRIGHT", meter, "TOPRIGHT", 0, 14)' not in stats:
+    fail("Stats must be the only window newly anchored above the right-side Damage meter")
+if 'f:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -58, 282)' not in meter:
+    fail("Damage meter fallback position must retain its original right-side anchor")
 if "for pass = 1, 2 do" not in movement:
     fail("Reset positions must reapply dependent default anchors so stacked windows settle together")
 if movement.index("if C.timerReset then C.timerReset() end") > movement.index("for pass = 1, 2 do"):
@@ -57,4 +59,4 @@ if movement.index("if C.timerReset then C.timerReset() end") > movement.index("f
 print("PASS: stock error frame has a reversible Arcane Options toggle")
 print("PASS: stock error frame uses Arcane's Move frames position system")
 print("PASS: stock error frame defaults beneath Arcane's boss bars; original event handling is untouched")
-print("PASS: Stats, Damage meter and Luck reset into one centered vertical stack")
+print("PASS: Luck and Damage meter keep their original right-side defaults; only Stats is added above the meter")

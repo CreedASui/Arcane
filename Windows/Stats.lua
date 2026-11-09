@@ -354,14 +354,14 @@ local function Step(dt)
 end
 
 ------------------------------------------------------------------------ setup
--- atop the Damage meter, completing the centered Stats → Damage meter → Luck stack.
+-- above the Damage meter on the right, keeping the meter and Luck in their original places.
 local function Anchor(f)
 	f:ClearAllPoints()
 	local meter = getglobal("ArcaneMeter")
 	if type(meter) == "table" then
-		f:SetPoint("BOTTOM", meter, "TOP", 0, 14)
+		f:SetPoint("BOTTOMRIGHT", meter, "TOPRIGHT", 0, 14)
 	else
-		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 24, 338)
+		f:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -58, 526)
 	end
 end
 
