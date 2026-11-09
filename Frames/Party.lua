@@ -1,4 +1,4 @@
--- Arcane UI: your party. Up to four friends under your target, each with a health bar in their
+-- Arcane UI: your party. Up to four friends in a compact stack, each with a health bar in their
 -- class's color and the real numbers, their mana, energy or rage, a portrait and their level. A
 -- friend who is down or offline says so. Click one to target them. While this part is on, the
 -- game's party frames are tucked away; turning it off brings them back.
@@ -466,7 +466,7 @@ end
 
 local function Anchor(f)
 	f:ClearAllPoints()
-	f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 14, -172) -- under the target frame
+	f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 14, -90) -- below your frame
 end
 
 C.OnInit(function()

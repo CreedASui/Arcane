@@ -1,3 +1,9 @@
+## Unreleased
+
+- **Remove the redundant target pane:** keep the player frame, Tiny Plates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
+- **Party layout:** move the default party-frame stack directly below the player frame.
+- **Remove unused legacy access:** B no longer opens the backpack or bags while Arcane is active; other B bindings and the saved key map are left alone. Keep the game's Honor tab hidden whether Arcane's Character panel is enabled or disabled.
+
 ## v0.6 — November 8, 2026
 
 - **Tiny Plates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.

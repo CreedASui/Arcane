@@ -76,6 +76,22 @@ local function GuardGameMenu()
 end
 C.OnInit(function() pcall(GuardGameMenu) end)
 
+-- The client still ships WoW's bag bindings, but Azeroth Survivors has no bag system.
+-- Suppress B only when it is actually assigned to opening a bag; leave every other B binding
+-- alone. Do not save the changed map: Arcane reapplies this while loaded, without overwriting
+-- the player's saved key configuration.
+local BAG_BINDINGS = {
+	TOGGLEBACKPACK = true, OPENALLBAGS = true,
+	TOGGLEBAG1 = true, TOGGLEBAG2 = true, TOGGLEBAG3 = true, TOGGLEBAG4 = true,
+}
+local function RemoveUnusedBackpackKey()
+	if type(GetBindingAction) ~= "function" or type(SetBinding) ~= "function" then return end
+	local ok, action = pcall(GetBindingAction, "B")
+	if not ok or not BAG_BINDINGS[action] then return end
+	pcall(SetBinding, "B")
+end
+C.OnWorld(RemoveUnusedBackpackKey)
+
 -- is the addon this part grew out of still running? then that part stays off
 function C.OldAddon(name)
 	return type(IsAddOnLoaded) == "function" and IsAddOnLoaded(name) and true or false

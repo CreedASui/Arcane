@@ -19,7 +19,7 @@ This document describes the source layout and the runtime rules behind it. The a
 | `Timer/` | Boss timer data and its renderer/controller. |
 | `Numbers/` | Damage-number configuration, combat intake, icons, labels, world anchors, layout, culling, placement, animation, lifecycle, options and commands. |
 | `SkillBar/` | Class/style data, visual style controller and the skill-slot/XP renderer. |
-| `Frames/` | Bosses, skulls, player/target, party, downed-player and stored-level-up frames. |
+| `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames. |
 | `Minimap/` | Minimap presentation, edge button, cache pins and lair pins. |
 | `Windows/` | Tally, meter, damage/healing, pets, luck, summary, character, stats, talents and chat windows. |
 | `Plates/` | Tiny Plates replacement and its options. |
@@ -27,7 +27,7 @@ This document describes the source layout and the runtime rules behind it. The a
 
 ## Shared components
 
-Shared behavior belongs to one owner under `Core/`; feature modules should call it rather than copy it. For example, player/target frames and party frames now use `Core/UnitFrames.lua` for health-number formatting and the mana/rage/focus/energy palettes.
+Shared behavior belongs to one owner under `Core/`; feature modules should call it rather than copy it. For example, the player and party frames now use `Core/UnitFrames.lua` for health-number formatting and the mana/rage/focus/energy palettes.
 
 Use a shared helper when the behavior and its contract are genuinely the same. Do not merge controls that only look similar but have different interaction, lifecycle or visual requirements. Keep feature-specific tuning close to the feature that owns it.
 

@@ -1,18 +1,17 @@
--- Arcane UI: your frame and your target's, in the boss timer's style, with the real health
--- numbers. Your frame shows your shield, your energy, mana or rage, your class's meter (combo
--- points, soul shards...) and your extra lives. While these are on, the game's PlayerFrame and
--- TargetFrame are tucked away; turning a part off brings its frame back.
+-- Arcane UI: your own frame, in the boss timer's style, with the real health numbers.
+-- It shows your shield, energy, mana or rage, your class's meter (combo points, soul shards...)
+-- and your extra lives. The game's PlayerFrame is tucked away while this replacement is on.
 
 local C = Arcane
 local Unit = C.UnitFrames
-local DEFAULTS = { player = true, target = true, playerScale = 1, targetScale = 1 }
+local DEFAULTS = { player = true, playerScale = 1 }
 local W, H = 300, 74
 local HP_W, HP_H = 200, 14
 local RES_H = 8
 local BAR_X = 88
 
 local db
-local P, T -- the two frames
+local P
 
 local HP_COLORS = {
 	{ 0.04, 0.28, 0.07 }, { 0.14, 0.62, 0.18 }, { 0.58, 0.96, 0.36 },
@@ -20,47 +19,6 @@ local HP_COLORS = {
 local LOW_COLORS = {
 	{ 0.36, 0.04, 0.02 }, { 0.80, 0.16, 0.06 }, { 1.00, 0.52, 0.20 },
 }
-local ENEMY_COLORS = {
-	{ 0.30, 0.02, 0.02 }, { 0.72, 0.05, 0.04 }, { 1.00, 0.30, 0.14 },
-}
-
-local KIND_TAGS = {
-	final = { "Final boss", 1, 0.32, 0.22 }, boss = { "Boss", 1, 0.32, 0.22 },
-	guardian = { "Guardian", 1, 0.72, 0.30 }, elite = { "Elite", 1, 0.84, 0.36 },
-}
-local ENEMY_KINDS = { final = true, boss = true, guardian = true, elite = true, normal = true }
-
--- Keep the classic gold elite ring for bosses and the silver rare ring for guardians.
--- The texture is sliced around its four health-bar seams so the portrait ring remains whole.
-local DRAGONS = { boss = "UI-TargetingFrame-Elite", final = "UI-TargetingFrame-Elite", guardian = "UI-TargetingFrame-Rare" }
-local DRAGON_PIECES = { { 130, 0, 20 }, { 145, 20, 26 }, { 140, 26, 39 }, { 145, 39, 45 },
-	{ 140, 45, 50 }, { 145, 50, 56 }, { 140, 56, 62 }, { 145, 62, 68 }, { 130, 68, 100 } }
-local DRAGON_SCALE = 66 / 72
-
-local function SetDragon(u, kind)
-	local file = kind and DRAGONS[kind]
-	if u.dragonFile == file then return end
-	u.dragonFile = file
-	if not u.dragon then
-		u.dragon = {}
-		local scale = DRAGON_SCALE
-		for i = 1, table.getn(DRAGON_PIECES) do
-			local p = DRAGON_PIECES[i]
-			local texture = u.faceTop:CreateTexture(nil, "ARTWORK")
-			texture:SetWidth((256 - p[1]) * scale)
-			texture:SetHeight((p[3] - p[2]) * scale)
-			texture:SetPoint("TOPLEFT", u.face, "CENTER", -74 * scale, (46 - p[2]) * scale)
-			texture:SetTexCoord(1, p[1] / 256, p[2] / 128, p[3] / 128)
-			u.dragon[i] = texture
-		end
-	end
-	for i = 1, table.getn(u.dragon) do
-		if file then u.dragon[i]:SetTexture("Interface\\TargetingFrame\\" .. file) end
-		C.Vis(u.dragon[i], file and true or false)
-	end
-	C.Vis(u.ring, not file)
-end
-
 local Call = C.Call -- no stray nil arguments (see Core)
 
 
@@ -73,8 +31,8 @@ local function Mix(a, b, t, out)
 end
 
 ------------------------------------------------------------------------ building a frame
-local function Build(name, key, label, default, isPlayer)
-	local u = { isPlayer = isPlayer, alpha = isPlayer and 1 or 0, low = 0, colA = { 0, 0, 0 }, colM = { 0, 0, 0 }, colB = { 0, 0, 0 } }
+local function Build(name, key, label, default)
+	local u = { low = 0, colA = { 0, 0, 0 }, colM = { 0, 0, 0 }, colB = { 0, 0, 0 } }
 	local f = CreateFrame("Frame", name, UIParent)
 	u.root = f
 	f:SetWidth(W)
@@ -114,33 +72,29 @@ local function Build(name, key, label, default, isPlayer)
 	u.hpText:SetPoint("CENTER", u.hp.frame, "CENTER", 0, 0)
 	u.name = C.Text(u.hp.top, C.FONT, 13, "OUTLINE", "LEFT", HP_W)
 	u.name:SetPoint("BOTTOMLEFT", u.hp.frame, "TOPLEFT", 4, 6)
-	u.tag = C.Text(u.hp.top, C.FONT, 11, "OUTLINE", "RIGHT", 120)
-	u.tag:SetPoint("BOTTOMRIGHT", u.hp.frame, "TOPRIGHT", -2, 6)
 
-	if isPlayer then
-		u.res = C.NewBar(f, HP_W - 24, RES_H, false)
-		u.res.frame:SetPoint("TOPLEFT", u.hp.frame, "BOTTOMLEFT", 0, -9)
-		u.resText = C.Text(u.res.top, C.FONT, 9, "OUTLINE", "CENTER", HP_W)
-		u.resText:SetPoint("CENTER", u.res.frame, "CENTER", 0, 0)
-		-- the class meter: up to six gems under the bars
-		u.pipFrame = CreateFrame("Frame", nil, f)
-		u.pipFrame:SetAllPoints(f)
-		u.pips = {}
-		for i = 1, 6 do
-			local p = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Diamond")
-			p:SetWidth(14)
-			p:SetHeight(14)
-			p:SetPoint("CENTER", u.res.frame, "BOTTOMLEFT", 7 + (i - 1) * 16, -11)
-			u.pips[i] = { tex = p, lit = 0 }
-		end
-		u.pipText = C.Text(u.pipFrame, C.FONT, 10, "OUTLINE", "LEFT", 140)
-		u.pipText:SetPoint("LEFT", u.res.frame, "BOTTOMLEFT", 0, -10)
-		-- extra lives, beside the name
-		u.lifeGem = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Gem")
-		u.lifeGem:SetWidth(14)
-		u.lifeGem:SetHeight(14)
-		u.lifeText = C.Text(u.hp.top, C.FONT, 11, "OUTLINE", "LEFT", 40)
+	u.res = C.NewBar(f, HP_W - 24, RES_H, false)
+	u.res.frame:SetPoint("TOPLEFT", u.hp.frame, "BOTTOMLEFT", 0, -9)
+	u.resText = C.Text(u.res.top, C.FONT, 9, "OUTLINE", "CENTER", HP_W)
+	u.resText:SetPoint("CENTER", u.res.frame, "CENTER", 0, 0)
+	-- the class meter: up to six gems under the bars
+	u.pipFrame = CreateFrame("Frame", nil, f)
+	u.pipFrame:SetAllPoints(f)
+	u.pips = {}
+	for i = 1, 6 do
+		local p = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Diamond")
+		p:SetWidth(14)
+		p:SetHeight(14)
+		p:SetPoint("CENTER", u.res.frame, "BOTTOMLEFT", 7 + (i - 1) * 16, -11)
+		u.pips[i] = { tex = p, lit = 0 }
 	end
+	u.pipText = C.Text(u.pipFrame, C.FONT, 10, "OUTLINE", "LEFT", 140)
+	u.pipText:SetPoint("LEFT", u.res.frame, "BOTTOMLEFT", 0, -10)
+	-- extra lives, beside the name
+	u.lifeGem = C.Tex(u.pipFrame, "ARTWORK", C.ART .. "Gem")
+	u.lifeGem:SetWidth(14)
+	u.lifeGem:SetHeight(14)
+	u.lifeText = C.Text(u.hp.top, C.FONT, 11, "OUTLINE", "LEFT", 40)
 
 	f:Hide()
 	u.mover = C.Movable(f, key, label, default)
@@ -249,77 +203,13 @@ local function StepPlayer(u, dt, now, pal)
 		C.Vis(u.lifeGem, false)
 		C.Vis(u.lifeText, false)
 	end
-	C.Vis(u.tag, false)
-end
-
------------------------------------------------------------------------- your target's frame
-local function StepTarget(u, dt, now, pal)
-	local exists = Call(UnitExists, "target")
-	local t = type(AZS_TARGET) == "table" and AZS_TARGET or {}
-	local kind = t.kind
-	local enemy = ENEMY_KINDS[kind] and true or false
-	local dead = Call(UnitIsDead, "target") or kind == "dead"
-	local want = exists and 1 or 0
-	u.alpha = C.Toward(u.alpha, want, want > u.alpha and 8 or 5, dt)
-	if want == 1 and u.alpha > 0.997 then u.alpha = 1 end
-	if u.alpha < 0.01 and want == 0 then
-		C.Vis(u.root, false)
-		u.hp.snap = true
-		return
-	end
-	C.Vis(u.root, true)
-	C.Alpha(u.root, C.Smooth(u.alpha))
-	if not exists then return end -- fading out: keep the last picture
-
-	SetDragon(u, (not dead) and kind or nil)
-	local name = Call(UnitName, "target") or t.name or "?"
-	local hp, hpm
-	if enemy and tonumber(t.hpm) and t.hpm > 0 then
-		hp, hpm = tonumber(t.hp) or 0, t.hpm
-	else
-		hp, hpm = Call(UnitHealth, "target") or 0, Call(UnitHealthMax, "target") or 1
-	end
-	if hpm <= 0 then hpm = 1 end
-	if dead then hp = 0 end
-	C.BarStep(u.hp, C.Clamp(hp / hpm, 0, 1), dt, now)
-	local hostile = enemy or Call(UnitCanAttack, "player", "target")
-	local cols = hostile and ENEMY_COLORS or HP_COLORS
-	if u.colorsFor ~= cols then
-		u.colorsFor = cols
-		C.BarColors(u.hp, cols[1], cols[2], cols[3])
-	end
-	if enemy or hpm > 100 then
-		C.SetText(u.hpText, Unit.HealthText(math.floor(hp + 0.5), math.floor(hpm + 0.5)))
-	else
-		C.SetText(u.hpText, math.floor(hp / hpm * 100 + 0.5) .. "%")
-	end
-	C.SetText(u.name, name)
-	if hostile then
-		C.TextColor(u.name, 1, 0.86, 0.78)
-	else
-		C.TextColor(u.name, pal.title[1], pal.title[2], pal.title[3])
-	end
-	local tag = KIND_TAGS[kind]
-	if tag then
-		C.SetText(u.tag, C.L(tag[1]))
-		C.TextColor(u.tag, tag[2], tag[3], tag[4])
-		C.Vis(u.tag, true)
-	else
-		C.Vis(u.tag, false)
-	end
-	local level = Call(UnitLevel, "target")
-	if kind == "boss" or kind == "final" or not level or level < 0 then
-		C.SetText(u.level, "??")
-	else
-		C.SetText(u.level, tostring(level))
-	end
 end
 
 ------------------------------------------------------------------------ portraits and theme
-local function Portrait(u, unit)
-	if type(SetPortraitTexture) == "function" and Call(UnitExists, unit) then
-		pcall(SetPortraitTexture, u.portrait, unit)
-		u.portrait:Show()
+local function PortraitPlayer()
+	if type(SetPortraitTexture) == "function" and Call(UnitExists, "player") then
+		pcall(SetPortraitTexture, P.portrait, "player")
+		P.portrait:Show()
 	end
 end
 
@@ -343,18 +233,6 @@ local function ApplyPlayer()
 	end
 end
 
-local function ApplyTarget()
-	if db.target then
-		C.HideStock("TargetFrame")
-		C.HideStock("ComboFrame")
-	else
-		C.RestoreStock("TargetFrame")
-		C.RestoreStock("ComboFrame")
-		T.root:Hide()
-		T.root.mv = false
-	end
-end
-
 local function Rescale(u, s)
 	u.root:SetScale(s)
 	C.ApplyPos(u.mover)
@@ -368,60 +246,54 @@ local function Tick(dt)
 	if stamp ~= C.palStamp then
 		stamp = C.palStamp
 		Theme(P, pal)
-		Theme(T, pal)
 	end
 	portraitClock = portraitClock - dt
 	if portraitClock <= 0 then
 		portraitClock = 3
-		Portrait(P, "player")
+		PortraitPlayer()
 	end
 	if not levelled then
 		levelled = true
 		Levels(P)
-		Levels(T)
 	end
 	if db.player then
 		C.Vis(P.root, true)
 		StepPlayer(P, dt, now, pal)
 	end
-	if db.target then StepTarget(T, dt, now, pal) end
 end
 
 C.OnInit(function()
 	db = C.DB("units", DEFAULTS)
+	-- The target pane is gone. Forget its old on/off, scale and saved-position settings.
+	db.target, db.targetScale = nil, nil
+	local root = C.Root()
+	if type(root.pos) == "table" then root.pos.target = nil end
+
 	P = Build("ArcanePlayer", "player", "Your frame", function(f)
 		f:ClearAllPoints()
 		f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 14, -10)
-	end, true)
-	T = Build("ArcaneTarget", "target", "Target frame", function(f)
-		f:ClearAllPoints()
-		f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 14, -90)
-	end, false)
+	end)
 	P.root:SetScale(db.playerScale)
-	T.root:SetScale(db.targetScale)
 	C.ApplyPos(P.mover)
-	C.ApplyPos(T.mover)
-	C.OverCards(P.root) -- lit over the level-up cards' veil (Core)
-	C.OverCards(T.root)
+	C.OverCards(P.root)
+
+	-- Keep the stock target pane and combo-point overlay hidden without replacing
+	-- them with another target window. The game's target selection itself is untouched.
+	local function HideUnusedTargetStock()
+		C.HideStock("TargetFrame")
+		C.HideStock("ComboFrame")
+	end
 
 	local driver = CreateFrame("Frame", "ArcaneUnitsDriver")
-	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
 	driver:RegisterEvent("UNIT_PORTRAIT_UPDATE")
 	driver:RegisterEvent("PLAYER_ENTERING_WORLD")
 	driver:SetScript("OnEvent", function()
-		if event == "PLAYER_TARGET_CHANGED" then
-			T.hp.snap = true
-			Portrait(T, "target")
-		elseif event == "UNIT_PORTRAIT_UPDATE" then
-			if arg1 == "player" then Portrait(P, "player") elseif arg1 == "target" then Portrait(T, "target") end
+		if event == "UNIT_PORTRAIT_UPDATE" then
+			if arg1 == "player" then PortraitPlayer() end
 		else
-			Portrait(P, "player")
-			Portrait(T, "target")
+			PortraitPlayer()
+			HideUnusedTargetStock()
 			if db.player then C.HideStock("PlayerFrame") end
-			if db.target then
-				C.HideStock("TargetFrame")
-				C.HideStock("ComboFrame")
-			end
 		end
 	end)
 	local broken = false
@@ -433,15 +305,12 @@ C.OnInit(function()
 		if not ok then
 			broken = true
 			C.RestoreStock("PlayerFrame")
-			C.RestoreStock("TargetFrame")
-			C.RestoreStock("ComboFrame")
 			P.root:Hide()
-			T.root:Hide()
 			C.Print(C.L("unit frames stopped after an error, so the game's own are back: ") .. tostring(err))
 		end
 	end)
+	HideUnusedTargetStock()
 	ApplyPlayer()
-	ApplyTarget()
 end)
 
 C.RegisterPart({
@@ -451,12 +320,4 @@ C.RegisterPart({
 	set = function(on) if db then db.player = on and true or false; ApplyPlayer() end end,
 	getScale = function() return db and db.playerScale or 1 end,
 	setScale = function(v) if db then db.playerScale = v; Rescale(P, v) end end,
-})
-C.RegisterPart({
-	key = "target", name = "Target frame",
-	note = "Your target's health with the real numbers, and whether it's a boss, guardian or elite. Replaces the game's target frame.",
-	get = function() return db and db.target end,
-	set = function(on) if db then db.target = on and true or false; ApplyTarget() end end,
-	getScale = function() return db and db.targetScale or 1 end,
-	setScale = function(v) if db then db.targetScale = v; Rescale(T, v) end end,
 })

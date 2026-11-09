@@ -14,9 +14,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Tiny Plates:** Arcane's built-in replacement for the game's enemy plates, with half-size regular enemies, Arcane's shared FRIZQT typography and layered health bars; bosses and guardians keep their full size with the same styling and their debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Health numbers can be shown or hidden independently in Tiny Plates options.
 - **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
 - **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
-- **Your frame, your target and your party:** in class colors, portraits in metal rings.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
-- **Target portrait rings:** bosses use the gold elite dragon ring; guardians use the silver rare ring, with the full original ring preserved.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
 - **Skill bar:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic uses the supplied gold dragon/A artwork, including its built-in amber gemstone, on both ends; Hybrid pairs the class-treated Arcane A medallion on the left with the active class crest on the right and class-colored glass/enamel; Full Class uses class-specific rails, tinted glass and paired class emblems for all nine classes. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
