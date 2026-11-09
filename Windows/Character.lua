@@ -218,9 +218,23 @@ local function TabText(tab)
 	if not fs and tab.GetFontString then fs = tab:GetFontString() end
 	return fs, fs and fs:GetText()
 end
+-- The native Honor/PvP tab has no corresponding system in Azeroth Survivors.
+-- Keep it hidden even when the dressed Character panel is switched off.
+local function HideHonorTab()
+	local honor = getglobal("HONOR") or "Honor"
+	for i = 1, 8 do
+		local tab = getglobal("CharacterFrameTab" .. i)
+		if tab then
+			local _, text = TabText(tab)
+			if text == honor or tab == W.honorTab then
+				W.honorTab = tab
+				if tab:IsShown() then tab:Hide() end
+			end
+		end
+	end
+end
 local function Retab()
 	local skills = getglobal("SKILLS") or "Skills"
-	local honor = getglobal("HONOR") or "Honor"
 	for i = 1, 8 do
 		local tab = getglobal("CharacterFrameTab" .. i)
 		if tab then
@@ -234,12 +248,10 @@ local function Retab()
 				local size = W.skillsFont[2] or 10
 				if fs.cface ~= C.FONT or fs.csize ~= size then C.SetFace(fs, C.FONT, size, W.skillsFont[3]) end
 				C.SetText(fs, C.L("Talents"))
-			elseif text == honor or tab == W.honorTab then
-				W.honorTab = tab
-				if tab:IsShown() then tab:Hide() end
 			end
 		end
 	end
+	HideHonorTab()
 end
 local function Untab()
 	if W.skillsText then
@@ -252,10 +264,7 @@ local function Untab()
 		end
 		W.skillsText = nil
 	end
-	if W.honorTab then
-		W.honorTab:Show()
-		W.honorTab = nil
-	end
+	-- Deliberately do not restore the Honor tab: Azeroth Survivors has no PvP/Honor UI.
 end
 
 ------------------------------------------------------------------------ reading the game's numbers
@@ -769,6 +778,7 @@ end
 local function Hook()
 	if S.hooked or type(PaperDollFrame) ~= "table" or type(CharacterFrame) ~= "table" then return end
 	S.hooked = true
+	Chain(CharacterFrame, "OnShow", HideHonorTab)
 	Chain(PaperDollFrame, "OnShow", function()
 		Shown()
 		if S.dressed then
@@ -814,6 +824,7 @@ end
 local function Apply()
 	if type(CharacterFrame) ~= "table" or type(PaperDollFrame) ~= "table" then return end
 	Hook()
+	HideHonorTab()
 	if db.enabled and not S.broken then
 		local onSkills = type(SkillFrame) == "table" and SkillFrame:IsVisible()
 		if PaperDollFrame:IsVisible() or onSkills then
