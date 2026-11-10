@@ -26,10 +26,17 @@ local function SuppressCtrlRToggle()
 	-- Leave the player's saved keymap untouched.
 end
 
+local readoutX, readoutY
+
 local function PositionReadout()
-	-- Center the combined "FPS: 130.4" group rather than each string independently.
+	-- WorldFrame does not reliably carry its native FontStrings with a different
+	-- movable frame during drag. Re-anchor them to the mover's current screen center.
+	local x, y = frame:GetCenter()
+	if not x or not y then return end
+	if readoutX == x and readoutY == y then return end
+	readoutX, readoutY = x, y
 	label:ClearAllPoints()
-	label:SetPoint("RIGHT", frame, "CENTER", -6, TEXT_Y)
+	label:SetPoint("RIGHT", UIParent, "BOTTOMLEFT", x - 6, y + TEXT_Y)
 	value:ClearAllPoints()
 	value:SetPoint("LEFT", label, "RIGHT", VALUE_GAP, 0)
 end
@@ -110,11 +117,8 @@ C.OnInit(function()
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
 
-	-- The Blizzard readout strings are siblings under WorldFrame by default. Reparent
-	-- the native strings to the movable root so the text and Arcane's grab box are
-	-- one unit: dragging the box can never leave the FPS text behind.
-	label:SetParent(frame)
-	value:SetParent(frame)
+	-- Keep the native Blizzard FontStrings in their original parent; position them
+	-- from the mover's screen coordinates instead of changing their ownership.
 	PreserveSavedTextPosition()
 
 	C.SetFace(label, C.FONT, 14, "OUTLINE")
@@ -158,6 +162,7 @@ C.OnInit(function()
 	local watch = CreateFrame("Frame", "ArcaneFPSThemeDriver")
 	watch:SetScript("OnUpdate", function()
 		local dt = arg1 or 0
+		PositionReadout()
 		displayState.elapsed = displayState.elapsed + dt
 		displayState.themeElapsed = displayState.themeElapsed + dt
 		if displayState.elapsed >= 0.15 then
