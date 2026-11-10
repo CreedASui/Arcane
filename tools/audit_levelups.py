@@ -16,6 +16,7 @@ required = (
     ("local function NativeStoring()", "the native setting must have one shared reader"),
     ("C.Call(AZS_IsStoringLevels)", "the game setting must be read through its public getter"),
     ("C.Call(AZS_SetStoringLevels, requested)", "the Arcane switch must call the native setting setter"),
+    ('f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 276)', "the stored-level button must default to the clear tested height above the skill bar"),
     ("local function SyncStoring(refreshHub)", "external native setting changes must be synchronized"),
     ("if refreshHub and C.RefreshHub then C.RefreshHub() end", "the open Arcane hub must refresh when the native setting changes"),
     ("if actual ~= nil then db.enabled = actual end", "the native preference must initialize the Arcane switch"),
