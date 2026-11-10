@@ -81,9 +81,10 @@ C.OnInit(function()
 	mover = C.Movable(frame, "fps", "FPS display", function(f)
 		f:ClearAllPoints()
 		if ArcaneBar then
-			f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 1)
+			-- Default to the tested spot above the right side of the skill bar.
+			f:SetPoint("CENTER", ArcaneBar, "CENTER", 298, 49)
 		else
-			f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 193)
+			f:SetPoint("CENTER", UIParent, "CENTER", 298, -410)
 		end
 	end)
 	-- Keep the standard Arcane gold outline visible in Move frames mode; no filled panel.
