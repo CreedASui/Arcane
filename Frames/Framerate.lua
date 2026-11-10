@@ -3,7 +3,7 @@
 local C = Arcane
 
 local WIDTH, HEIGHT = 188, 58
-local LABEL_Y = 15
+local LABEL_Y = 19
 
 local function ApplyTheme(panel, label, state)
 	local pal = C.Pal()
