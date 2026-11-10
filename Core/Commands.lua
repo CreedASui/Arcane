@@ -59,7 +59,8 @@ local function Slash(msg)
 				table.concat(keys, ", ")))
 		end
 	end
-	RefreshHub()
+	-- Options owns the hub refresh callback on Arcane, not as a global.
+	if C.RefreshHub then C.RefreshHub() end
 end
 
 SLASH_ARCANE1 = "/Arcane"
