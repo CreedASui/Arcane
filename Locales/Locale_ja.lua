@@ -389,4 +389,7 @@ Arcane.AddLanguage("ja", "日本語", Arcane.FACE_CJK, {
 	["{1} in all"] = "合計 {1}",
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcaneの戦利品通知：各アイテムのアイコン、名前、レア度の色と獲得したマークを表示。ゲーム本来の通知を置き換えます。",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "戦利品通知がエラーで停止したため、ゲーム本来の通知に戻しました：",
+	["FPS display"] = "FPS表示",
+	["The game's FPS readout in Arcane lettering and a small open metal frame. Ctrl+R toggles it too."] = "ゲームのFPS表示をArcaneフォントと小さな開いた金属フレームで装飾します。Ctrl+Rでも切り替えられます。",
+
 })
