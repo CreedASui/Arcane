@@ -1,12 +1,21 @@
 -- Arcane UI: frame the game's native FPS readout without replacing it.
--- The 1.12 client owns the live number; Arcane only themes and repositions its two FontStrings.
+-- The 1.12 client owns the live number and Ctrl+R toggle; Arcane themes and positions both strings.
 local C = Arcane
+local DEFAULTS = { enabled = false }
 
 local WIDTH, HEIGHT = 108, 28
 local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 40, 46, 5
 local TEXT_Y = -1
 
-local function PositionReadout(frame, label, value)
+local db, frame, label, value, art, mover
+local themeState = { palStamp = -1, styleStamp = -1 }
+local displayState = { shown = nil, elapsed = 0, themeElapsed = 0 }
+
+local function NativeShown()
+	return value and value.IsShown and value:IsShown() and true or false
+end
+
+local function PositionReadout()
 	-- Center the combined "FPS: 130.4" group, not the two strings separately.
 	label:ClearAllPoints()
 	label:SetPoint("RIGHT", frame, "CENTER", -9, TEXT_Y)
@@ -14,12 +23,12 @@ local function PositionReadout(frame, label, value)
 	value:SetPoint("LEFT", label, "RIGHT", VALUE_GAP, 0)
 end
 
-local function ApplyTheme(art, label, value, state)
+local function ApplyTheme()
 	local pal = C.Pal()
 	local styleStamp = C.BarStyles and C.BarStyles.Stamp and C.BarStyles.Stamp() or 0
 	local palStamp = C.palStamp or 0
-	if state.palStamp == palStamp and state.styleStamp == styleStamp then return end
-	state.palStamp, state.styleStamp = palStamp, styleStamp
+	if themeState.palStamp == palStamp and themeState.styleStamp == styleStamp then return end
+	themeState.palStamp, themeState.styleStamp = palStamp, styleStamp
 
 	local red, green, blue = C.PanelMetal(pal)
 	for i = 1, table.getn(art) do
@@ -29,21 +38,70 @@ local function ApplyTheme(art, label, value, state)
 	C.TextColor(value, pal.title[1], pal.title[2], pal.title[3])
 end
 
+local function SetShown(on)
+	on = on and true or false
+	if not frame or not label or not value then return end
+
+	-- Use the game's own Ctrl+R handler so its native state and timer stay in step.
+	if NativeShown() ~= on then
+		if type(ToggleFramerate) == "function" then
+			ToggleFramerate()
+		else
+			if on then
+				label:Show()
+				value:Show()
+			else
+				label:Hide()
+				value:Hide()
+			end
+		end
+	end
+
+	-- Keep the pair together even if a client build exposes a partial native state.
+	if label:IsShown() ~= on then
+		if on then label:Show() else label:Hide() end
+	end
+	if value:IsShown() ~= on then
+		if on then value:Show() else value:Hide() end
+	end
+
+	db.enabled = on
+	if on then frame:Show() else frame:Hide() end
+	displayState.shown = on
+end
+
+local function SyncFromGame()
+	local shown = NativeShown()
+	if label and label:IsShown() ~= shown then
+		if shown then label:Show() else label:Hide() end
+	end
+	if db then db.enabled = shown end
+	if frame then
+		if shown then frame:Show() else frame:Hide() end
+	end
+	if displayState.shown ~= shown then
+		displayState.shown = shown
+		if C.RefreshHub then C.RefreshHub() end
+	end
+end
+
 C.OnInit(function()
+	db = C.DB("fps", DEFAULTS)
+
 	-- WoW 1.12 splits the native readout into "FPS:" and its separately updated number.
-	local label = getglobal("FramerateLabel")
-	local value = getglobal("FramerateText")
+	label = getglobal("FramerateLabel")
+	value = getglobal("FramerateText")
 	if not label or not value or type(label.ClearAllPoints) ~= "function"
 			or type(value.ClearAllPoints) ~= "function" then return end
 
-	local frame = CreateFrame("Frame", "ArcaneFPSPanel", UIParent)
+	frame = CreateFrame("Frame", "ArcaneFPSPanel", UIParent)
 	frame:SetFrameStrata("MEDIUM")
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
 
 	-- Transparent open-bottom half-frame: one top rail and two short side rails.
 	-- There is deliberately no fill, backdrop or lower rail.
-	local art = {}
+	art = {}
 	local top = C.Tex(frame, "BORDER", C.ART .. "PanelRailT")
 	top:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, 0)
 	top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, 0)
@@ -86,14 +144,12 @@ C.OnInit(function()
 	value:SetShadowColor(0, 0, 0, 1)
 	label:SetShadowOffset(1, -1)
 	value:SetShadowOffset(1, -1)
-	PositionReadout(frame, label, value)
+	PositionReadout()
 
-	local themeState = { palStamp = -1, styleStamp = -1 }
-	ApplyTheme(art, label, value, themeState)
+	ApplyTheme()
 
-	-- Arcane's own mover and saved position. Its edit overlay stays invisible so it
-	-- doesn't cover the text or half-frame while the user is arranging the HUD.
-	local mover = C.Movable(frame, "fps", "FPS display", function(f)
+	-- Arcane's native mover and saved position. The edit hitbox is transparent and unlabelled.
+	mover = C.Movable(frame, "fps", "FPS display", function(f)
 		f:ClearAllPoints()
 		if ArcaneBar then
 			f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 8)
@@ -104,17 +160,34 @@ C.OnInit(function()
 	mover.box:SetBackdrop(nil)
 	mover.box.text:Hide()
 
+	-- Restore the saved checkbox state through the same native handler used by Ctrl+R.
+	SetShown(db.enabled)
+
 	C.OnWorld(function()
-		PositionReadout(frame, label, value)
+		PositionReadout()
+		SetShown(db.enabled)
 	end)
 
-	-- Full Class can change the active metal and text colors after the run class is read.
+	-- Ctrl+R is handled by the game. Poll only to mirror its visibility into the Options checkbox.
 	local watch = CreateFrame("Frame", "ArcaneFPSThemeDriver")
-	local elapsed = 0
 	watch:SetScript("OnUpdate", function()
-		elapsed = elapsed + (arg1 or 0)
-		if elapsed < 0.5 then return end
-		elapsed = 0
-		ApplyTheme(art, label, value, themeState)
+		local dt = arg1 or 0
+		displayState.elapsed = displayState.elapsed + dt
+		displayState.themeElapsed = displayState.themeElapsed + dt
+		if displayState.elapsed >= 0.15 then
+			displayState.elapsed = 0
+			SyncFromGame()
+		end
+		if displayState.themeElapsed >= 0.5 then
+			displayState.themeElapsed = 0
+			ApplyTheme()
+		end
 	end)
 end)
+
+C.RegisterPart({
+	key = "fps", name = "FPS display",
+	note = "The game's FPS readout in Arcane lettering and a small open metal frame. Ctrl+R toggles it too.",
+	get = function() return db and db.enabled end,
+	set = function(on) SetShown(on) end,
+})
