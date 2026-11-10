@@ -18,6 +18,7 @@ on:
     paths:
       - "**.lua"
       - "**.toc"
+      - "**.md"
       - "tools/**"
       - ".github/workflows/arcane-audit.yml"
   workflow_dispatch:
