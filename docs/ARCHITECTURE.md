@@ -89,3 +89,8 @@ The native pool is dynamic. Arcane registers hidden pool entries before first us
 The replacement bar is centered on the cached native health StatusBar rather than converting a bottom-left anchor into a center offset. Its dimensions are bounded to the native StatusBar's expected range. Health text has no whitespace break around its separator and is measured/fitted against the bar's inner width, preventing current/maximum values from wrapping into two rows. The regular-bar scale and right-side enemy-level badge behavior remain unchanged.
 
 `Frames/WorldTooltip.lua` is a standalone guard for the persistent default-anchored world-hover `GameTooltip`. It chains the existing `OnTooltipSetDefaultAnchor` and `OnShow` scripts, then hides the tooltip only when the native `GameTooltip.default` flag is set. Ordinary control tooltips use their normal non-default anchors and remain available. The guard does not depend on Arcane's startup table and does not run a per-frame polling script.
+
+
+## Skill-bar center ornaments
+
+The top and bottom center diamonds are anchored to their respective panel rail textures (root.deco.railT and root.deco.railB), with small opposite vertical offsets to compensate for transparent art padding and align the diamond centers to the visible gold stripes. This calibrated placement applies in Classic, Hybrid and Full Class modes. Because the rails span the outer panel, both diamonds remain horizontally centered on the complete visible bar as the kills/gold/cache tally dock expands or contracts.
