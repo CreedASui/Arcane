@@ -1,6 +1,6 @@
 -- Arcane UI: the game's gameplay notification feed, using the active UX text palette.
 -- Keep the native MessageFrame transparent and intact. Arcane owns its saved position,
--- visibility switch and the color used for each new message.
+-- visibility switch, font treatment and the color used for each new message.
 local C = Arcane
 local DEFAULTS = { enabled = true }
 local db
@@ -12,6 +12,14 @@ local function Apply()
 	else
 		C.HideStock("UIErrorsFrame")
 	end
+end
+
+local function ThemeFont(frame)
+	if type(frame.GetFont) ~= "function" or type(frame.SetFont) ~= "function" then return end
+	local _, size = frame:GetFont()
+	if type(size) ~= "number" or size <= 0 then size = 16 end
+	local face = type(C.Face) == "function" and C.Face(C.FONT) or C.FONT
+	pcall(frame.SetFont, frame, face, size, "OUTLINE")
 end
 
 C.OnInit(function()
@@ -33,11 +41,13 @@ C.OnInit(function()
 	local nativeAddMessage = frame.AddMessage
 	if type(nativeAddMessage) == "function" then
 		frame.AddMessage = function(self, message, red, green, blue, alpha)
+			ThemeFont(self)
 			local title = C.Pal().title
 			return nativeAddMessage(self, message, title[1], title[2], title[3], alpha)
 		end
 	end
 
+	ThemeFont(frame)
 	Apply()
 end)
 
@@ -53,7 +63,7 @@ end)
 C.RegisterPart({
 	key = "errors",
 	name = "Stock error messages",
-	note = "The game's original gameplay messages, using Arcane's active text theme. Turn it off to compare without them; use Move frames to reposition it.",
+	note = "The game's original gameplay messages, using the active text theme. Turn it off to compare without them; use Move frames to reposition it.",
 	get = function() return db and db.enabled end,
 	set = function(on)
 		if not db then return end

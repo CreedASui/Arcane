@@ -69,6 +69,9 @@ jobs:
       - name: Audit Arcane Nameplates state and module ownership
         run: python tools/audit_nameplates.py
 
+      - name: Audit native text theming and behavior preservation
+        run: python tools/audit_native_text.py
+
       - name: Audit stock error-frame controls
         run: python tools/audit_stock_frame_controls.py
 

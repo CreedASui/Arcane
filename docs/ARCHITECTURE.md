@@ -19,7 +19,7 @@ This document describes the source layout and the runtime rules behind it. The a
 | `Timer/` | Boss timer data and its renderer/controller. |
 | `Numbers/` | Damage-number configuration, combat intake, icons, labels, world anchors, layout, culling, placement, animation, lifecycle, options and commands. |
 | `SkillBar/` | Class/style data, visual style controller and the skill-slot/XP renderer. |
-| `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames. |
+| `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames, stock notifications and native text styling. |
 | `Minimap/` | Minimap presentation, edge button, cache pins and lair pins. |
 | `Windows/` | Tally, meter, damage/healing, pets, luck, summary, character, stats, talents and chat windows. |
 | `Nameplates/` | Arcane Nameplates replacement and its options. |
@@ -60,3 +60,11 @@ Arcane-owned code uses the `C.Nameplates` namespace and `arcaneNameplates*` fram
 
 
 Arcane Nameplates does not own the `WorldFrame` plate root's dimensions, scale or projected position. Azeroth Survivors updates the root anchor as units move; Arcane Nameplates anchors its overlay to the native health bar and restores only native child visibility/alpha that it changed.
+
+## Native text styling
+
+`Frames/NativeText.lua` styles only the game's existing floating combat-text categories for positive spell/aura messages and healing. It uses the same `C.Pal()` title/accent mapping as the known-good reference build. Blizzard still creates each message, applies its own visibility flags and filters, chooses the message type, moves the text, and runs the original animation/fade. Arcane does not replace `CombatText_AddMessage`, `CombatText_OnEvent` or the client's update function.
+
+**Zone and subzone announcements remain entirely native.** Arcane does not reference or hook `ZoneTextString`, `SubZoneTextString`, `ZoneTextFrame`, `SubZoneTextFrame` or `SetZoneText`. The game owns their original wording, font, exact size, contextual fill color, position and fade. No outline, banner, trim, background or other Arcane decoration is added.
+
+`Frames/StockErrors.lua` retains the known-good treatment for the game's separate `UIErrorsFrame` gameplay-notification feed: Arcane typography and the active `C.Pal().title` color. Lua script errors are separate from this gameplay-notification feed. Live-client testing remains necessary in Azeroth Survivors 1.12.1 / Lua 5.0.

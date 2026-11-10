@@ -55,6 +55,7 @@ Frames/Units.lua
 Frames/Party.lua
 Frames/Downed.lua
 Frames/StockErrors.lua
+Frames/NativeText.lua
 
 SkillBar/StylesData.lua
 SkillBar/Styles.lua
