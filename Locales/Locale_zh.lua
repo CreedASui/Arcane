@@ -390,6 +390,6 @@ Arcane.AddLanguage("zh", "中文", Arcane.FACE_CJK, {
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane 战利品通知：显示每件物品的图标、名称、稀有度颜色以及获得的印记。取代游戏自带通知。",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "战利品通知发生错误并停止，已恢复游戏自带通知：",
 	["FPS display"] = "FPS 显示",
-	["The game's FPS readout in Arcane lettering and a small open metal frame. Ctrl+R toggles it too."] = "使用 Arcane 字体和小型开放金属框显示游戏 FPS。Ctrl+R 也可切换显示。",
+	["Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."] = "使用此复选框显示或隐藏游戏 FPS。Arcane 加载期间会禁用 Ctrl+R。",
 
 })
