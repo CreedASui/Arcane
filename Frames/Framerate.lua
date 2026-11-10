@@ -3,9 +3,9 @@
 local C = Arcane
 local DEFAULTS = { enabled = false }
 
-local WIDTH, HEIGHT = 108, 28
+local WIDTH, HEIGHT = 96, 22
 local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 40, 46, 5
-local TEXT_Y = -1
+local TEXT_Y = 0
 
 local db, frame, label, value, art, mover
 local themeState = { palStamp = -1, styleStamp = -1 }
@@ -30,11 +30,7 @@ local function ApplyTheme()
 	if themeState.palStamp == palStamp and themeState.styleStamp == styleStamp then return end
 	themeState.palStamp, themeState.styleStamp = palStamp, styleStamp
 
-	local red, green, blue = C.PanelMetal(pal)
-	for i = 1, table.getn(art) do
-		C.Color(art[i], red, green, blue, 1)
-	end
-	C.TextColor(label, pal.title[1], pal.title[2], pal.title[3])
+		C.TextColor(label, pal.title[1], pal.title[2], pal.title[3])
 	C.TextColor(value, pal.title[1], pal.title[2], pal.title[3])
 end
 
@@ -99,37 +95,9 @@ C.OnInit(function()
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
 
-	-- Transparent open-bottom half-frame: one top rail and two short side rails.
-	-- There is deliberately no fill, backdrop or lower rail.
+	-- No decorative shell: the FPS text itself carries the Arcane treatment.
+	-- Keep only an invisible movable root so both native strings can be repositioned together.
 	art = {}
-	local top = C.Tex(frame, "BORDER", C.ART .. "PanelRailT")
-	top:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, 0)
-	top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, 0)
-	top:SetHeight(6)
-	table.insert(art, top)
-
-	local left = C.Tex(frame, "BORDER", C.ART .. "PanelRailL")
-	left:SetWidth(6)
-	left:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -2)
-	left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 7)
-	table.insert(art, left)
-
-	local right = C.Tex(frame, "BORDER", C.ART .. "PanelRailR")
-	right:SetWidth(6)
-	right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -2)
-	right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 7)
-	table.insert(art, right)
-
-	for _, corner in ipairs({
-		{ "TOPLEFT", "PanelCornerTL" },
-		{ "TOPRIGHT", "PanelCornerTR" },
-	}) do
-		local t = C.Tex(frame, "ARTWORK", C.ART .. corner[2])
-		t:SetWidth(9)
-		t:SetHeight(9)
-		t:SetPoint("CENTER", frame, corner[1], corner[1] == "TOPLEFT" and 6 or -6, -1)
-		table.insert(art, t)
-	end
 
 	-- Keep both native strings; do not create a duplicate FPS counter.
 	C.SetFace(label, C.FONT, 14, "OUTLINE")
