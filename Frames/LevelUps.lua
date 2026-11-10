@@ -12,10 +12,20 @@ local db
 local root
 local S = { alpha = 0, n = 0, pop = nil, takeClock = 0, broken = false, stamp = -1 }
 
+-- The Arcane switch controls the same preference as the game's own Options page.
+-- nil means this client does not expose the setting API, so keep the saved fallback.
+local function NativeStoring()
+	if type(AZS_IsStoringLevels) ~= "function" then return nil end
+	local value = C.Call(AZS_IsStoringLevels)
+	if type(value) == "boolean" then return value end
+	if type(value) == "number" then return value ~= 0 end
+	return nil
+end
+
 local function Waiting()
 	if type(AZS_GetStoredLevels) ~= "function" then return 0 end
 	local n = tonumber(C.Call(AZS_GetStoredLevels)) or 0
-	if n > 0 and type(AZS_IsStoringLevels) == "function" and not C.Call(AZS_IsStoringLevels) then n = 0 end
+	if n > 0 and NativeStoring() == false then n = 0 end
 	return n
 end
 
@@ -87,8 +97,33 @@ local function Apply()
 	end
 end
 
+-- Keep the Arcane hub checkbox and the native Options checkbox in lockstep.
+local function SyncStoring(refreshHub)
+	if not db then return end
+	local actual = NativeStoring()
+	if actual == nil or actual == db.enabled then return end
+	db.enabled = actual
+	if actual then S.broken = false end
+	Apply()
+	if refreshHub and C.RefreshHub then C.RefreshHub() end
+end
+
+local function SetStoring(on)
+	local requested = on and true or false
+	if type(AZS_SetStoringLevels) == "function" then
+		C.Call(AZS_SetStoringLevels, requested)
+		local actual = NativeStoring()
+		if actual ~= nil then requested = actual end
+	end
+	db.enabled = requested
+	S.broken = false
+	Apply()
+end
+
 C.OnInit(function()
 	db = C.DB("levelups", DEFAULTS)
+	local actual = NativeStoring()
+	if actual ~= nil then db.enabled = actual end
 	root = CreateFrame("Button", "ArcaneLevelUps", UIParent)
 	root:SetWidth(W)
 	root:SetHeight(H)
@@ -129,7 +164,9 @@ C.OnInit(function()
 	end)
 	local driver = CreateFrame("Frame", "ArcaneLevelUpsDriver")
 	driver:SetScript("OnUpdate", function()
-		if S.broken or not db.enabled then return end
+		if S.broken then return end
+		SyncStoring(true)
+		if not db.enabled then return end
 		local dt = arg1 or 0
 		if dt > 0.1 then dt = 0.1 end
 		local ok, err = pcall(Step, dt, GetTime())
@@ -154,14 +191,14 @@ end)
 
 C.RegisterPart({
 	key = "levelups", name = "Stored level-ups",
-	note = "With the game's Store Level-Ups on: a glowing Level Up! button over the skill bar with how many wait. Click it to pick their cards. Replaces the game's button.",
-	get = function() return db and db.enabled end,
+	note = "Turns the game's Store Level-Ups setting on or off. When on: a glowing Level Up! button over the skill bar shows how many wait. Click it to pick their cards. Replaces the game's button.",
+	get = function()
+		if not db then return false end
+		SyncStoring()
+		return db.enabled
+	end,
 	set = function(on)
-		if db then
-			db.enabled = on and true or false
-			S.broken = false
-			Apply()
-		end
+		if db then SetStoring(on) end
 	end,
 	getScale = function() return db and db.scale or 1 end,
 	setScale = function(v)

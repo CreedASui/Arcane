@@ -86,6 +86,9 @@ jobs:
       - name: Audit boss skulls and cache marks
         run: python tools/audit_skulls.py
 
+      - name: Audit native Store Level-Ups setting integration
+        run: python tools/audit_levelups.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
