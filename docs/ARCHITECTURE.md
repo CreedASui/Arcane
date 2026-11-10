@@ -51,7 +51,7 @@ Arcane Nameplates is split by responsibility rather than by individual helper:
 - `Nameplates/State.lua` owns native plate discovery, child-state snapshots and safe visibility restoration.
 - `Nameplates/SpecialTargets.lua` owns boss/guardian identity and debuff presentation.
 - `Nameplates/Visuals.lua` owns replacement bars, labels and plate styling.
-- `Nameplates/ArcaneNameplates.lua` owns discovery cadence, update scheduling and addon lifecycle.
+- `Nameplates/ArcaneNameplates.lua` owns cached pool registration, same-update reuse styling, native-region suppression and addon lifecycle.
 - `Nameplates/ArcaneNameplatesOptions.lua` owns the settings UI and saved option access.
 
 The controller delegates to these modules in TOC order. Arcane Nameplates is Arcane's required enemy-plate renderer and remains active whenever Arcane is loaded. The game's native `V` command owns enemy-plate visibility. Azeroth Survivors creates anonymous `Button` children under `WorldFrame`, hides retired plates, and reuses free pool slots. The Arcane replacement bar is parented to the same button, so it follows the game's show/hide state without binding or overriding `V`. The registry is therefore bounded by the game's high-water plate pool; no guessed cleanup timer is needed. There is no second hide checkbox and no stock-renderer fallback.
@@ -68,3 +68,24 @@ Arcane Nameplates does not own the `WorldFrame` plate root's dimensions, scale o
 **Zone and subzone announcements remain entirely native.** Arcane does not reference or hook `ZoneTextString`, `SubZoneTextString`, `ZoneTextFrame`, `SubZoneTextFrame` or `SetZoneText`. The game owns their original wording, font, exact size, contextual fill color, position and fade. No outline, banner, trim, background or other Arcane decoration is added.
 
 `Frames/StockErrors.lua` retains the known-good treatment for the game's separate `UIErrorsFrame` gameplay-notification feed: Arcane typography and the active `C.Pal().title` color. Lua script errors are separate from this gameplay-notification feed. Live-client testing remains necessary in Azeroth Survivors 1.12.1 / Lua 5.0.
+
+
+## Nameplate sizing and level badge
+
+Regular Arcane Nameplates replacement bars use 75% of the native health-bar width and height (the previous regular scale was 50%). The health FontString is constrained to the bar's inner width so current/maximum health stays inside the bar rather than spilling past its edges.
+
+The native 1.12 nameplate exposes its level as a numeric root FontString, separate from the name. `Nameplates/State.lua` reads and caches that value before the native labels are hidden, refreshing it as pooled plates are reused. `Nameplates/Visuals.lua` displays it in a compact square glass-and-metal badge attached to the right side of the replacement bar. The badge uses the shared Arcane `rim`, `trough` and `title` palette and is parented to the replacement overlay, so it follows the game's native V visibility and pooled-frame lifecycle. If the native plate has no numeric level, the badge stays hidden.
+
+The WorldFrame plate's root size, scale, projected position and anchor remain game-owned; Arcane only enlarges its child replacement visual.
+
+
+
+## Nameplate lifecycle and hover tooltip
+
+The native Azeroth Survivors plate is recognized by its actual 1.12 structure: an anonymous `Button` under `WorldFrame`, six root regions in the game's creation order (border Texture, glow Texture, name FontString, level FontString, skull Texture, raid Texture), and one direct horizontal health `StatusBar`. `Nameplates/State.lua` validates that signature once and caches the native region and StatusBar references. It does not recursively search arbitrary descendants for a name and a wide StatusBar. Frames that do not match the native signature are ignored.
+
+The native pool is dynamic. Arcane registers hidden pool entries before first use, chains their existing `OnShow` and `OnHide` handlers without discarding them, and refreshes cached frame identities during the plate driver. On reuse, it restores the captured child visibility/alpha state, invalidates the old identity, reapplies the new plate style, and hides only the four native decoration regions, native name/level strings and native health bar. The WorldFrame root's size, scale, position and visibility remain game-owned. The controller no longer waits half a second to recognize a new plate.
+
+The replacement bar is centered on the cached native health StatusBar rather than converting a bottom-left anchor into a center offset. Its dimensions are bounded to the native StatusBar's expected range. Health text has no whitespace break around its separator and is measured/fitted against the bar's inner width, preventing current/maximum values from wrapping into two rows. The regular-bar scale and right-side enemy-level badge behavior remain unchanged.
+
+`Frames/WorldTooltip.lua` is a standalone guard for the persistent default-anchored world-hover `GameTooltip`. It chains the existing `OnTooltipSetDefaultAnchor` and `OnShow` scripts, then hides the tooltip only when the native `GameTooltip.default` flag is set. Ordinary control tooltips use their normal non-default anchors and remain available. The guard does not depend on Arcane's startup table and does not run a per-frame polling script.

@@ -1,4 +1,4 @@
--- Arcane Nameplates controller: scanning, update cadence and lifecycle.
+-- Arcane Nameplates controller: cached native-plate pool and immediate lifecycle updates.
 local C = Arcane
 C.Nameplates = C.Nameplates or {}
 local P = C.Nameplates
@@ -8,13 +8,11 @@ P.Option = function(key)
 	return false
 end
 
--- Azeroth Survivors creates anonymous Button children under WorldFrame, hides retired plates,
--- and reuses free pool slots. Keep one registry entry per pooled button; do not prune frames
--- merely because V hid them. State.RegisterPlate resets per-unit data when a slot is reused.
+-- Native plates are pooled WorldFrame children. Identify their fixed 6-region/1-StatusBar
+-- signature once, cache those objects, then only read the two identity strings from known frames.
 local knownPlates = {}
 local orderedPlates = {}
-local scanClock = 0
-local SCAN_INTERVAL = 0.50
+local checkedWorldChildren = {}
 local OVERLAY_INTERVAL = 0.10
 local DEBUFF_INTERVAL = 0.25
 local overlayClock = 0
@@ -33,13 +31,13 @@ local function ReportError(scope, err)
 end
 
 local function SafeCall(scope, callback, first, second)
-	local ok, result = pcall(callback, first, second)
+	local ok, result, extra, fourth = pcall(callback, first, second)
 	if not ok then
 		ReportError(scope, result)
 		return false
 	end
 	reportedErrors[scope] = nil
-	return true, result
+	return true, result, extra, fourth
 end
 
 local function RegisterPlate(frame)
@@ -51,10 +49,7 @@ local function SyncOverlayValues()
 end
 
 local function ApplyKnownPlate(frame, updateDebuffs)
-	if not frame or not frame.GetObjectType then return end
-	local objectType = frame:GetObjectType()
-	-- The native plate pool is made of anonymous Buttons under WorldFrame.
-	if objectType ~= "Button" then return end
+	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Button" then return end
 	if not frame.IsVisible or not frame:IsVisible() then return end
 
 	local special = P.Special.IsBossOrGuardianPlate(frame)
@@ -62,8 +57,6 @@ local function ApplyKnownPlate(frame, updateDebuffs)
 	if frame.arcaneNameplatesAppliedCategory ~= category
 			or frame.arcaneNameplatesStyleRevision ~= styleRevision then
 		if P.Visuals.Apply(frame) then
-			-- Commit the revision only after all replacement visuals were created and applied.
-			-- An incomplete native plate stays eligible for retry on the next scan.
 			frame.arcaneNameplatesAppliedCategory = category
 			frame.arcaneNameplatesStyleRevision = styleRevision
 		else
@@ -92,30 +85,87 @@ local function StyleKnownPlates(updateDebuffs)
 		local scope = "plate " .. tostring(frame)
 		local ok = SafeCall(scope, ApplyKnownPlate, frame, updateDebuffs)
 		if not ok then
-			-- Retry this plate on the next scan. Never disable the whole renderer because
-			-- one recycled or malformed game frame behaved unexpectedly.
 			frame.arcaneNameplatesAppliedCategory = nil
 			frame.arcaneNameplatesStyleRevision = -1
 		end
 	end
 end
 
-local function ScanNameplates()
-	if type(WorldFrame) ~= "table" or type(WorldFrame.GetChildren) ~= "function" then return end
-	local children = { WorldFrame:GetChildren() }
+local function DiscoverNativePool(children)
 	for i = 1, table.getn(children) do
 		local frame = children[i]
-		if frame and frame.IsVisible and frame:IsVisible()
-				and frame.GetWidth and frame:GetWidth() > 0
-				and frame.GetHeight and frame:GetHeight() > 0 then
-			SafeCall("plate discovery", RegisterPlate, frame)
+		if frame and not checkedWorldChildren[frame] then
+			if frame.GetObjectType and frame:GetObjectType() == "Button" then
+				local ok, recognized = SafeCall("plate discovery", P.State.IdentifyNameplate, frame)
+				if ok and recognized then
+					checkedWorldChildren[frame] = true
+					SafeCall("plate registration", RegisterPlate, frame)
+				elseif frame.GetWidth and frame:GetWidth() > 0
+						and frame.GetHeight and frame:GetHeight() > 0 then
+						checkedWorldChildren[frame] = true
+				end
+			else
+				checkedWorldChildren[frame] = true
+			end
+		end
+	end
+end
+
+local function ScanNameplates(updateDebuffs)
+	if type(WorldFrame) ~= "table" or type(WorldFrame.GetChildren) ~= "function" then return end
+	local children = { WorldFrame:GetChildren() }
+	DiscoverNativePool(children)
+
+	local refreshSpecialNames = false
+	local anyIdentityChange = false
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		local ok, registered, identityChanged, nameWasChanged = SafeCall(
+			"plate lifecycle", RegisterPlate, frame)
+		if ok and registered and frame:IsVisible() then
+			if identityChanged or nameWasChanged or frame.arcaneNameplatesNeedsStyle
+					or frame.arcaneNameplatesStyleRevision ~= styleRevision then
+				anyIdentityChange = true
+			end
+			if nameWasChanged or frame.arcaneNameplatesNameChangedPending then
+				refreshSpecialNames = true
+			end
+		end
+	end
+
+	-- Run snapshots are independent of plate discovery: a boss can become known in AZS_UNITS
+	-- while its native nameplate frame and name remain unchanged.
+	if refreshPending or refreshSpecialNames then
+		SafeCall("boss and guardian index", P.Special.RefreshNames, refreshSpecialNames, orderedPlates)
+		refreshPending = false
+	elseif anyIdentityChange then
+		SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
+	end
+
+	-- Reuse the one cached plate registry directly. No temporary active/dirty arrays are
+	-- allocated each frame, and a pooled frame is styled on the same update that notices reuse.
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		if frame:IsVisible() then
+			local special = P.Special.IsBossOrGuardianPlate(frame)
+			local category = special and "boss" or "regular"
+			if frame.arcaneNameplatesNeedsStyle
+					or frame.arcaneNameplatesNameChangedPending
+					or frame.arcaneNameplatesAppliedCategory ~= category
+					or frame.arcaneNameplatesStyleRevision ~= styleRevision then
+					SafeCall("plate style", ApplyKnownPlate, frame, updateDebuffs)
+					frame.arcaneNameplatesNeedsStyle = nil
+					frame.arcaneNameplatesNameChangedPending = nil
+			end
+			-- The native game updates level/skull/raid/hover regions after creating the pooled plate.
+			-- Re-hide only the cached native presentation after those writes each UI update.
+			P.State.HideNativePresentation(frame)
 		end
 	end
 end
 
 local function RefreshAll()
 	refreshPending = true
-	if scanFrame then scanClock = 0 end
 end
 
 local function RestoreAll()
@@ -159,24 +209,20 @@ C.OnInit(function()
 		if dt > 0.1 then dt = 0.1 end
 		if dt < 0 then dt = 0 end
 
-		scanClock = scanClock - dt
-		if scanClock <= 0 then
-			scanClock = SCAN_INTERVAL
-			ScanNameplates()
-			refreshPending = true
+		-- Scan the tiny native child pool every UI frame. Recognition is exact and cached;
+		-- known frames are read by their two cached native FontStrings, never recursively walked.
+		local updateDebuffs = false
+		debuffClock = debuffClock - dt
+		if debuffClock <= 0 then
+			debuffClock = DEBUFF_INTERVAL
+			updateDebuffs = true
 		end
+		ScanNameplates(updateDebuffs)
 
 		overlayClock = overlayClock - dt
 		if overlayClock <= 0 then
 			overlayClock = OVERLAY_INTERVAL
 			SyncOverlayValues()
-		end
-
-		debuffClock = debuffClock - dt
-		local updateDebuffs = false
-		if debuffClock <= 0 then
-			debuffClock = DEBUFF_INTERVAL
-			updateDebuffs = true
 		end
 		if refreshPending then
 			refreshPending = false
@@ -198,4 +244,3 @@ C.OnWorld(function()
 end)
 
 C.OnLogout(function() RestoreAll() end)
-

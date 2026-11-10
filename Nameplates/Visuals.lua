@@ -4,25 +4,6 @@ C.Nameplates = C.Nameplates or {}
 local P = C.Nameplates
 P.Visuals = {}
 
-local function FindStyledVisual(frame, source)
-	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		local child = children[i]
-		local width, height = child:GetWidth(), child:GetHeight()
-		if child ~= source and child ~= frame.arcaneNameplatesOverlay
-				and child:GetObjectType() ~= "StatusBar"
-				and width and height and width >= 30 and width <= 200
-				and height >= 5 and height <= 60
-				and P.State.ContainsStatusBar(child) then
-			if not frame.arcaneNameplatesStyledOriginalScale then
-				frame.arcaneNameplatesStyledOriginalScale = child:GetScale()
-			end
-			return child
-		end
-	end
-	return nil
-end
-
 local function IsPlaceholderShrunk(frame)
 	local visual = frame.arcaneNameplatesStyledVisual
 	if visual and visual:IsShown() and frame.arcaneNameplatesStyledOriginalScale then
@@ -30,7 +11,9 @@ local function IsPlaceholderShrunk(frame)
 	end
 	local overlay = frame.arcaneNameplatesOverlay
 	if overlay and overlay:IsShown() and frame.arcaneNameplatesOverlayBaseWidth then
-		return overlay:GetWidth() < frame.arcaneNameplatesOverlayBaseWidth * 0.99
+		local expected = frame.arcaneNameplatesOverlayBaseWidth
+			* (frame.arcaneNameplatesOverlayScale or 1)
+		return overlay:GetWidth() < expected * 0.99
 	end
 	local source = frame.arcaneNameplatesSourceBar
 	if source and source:IsShown() and frame.arcaneNameplatesSourceOriginalWidth then
@@ -79,28 +62,13 @@ local function UpdateNamePlaceholder(frame)
 	HideShrunkNameLabel(frame)
 	if frame.arcaneNameplatesBossGuardian and P.Option("hideBossName") then
 		if label then label:Hide() end
-		if frame.arcaneNameplatesBossGuardianLabelHolder then frame.arcaneNameplatesBossGuardianLabelHolder:Hide() end
-		local visual = frame.arcaneNameplatesStyledVisual
-		local native = visual and P.State.FindNameFontString(visual, frame.arcaneNameplatesPlateName)
-		if native then native:SetAlpha(0); native:Hide() end
-		P.State.HideMatchingNameText(frame, frame.arcaneNameplatesPlateName, nil)
-		return
-	end
-	local visual = frame.arcaneNameplatesStyledVisual
-	local native = visual and P.State.FindNameFontString(visual, frame.arcaneNameplatesPlateName)
-	if native and P.State.NormalizeName(native:GetText()) == frame.arcaneNameplatesPlateName then
-		-- Let the replacement UI draw its own name where it expects it.
-		native:SetAlpha(1)
-		native:Show()
-		if native:IsVisible() then
-			if label then label:Hide() end
-			return
+		if frame.arcaneNameplatesBossGuardianLabelHolder then
+			frame.arcaneNameplatesBossGuardianLabelHolder:Hide()
 		end
+		return
 	end
 	P.Special.UpdateBossGuardianLabel(frame)
 	P.Special.ApplyBossGuardianLabelFont(frame)
-	P.State.HideMatchingNameText(frame, frame.arcaneNameplatesPlateName,
-		frame.arcaneNameplatesBossGuardianLabel)
 end
 
 local PLATE_ENEMY_COLORS = {
@@ -125,8 +93,40 @@ end
 local function PlateHealthText(value, maximum)
 	local hp = math.floor((value or 0) + 0.5)
 	local hpm = math.floor((maximum or 0) + 0.5)
-	if hpm >= 100000 then return C.Short(hp) .. " / " .. C.Short(hpm) end
-	return C.Commas(hp) .. " / " .. C.Commas(hpm)
+	-- No spaces around the separator: a FontString may wrap at spaces, which made the
+	-- health pair appear as two stacked rows when a large health value crossed the width limit.
+	if hpm >= 100000 then return C.Short(hp) .. "/" .. C.Short(hpm) end
+	return C.Commas(hp) .. "/" .. C.Commas(hpm)
+end
+
+local function FitHealthText(frame, width, baseSize)
+	local text = frame.arcaneNameplatesHealthText
+	if not text then return end
+	if frame.arcaneNameplatesHealthTextWidth ~= width then
+		text:SetWidth(width)
+		frame.arcaneNameplatesHealthTextWidth = width
+	end
+	if frame.arcaneNameplatesHealthTextBaseSize == baseSize
+			and frame.arcaneNameplatesHealthTextFitWidth == width
+			and frame.arcaneNameplatesHealthTextFitValue == frame.arcaneNameplatesHealthTextValue
+			and frame.arcaneNameplatesHealthTextFitMaximum == frame.arcaneNameplatesHealthTextMaximum then
+		return
+	end
+
+	local size = baseSize
+	C.SetFace(text, C.FONT, size, "OUTLINE")
+	local measured = text:GetStringWidth() or 0
+	while measured > width and size > 6 do
+		size = size - 0.5
+		C.SetFace(text, C.FONT, size, "OUTLINE")
+		measured = text:GetStringWidth() or 0
+	end
+	text:SetHeight(size * 1.6)
+	frame.arcaneNameplatesHealthTextSize = size
+	frame.arcaneNameplatesHealthTextBaseSize = baseSize
+	frame.arcaneNameplatesHealthTextFitWidth = width
+	frame.arcaneNameplatesHealthTextFitValue = frame.arcaneNameplatesHealthTextValue
+	frame.arcaneNameplatesHealthTextFitMaximum = frame.arcaneNameplatesHealthTextMaximum
 end
 
 local function UpdatePlateHealthText(frame, source)
@@ -136,25 +136,16 @@ local function UpdatePlateHealthText(frame, source)
 		end
 		return
 	end
+	local baseSize = frame.arcaneNameplatesBossGuardian and 10 or 8
+	local width = math.max(36, frame.arcaneNameplatesOverlayWidth - 8)
 	if not frame.arcaneNameplatesHealthText then
-		local special = frame.arcaneNameplatesBossGuardian and true or false
-		local size = special and 10 or 8
-		local text = C.Text(frame.arcaneNameplatesHealthBar.top, C.FONT, size, "OUTLINE",
-			"CENTER", frame.arcaneNameplatesOverlayWidth + 20)
+		local text = C.Text(frame.arcaneNameplatesHealthBar.top, C.FONT, baseSize, "OUTLINE",
+			"CENTER", width)
 		text:SetPoint("CENTER", frame.arcaneNameplatesOverlay, "CENTER", 0, 0)
 		frame.arcaneNameplatesHealthText = text
-		frame.arcaneNameplatesHealthTextSize = size
-		frame.arcaneNameplatesHealthTextWidth = frame.arcaneNameplatesOverlayWidth + 20
-	elseif frame.arcaneNameplatesHealthTextSize ~= (frame.arcaneNameplatesBossGuardian and 10 or 8) then
-		local size = frame.arcaneNameplatesBossGuardian and 10 or 8
-		C.SetFace(frame.arcaneNameplatesHealthText, C.FONT, size, "OUTLINE")
-		frame.arcaneNameplatesHealthTextSize = size
-	end
-	local width = frame.arcaneNameplatesOverlayWidth + 20
-	if frame.arcaneNameplatesHealthTextWidth ~= width then
-		frame.arcaneNameplatesHealthText:SetWidth(width)
 		frame.arcaneNameplatesHealthTextWidth = width
 	end
+
 	local _, maximum = source:GetMinMaxValues()
 	local value = source:GetValue()
 	if frame.arcaneNameplatesHealthTextValue ~= value
@@ -163,7 +154,72 @@ local function UpdatePlateHealthText(frame, source)
 		frame.arcaneNameplatesHealthTextValue = value
 		frame.arcaneNameplatesHealthTextMaximum = maximum
 	end
+	FitHealthText(frame, width, baseSize)
 	if not frame.arcaneNameplatesHealthText:IsShown() then frame.arcaneNameplatesHealthText:Show() end
+end
+
+local function EnsureLevelBadge(frame)
+	if frame.arcaneNameplatesLevelBadge then return frame.arcaneNameplatesLevelBadge end
+	local overlay = frame.arcaneNameplatesOverlay
+	if not overlay then return nil end
+
+	local size = math.max(16, math.min(20, frame.arcaneNameplatesOverlayHeight + 9))
+	local badge = CreateFrame("Frame", nil, overlay)
+	badge:SetWidth(size)
+	badge:SetHeight(size)
+	badge:SetPoint("LEFT", overlay, "RIGHT", -1, 0)
+	badge:SetFrameLevel(overlay:GetFrameLevel() + 5)
+
+	badge.edge = C.Tex(badge, "BACKGROUND", C.FLAT)
+	badge.edge:SetAllPoints(badge)
+	badge.fill = C.Tex(badge, "BORDER", C.FLAT)
+	badge.fill:SetPoint("TOPLEFT", badge, "TOPLEFT", 1, -1)
+	badge.fill:SetPoint("BOTTOMRIGHT", badge, "BOTTOMRIGHT", -1, 1)
+	badge.text = C.Text(badge, C.FONT, 8, "OUTLINE", "CENTER", size - 2)
+	badge.text:SetHeight(size - 2)
+	badge.text:SetPoint("CENTER", badge, "CENTER", 0, 0)
+	badge.text:SetText("")
+
+	frame.arcaneNameplatesLevelBadge = badge
+	frame.arcaneNameplatesLevelBadgeSize = size
+	return badge
+end
+
+local function UpdatePlateLevelBadge(frame)
+	local badge = EnsureLevelBadge(frame)
+	if not badge then return end
+	local size = math.max(16, math.min(20, frame.arcaneNameplatesOverlayHeight + 9))
+	if frame.arcaneNameplatesLevelBadgeSize ~= size then
+		badge:SetWidth(size)
+		badge:SetHeight(size)
+		badge.text:SetWidth(size - 2)
+		badge.text:SetHeight(size - 2)
+		frame.arcaneNameplatesLevelBadgeSize = size
+	end
+	if frame.arcaneNameplatesLevelBadgeFrameLevel ~= frame.arcaneNameplatesOverlay:GetFrameLevel() + 5 then
+		badge:SetFrameLevel(frame.arcaneNameplatesOverlay:GetFrameLevel() + 5)
+		frame.arcaneNameplatesLevelBadgeFrameLevel = frame.arcaneNameplatesOverlay:GetFrameLevel() + 5
+	end
+	local level = frame.arcaneNameplatesPlateLevel
+	if type(level) ~= "number" or level < 1 then
+		if badge:IsShown() then badge:Hide() end
+		return
+	end
+
+	local levelText = tostring(math.floor(level))
+	if frame.arcaneNameplatesLevelBadgeText ~= levelText then
+		C.SetText(badge.text, levelText)
+		frame.arcaneNameplatesLevelBadgeText = levelText
+	end
+
+	if frame.arcaneNameplatesLevelBadgeThemeStamp ~= C.palStamp then
+		local pal = C.Pal()
+		badge.edge:SetVertexColor(pal.rim[1], pal.rim[2], pal.rim[3], 1)
+		badge.fill:SetVertexColor(pal.trough[1], pal.trough[2], pal.trough[3], 0.98)
+		badge.text:SetTextColor(pal.title[1], pal.title[2], pal.title[3])
+		frame.arcaneNameplatesLevelBadgeThemeStamp = C.palStamp
+	end
+	if not badge:IsShown() then badge:Show() end
 end
 
 local function ApplyPlateStyle(frame)
@@ -184,6 +240,7 @@ local function ApplyPlateStyle(frame)
 	if bar.w ~= width or bar.h ~= height then C.BarLayout(bar, width, height) end
 	overlay:SetFrameLevel(math.max(frame:GetFrameLevel() + 2, source:GetFrameLevel() + 1))
 	C.BarLevels(bar, overlay:GetFrameLevel())
+	UpdatePlateLevelBadge(frame)
 	if frame.arcaneNameplatesBarThemeStamp ~= C.palStamp then
 		C.BarTheme(bar, C.Pal())
 		frame.arcaneNameplatesBarThemeStamp = C.palStamp
@@ -199,64 +256,20 @@ local function ApplyPlateStyle(frame)
 end
 
 local function CreatePlateOverlay(frame)
-	-- Do not move, resize or rescale the WorldFrame plate. The game owns its projected
-	-- position; our replacement bar is anchored to the native health bar below.
+	-- The native StatusBar is the one direct StatusBar child of the exact WorldFrame plate.
+	-- Center the replacement on that bar; do not reuse its BOTTOMLEFT point with a center offset.
+	local source = frame.arcaneNameplatesSourceBar or frame.arcaneNameplatesNativeBar
+	if not source or not P.State.IsHealthStatusBar(source) then return false end
+	frame.arcaneNameplatesSourceBar = source
 
-	if not frame.arcaneNameplatesStyledVisual then
-		frame.arcaneNameplatesStyledVisual = FindStyledVisual(frame, frame.arcaneNameplatesSourceBar)
-	end
-	if not frame.arcaneNameplatesSourceBar then
-		local children = { frame:GetChildren() }
-		for i = 1, table.getn(children) do
-			if P.State.IsHealthStatusBar(children[i]) then
-				frame.arcaneNameplatesSourceBar = children[i]
-				break
-			end
-		end
-	end
-	if not frame.arcaneNameplatesSourceBar and frame.arcaneNameplatesStyledVisual then
-		local bars = {}
-		P.State.CollectStatusBars(frame.arcaneNameplatesStyledVisual, bars)
-		for i = 1, table.getn(bars) do
-			if bars[i]:GetWidth() > 0 and bars[i]:GetHeight() > 0 then
-				frame.arcaneNameplatesSourceBar = bars[i]
-				break
-			end
-		end
-	end
-	if not frame.arcaneNameplatesSourceBar then
-		local bars = {}
-		P.State.CollectStatusBars(frame, bars)
-		for i = 1, table.getn(bars) do
-			if bars[i] ~= frame.arcaneNameplatesOverlay
-					and bars[i]:GetWidth() > 0 and bars[i]:GetHeight() > 0 then
-				frame.arcaneNameplatesSourceBar = bars[i]
-				break
-			end
-		end
-	end
-	if not frame.arcaneNameplatesSourceBar then return false end
+	local originalWidth, originalHeight = source:GetWidth(), source:GetHeight()
+	if not originalWidth or not originalHeight or originalWidth < 20 or originalWidth > 512
+			or originalHeight < 3 or originalHeight > 128 then return false end
+	frame.arcaneNameplatesSourceOriginalWidth = originalWidth
+	frame.arcaneNameplatesSourceOriginalHeight = originalHeight
 
-	local source = frame.arcaneNameplatesSourceBar
-	local originalWidth = frame.arcaneNameplatesSourceOriginalWidth or source:GetWidth()
-	local originalHeight = frame.arcaneNameplatesSourceOriginalHeight or source:GetHeight()
-	local point, relativeTo, relativePoint, x, y = source:GetPoint()
-	local oldVisuals = frame.arcaneNameplatesVisuals or {}
-	for j = 1, table.getn(oldVisuals) do
-		if oldVisuals[j].region == source then
-			originalWidth, originalHeight = oldVisuals[j].width, oldVisuals[j].height
-			point, relativeTo, relativePoint = oldVisuals[j].point, oldVisuals[j].relativeTo, oldVisuals[j].relativePoint
-			x, y = oldVisuals[j].x, oldVisuals[j].y
-			break
-		end
-	end
-	if not point then return false end
-	frame.arcaneNameplatesSourceOriginalWidth, frame.arcaneNameplatesSourceOriginalHeight = originalWidth, originalHeight
-	local visualScale = P.Special.IsBossOrGuardianPlate(frame) and 1 or 0.5
+	local visualScale = P.Special.IsBossOrGuardianPlate(frame) and 1 or 0.75
 	local width, height = originalWidth * visualScale, originalHeight * visualScale
-	local adjustedX, adjustedY = x or 0, y or 0
-	if string.find(point, "LEFT") then adjustedX = adjustedX + width / 2 end
-	if string.find(point, "BOTTOM") then adjustedY = adjustedY + height / 2 end
 	local offsetX, offsetY = 10, 14
 	if visualScale == 1 then offsetX, offsetY = 0, 0 end
 
@@ -268,15 +281,13 @@ local function CreatePlateOverlay(frame)
 		local bar = frame.arcaneNameplatesHealthBar
 		if bar.w ~= width or bar.h ~= height then C.BarLayout(bar, width, height) end
 	end
-	frame.arcaneNameplatesOverlayPoint = point
-	frame.arcaneNameplatesOverlayRelativeTo = relativeTo or frame
-	frame.arcaneNameplatesOverlayRelativePoint = relativePoint or point
-	frame.arcaneNameplatesOverlayX, frame.arcaneNameplatesOverlayY = adjustedX, adjustedY
+
 	frame.arcaneNameplatesOverlayWidth, frame.arcaneNameplatesOverlayHeight = width, height
 	frame.arcaneNameplatesOverlayBaseWidth, frame.arcaneNameplatesOverlayBaseHeight = originalWidth, originalHeight
+	frame.arcaneNameplatesOverlayScale = visualScale
 	local overlay = frame.arcaneNameplatesOverlay
 	overlay:ClearAllPoints()
-	overlay:SetPoint(point, relativeTo or frame, relativePoint or point, adjustedX + offsetX, adjustedY + offsetY)
+	overlay:SetPoint("CENTER", source, "CENTER", offsetX, offsetY)
 	return true
 end
 
@@ -303,15 +314,29 @@ local function SyncOverlayValues(orderedPlates)
 		local source = frame.arcaneNameplatesSourceBar
 		if bar and source and frame:IsVisible() and frame.arcaneNameplatesOverlay
 				and frame.arcaneNameplatesOverlay:IsShown() then
-			local minimum, maximum = source:GetMinMaxValues()
-			local range = (maximum or 0) - (minimum or 0)
-			local value = source:GetValue() or 0
-			local ratio = range > 0 and C.Clamp((value - minimum) / range, 0, 1) or 0
-			C.BarStep(bar, ratio, dt, now)
-			UpdatePlateHealthText(frame, source)
-			if frame.arcaneNameplatesBarThemeStamp ~= C.palStamp then
-				C.BarTheme(bar, C.Pal())
-				frame.arcaneNameplatesBarThemeStamp = C.palStamp
+			local sourceWidth, sourceHeight = source:GetWidth(), source:GetHeight()
+			if math.abs(sourceWidth - (frame.arcaneNameplatesSourceOriginalWidth or 0)) > 0.5
+					or math.abs(sourceHeight - (frame.arcaneNameplatesSourceOriginalHeight or 0)) > 0.5 then
+				-- The game's plate geometry changes on viewport resize. Recompute the child bar
+				-- from the live native StatusBar dimensions instead of keeping stale geometry.
+				if Apply(frame) then
+					bar = frame.arcaneNameplatesHealthBar
+				else
+					bar = nil
+				end
+			end
+			if bar then
+				local minimum, maximum = source:GetMinMaxValues()
+				local range = (maximum or 0) - (minimum or 0)
+				local value = source:GetValue() or 0
+				local ratio = range > 0 and C.Clamp((value - minimum) / range, 0, 1) or 0
+				C.BarStep(bar, ratio, dt, now)
+				UpdatePlateHealthText(frame, source)
+				UpdatePlateLevelBadge(frame)
+				if frame.arcaneNameplatesBarThemeStamp ~= C.palStamp then
+					C.BarTheme(bar, C.Pal())
+					frame.arcaneNameplatesBarThemeStamp = C.palStamp
+				end
 			end
 		end
 	end

@@ -1,4 +1,7 @@
 -- Native nameplate discovery and reversible state management.
+-- Azeroth Survivors 1.12 plates have a fixed, documented shape:
+-- anonymous WorldFrame Button; six root regions (4 textures, name + level FontStrings);
+-- one direct StatusBar child. Identify that exact object once, then cache its regions.
 local C = Arcane
 C.Nameplates = C.Nameplates or {}
 local P = C.Nameplates
@@ -22,59 +25,73 @@ local function IsOwnObject(frame, object)
 		or object == frame.arcaneNameplatesBossGuardianLabel
 end
 
--- Searches descendants because replacement UIs may put the name in a child frame.
-local function GetPlateName(frame, root)
-	root = root or frame
-	local regions = { root:GetRegions() }
-	for i = 1, table.getn(regions) do
-		local region = regions[i]
-		if region and region ~= frame.arcaneNameplatesBossGuardianLabel
-				and region:GetObjectType() == "FontString" then
-			local name = NormalizeName(region:GetText())
-			-- Purely numeric text is a level indicator, not a name.
-			if name and not string.find(name, "^%d+$") then
-				return name
-			end
-		end
-	end
-	local children = { root:GetChildren() }
-	for i = 1, table.getn(children) do
-		if not IsOwnObject(frame, children[i]) then
-			local name = GetPlateName(frame, children[i])
-			if name then return name end
-		end
-	end
-	return nil
+local function IsHealthStatusBar(bar)
+	if not bar or bar:GetObjectType() ~= "StatusBar" then return false end
+	local width, height = bar:GetWidth(), bar:GetHeight()
+	-- Native plate bars are bounded horizontal strips. The upper bounds reject unrelated
+	-- world-space widgets whose very wide StatusBars could otherwise create screen-sized overlays.
+	return width and height and width >= 20 and width <= 512
+		and height >= 3 and height <= 128 and width >= height * 2
 end
 
-local function FindNameFontString(frame, name)
-	local fallback
+local function CacheNativeParts(frame)
+	if frame.arcaneNameplatesNativeRegions and frame.arcaneNameplatesNativeBar then return true end
 	local regions = { frame:GetRegions() }
-	for i = 1, table.getn(regions) do
-		local region = regions[i]
-		if region and region:GetObjectType() == "FontString" then
-			local text = region:GetText()
-			if text == name then return region end
-			if not fallback and text and text ~= "" then fallback = region end
-		end
-	end
+	if table.getn(regions) ~= 6 then return false end
 	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		if not IsOwnObject(frame, children[i]) then
-			local found = FindNameFontString(children[i], name)
-			if found and found:GetText() == name then return found end
-			if not fallback and found then fallback = found end
-		end
+	if table.getn(children) ~= 1 or not IsHealthStatusBar(children[1]) then return false end
+
+	-- Exact order from CGNamePlateFrame: border, glow, name, level, skull, raid mark.
+	if regions[1]:GetObjectType() ~= "Texture"
+			or regions[2]:GetObjectType() ~= "Texture"
+			or regions[3]:GetObjectType() ~= "FontString"
+			or regions[4]:GetObjectType() ~= "FontString"
+			or regions[5]:GetObjectType() ~= "Texture"
+			or regions[6]:GetObjectType() ~= "Texture" then
+		return false
 	end
-	return fallback
+	frame.arcaneNameplatesNativeRegions = regions
+	frame.arcaneNameplatesNameRegion = regions[3]
+	frame.arcaneNameplatesLevelRegion = regions[4]
+	frame.arcaneNameplatesNativeBar = children[1]
+	return true
+end
+
+local function IdentifyNameplate(frame)
+	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Button" then return false end
+	-- The native constructor explicitly creates an anonymous Button under WorldFrame.
+	if type(frame.GetName) == "function" and frame:GetName() ~= nil then return false end
+	local width, height = frame:GetWidth(), frame:GetHeight()
+	if not width or not height or width <= 0 or width > 640 or height <= 0 or height > 192 then
+		return false
+	end
+	return CacheNativeParts(frame)
+end
+
+local function GetPlateName(frame)
+	local region = frame.arcaneNameplatesNameRegion
+	if not region then
+		if not CacheNativeParts(frame) then return nil end
+		region = frame.arcaneNameplatesNameRegion
+	end
+	return NormalizeName(region:GetText())
+end
+
+local function GetPlateLevel(frame)
+	local region = frame.arcaneNameplatesLevelRegion
+	if not region then
+		if not CacheNativeParts(frame) then return nil end
+		region = frame.arcaneNameplatesLevelRegion
+	end
+	local value = region:GetText()
+	if value and string.find(value, "^%d+$") then return tonumber(value) end
+	return nil
 end
 
 local function SaveObjectState(object, states, plate)
 	plate = plate or object
-	-- The root plate's visibility belongs to the game. Never restore it from our snapshot:
-	-- a pooled plate may have been hidden by the game since it was first discovered.
+	-- The root plate's visibility belongs to the game. Never restore it from our snapshot.
 	if object ~= plate then
-		-- Arcane-owned overlays have independent lifetimes and are not native state.
 		if IsOwnObject(plate, object) then return end
 		local state = { object = object, shown = object:IsShown() }
 		if object.GetAlpha then state.alpha = object:GetAlpha() end
@@ -91,17 +108,10 @@ end
 
 local function CaptureNativeState(frame)
 	if frame.arcaneNameplatesNativeCaptured then return end
-	local previouslyStyled = frame.arcaneNameplatesStyledVisual or frame.arcaneNameplatesOverlay
+	if not CacheNativeParts(frame) then return end
 	local states = {}
 	SaveObjectState(frame, states)
-	-- If an older version already modified this frame, an accurate child snapshot no longer
-	-- exists. Keep any snapshot already saved on the frame; do not invent a blanket "show all"
-	-- restoration policy for another addon or the game's UI.
-	if not previouslyStyled then
-		frame.arcaneNameplatesNativeState = states
-	elseif type(frame.arcaneNameplatesNativeState) ~= "table" then
-		frame.arcaneNameplatesNativeState = nil
-	end
+	frame.arcaneNameplatesNativeState = states
 	frame.arcaneNameplatesNativeCaptured = true
 end
 
@@ -117,9 +127,7 @@ local function RestoreNativeState(frame)
 			end
 		end
 	end
-
-	-- The WorldFrame plate's size and world-projected anchor belong to the game. Arcane Nameplates
-	-- restores only native child visibility/alpha that it explicitly changed.
+	-- Root position, scale, size and visibility remain entirely game-owned.
 	if frame.arcaneNameplatesBossGuardianLabel then frame.arcaneNameplatesBossGuardianLabel:Hide() end
 	if frame.arcaneNameplatesBossGuardianLabelHolder then frame.arcaneNameplatesBossGuardianLabelHolder:Hide() end
 	if frame.arcaneNameplatesShrunkLabelHolder then frame.arcaneNameplatesShrunkLabelHolder:Hide() end
@@ -127,156 +135,134 @@ local function RestoreNativeState(frame)
 	frame.arcaneNameplatesNativeRestored = true
 end
 
-local function IsHealthStatusBar(bar)
-	if not bar or bar:GetObjectType() ~= "StatusBar" then return false end
-	local width, height = bar:GetWidth(), bar:GetHeight()
-	-- The game plate has one wide horizontal health bar. Exclude incidental meter bars.
-	return width and height and width >= 20 and height >= 3 and width >= height * 2
-end
-
-local function ContainsStatusBar(frame)
-	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		local child = children[i]
-		if IsHealthStatusBar(child) then
-			return true
-		elseif child:GetObjectType() ~= "StatusBar" and ContainsStatusBar(child) then
-			return true
-		end
-	end
-	return false
-end
-
-local function IdentifyNameplate(frame)
-	-- Azeroth Survivors creates its native V-plates as anonymous Button children of WorldFrame.
-	-- Requiring their name and health bar keeps unrelated WorldFrame frames out of the registry.
-	if frame:GetObjectType() ~= "Button" then return false end
-	local width, height = frame:GetWidth(), frame:GetHeight()
-	if not width or not height or width <= 0 or height <= 0 then return false end
-	return GetPlateName(frame) ~= nil and ContainsStatusBar(frame)
-end
-
 local function HideNameText(frame)
-	local regions = { frame:GetRegions() }
-	for i = 1, table.getn(regions) do
+	local regions = frame.arcaneNameplatesNativeRegions
+	if not regions then return end
+	for i = 3, 4 do
 		local region = regions[i]
-		if region and region ~= frame.arcaneNameplatesBossGuardianLabel
-				and region:GetObjectType() == "FontString" then
-			region:SetAlpha(0)
-			region:Hide()
-		end
-	end
-end
-
-local function HideMatchingNameText(frame, name, keep)
-	if not name or name == "" or frame == keep then return end
-	local regions = { frame:GetRegions() }
-	for i = 1, table.getn(regions) do
-		local region = regions[i]
-		if region and region ~= keep and region:GetObjectType() == "FontString"
-				and region:GetText() == name then
-			region:SetAlpha(0)
-			region:Hide()
-		end
-	end
-	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		if not IsOwnObject(frame, children[i]) then
-			HideMatchingNameText(children[i], name, keep)
-		end
+		if region and region:IsShown() then region:Hide() end
 	end
 end
 
 local function HideNativePlate(frame, keep)
-	local regions = { frame:GetRegions() }
-	for i = 1, table.getn(regions) do
-		local region = regions[i]
-		if region and region:GetObjectType() == "Texture" then region:Hide() end
-	end
-	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		if children[i] ~= keep and children[i] ~= frame.arcaneNameplatesOverlay
-				and children[i] ~= frame.arcaneNameplatesShrunkLabelHolder then
-			children[i]:Hide()
+	local regions = frame.arcaneNameplatesNativeRegions
+	if regions then
+		for index = 1, 6 do
+			if index == 1 or index == 2 or index == 5 or index == 6 then
+				local region = regions[index]
+				if region and region:IsShown() then region:Hide() end
+			end
 		end
 	end
+	local bar = frame.arcaneNameplatesNativeBar
+	if bar and bar ~= keep and bar:IsShown() then bar:Hide() end
 end
 
-local function CollectStatusBars(frame, list)
-	local children = { frame:GetChildren() }
-	for i = 1, table.getn(children) do
-		local child = children[i]
-		if IsHealthStatusBar(child) then
-			table.insert(list, child)
-		elseif child:GetObjectType() ~= "StatusBar" then
-			CollectStatusBars(child, list)
-		end
-	end
-	return list
+local function HideArcanePresentation(frame)
+	if frame.arcaneNameplatesOverlay then frame.arcaneNameplatesOverlay:Hide() end
+	if frame.arcaneNameplatesDebuffRow then frame.arcaneNameplatesDebuffRow:Hide() end
+	if frame.arcaneNameplatesBossGuardianLabelHolder then frame.arcaneNameplatesBossGuardianLabelHolder:Hide() end
+	if frame.arcaneNameplatesBossGuardianLabel then frame.arcaneNameplatesBossGuardianLabel:Hide() end
+	if frame.arcaneNameplatesShrunkLabelHolder then frame.arcaneNameplatesShrunkLabelHolder:Hide() end
+end
+
+local function HideNativePresentation(frame)
+	HideNameText(frame)
+	HideNativePlate(frame, nil)
+end
+
+local function InstallLifecycleHooks(frame)
+	if frame.arcaneNameplatesLifecycleHooks then return end
+	local oldOnShow = frame:GetScript("OnShow")
+	local oldOnHide = frame:GetScript("OnHide")
+	frame:SetScript("OnShow", function()
+		if oldOnShow then oldOnShow() end
+		-- The game reuses hidden pool entries. Suppress both the old overlay and the just-shown
+		-- native regions immediately; the same-frame driver below binds the new unit identity.
+		frame.arcaneNameplatesPendingReuse = true
+		frame.arcaneNameplatesWasShown = false
+		HideArcanePresentation(frame)
+		HideNativePresentation(frame)
+	end)
+	frame:SetScript("OnHide", function()
+		if oldOnHide then oldOnHide() end
+		frame.arcaneNameplatesPendingReuse = true
+		frame.arcaneNameplatesWasShown = false
+		HideArcanePresentation(frame)
+	end)
+	frame.arcaneNameplatesLifecycleHooks = true
 end
 
 local function RegisterPlate(frame, knownPlates, orderedPlates)
-	if not frame or not frame.IsVisible or not frame:IsVisible()
-			or not frame.GetWidth or frame:GetWidth() <= 0
-			or not frame.GetHeight or frame:GetHeight() <= 0 then return false end
-	local known = knownPlates[frame] and true or false
-	if not known and not IdentifyNameplate(frame) then return false end
-
-	local currentName = GetPlateName(frame)
-	local oldName = frame.arcaneNameplatesPlateName
-	-- A briefly blank name is common while a pooled plate is being reused. Do not treat
-	-- that transient state as a new unit or throw away the last valid identity.
-	local nameChanged = currentName and currentName ~= oldName
-	if known and nameChanged and oldName ~= nil then
-		RestoreNativeState(frame)
+	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Button" then
+		return false, false, false
 	end
 
+	local known = knownPlates[frame] and true or false
 	if not known then
+		if not IdentifyNameplate(frame) then return false, false, false end
 		knownPlates[frame] = true
 		table.insert(orderedPlates, frame)
 		CaptureNativeState(frame)
-	elseif nameChanged then
-		-- A recycled frame may contain new native regions/children. Capture those after
-		-- restoring the previous unit, while retaining the original objects' snapshots.
-		if type(frame.arcaneNameplatesNativeState) == "table" then
-			-- The old unit's captured state has just been restored. Replace the snapshot
-			-- with this pooled unit's current tree instead of accumulating retired objects.
-			local fresh = {}
-			SaveObjectState(frame, fresh)
-			frame.arcaneNameplatesNativeState = fresh
-		end
+		InstallLifecycleHooks(frame)
+		frame.arcaneNameplatesSourceBar = frame.arcaneNameplatesNativeBar
+		frame.arcaneNameplatesAppliedCategory = nil
+		frame.arcaneNameplatesStyleRevision = -1
+	end
+	if not frame.arcaneNameplatesNativeCaptured then CaptureNativeState(frame) end
+	if not frame.arcaneNameplatesNativeCaptured then return false, false, false end
+
+	local visible = frame.IsShown and frame:IsShown()
+		and frame.IsVisible and frame:IsVisible()
+	if not visible then
+		frame.arcaneNameplatesWasShown = false
+		return true, false, false
 	end
 
-	if nameChanged then
-		frame.arcaneNameplatesPlateName = currentName
-		-- A pooled frame may receive a different native visual tree. Drop cached references so
-		-- the replacement bar is rebound to the new unit's actual StatusBar and name container.
-		frame.arcaneNameplatesSourceBar = nil
-		frame.arcaneNameplatesStyledVisual = nil
-		frame.arcaneNameplatesStyledOriginalScale = nil
-		frame.arcaneNameplatesSourceOriginalWidth = nil
-		frame.arcaneNameplatesSourceOriginalHeight = nil
+	local currentName = GetPlateName(frame)
+	local currentLevel = GetPlateLevel(frame)
+	local oldName = frame.arcaneNameplatesPlateName
+	local reactivated = frame.arcaneNameplatesPendingReuse or not frame.arcaneNameplatesWasShown
+	frame.arcaneNameplatesPendingReuse = nil
+	local nameChanged = currentName and currentName ~= oldName
+	local changed = not known or nameChanged or reactivated
+
+	if known and changed then
+		-- Restore the one original snapshot before reapplying Arcane's child visuals.
+		-- The native pool keeps the same six regions and StatusBar for the frame's lifetime.
+		RestoreNativeState(frame)
+	end
+	if currentName then frame.arcaneNameplatesPlateName = currentName end
+	if currentLevel then
+		frame.arcaneNameplatesPlateLevel = currentLevel
+	elseif changed then
+		frame.arcaneNameplatesPlateLevel = nil
+	end
+	frame.arcaneNameplatesWasShown = true
+
+	if changed then
 		frame.arcaneNameplatesDebuffUnitID = nil
 		frame.arcaneNameplatesDebuffSignature = nil
 		frame.arcaneNameplatesAppliedCategory = nil
 		frame.arcaneNameplatesStyleRevision = -1
 		frame.arcaneNameplatesNativeRestored = false
+		frame.arcaneNameplatesNeedsStyle = true
+		if nameChanged then frame.arcaneNameplatesNameChangedPending = true end
 		if frame.arcaneNameplatesHealthBar then frame.arcaneNameplatesHealthBar.snap = true end
 	end
-	return true
+	return true, changed, nameChanged and true or false
 end
 
 P.State.NormalizeName = NormalizeName
-P.State.GetPlateName = GetPlateName
-P.State.FindNameFontString = FindNameFontString
 P.State.IsOwnObject = IsOwnObject
-P.State.CaptureNativeState = CaptureNativeState
-P.State.RestoreNativeState = RestoreNativeState
-P.State.ContainsStatusBar = ContainsStatusBar
+P.State.GetPlateName = GetPlateName
+P.State.GetPlateLevel = GetPlateLevel
 P.State.IsHealthStatusBar = IsHealthStatusBar
 P.State.IdentifyNameplate = IdentifyNameplate
+P.State.CacheNativeParts = CacheNativeParts
+P.State.CaptureNativeState = CaptureNativeState
+P.State.RestoreNativeState = RestoreNativeState
 P.State.HideNameText = HideNameText
-P.State.HideMatchingNameText = HideMatchingNameText
 P.State.HideNativePlate = HideNativePlate
-P.State.CollectStatusBars = CollectStatusBars
+P.State.HideNativePresentation = HideNativePresentation
 P.State.RegisterPlate = RegisterPlate

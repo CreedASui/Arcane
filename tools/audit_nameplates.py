@@ -1,134 +1,211 @@
 #!/usr/bin/env python3
-"""Static ownership and regression guards for the Arcane Nameplates subsystem."""
+"""Static lifecycle, geometry, text-layout and tooltip guards for Arcane Nameplates."""
+
 from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
 TOC = (ROOT / "Arcane.toc").read_text(encoding="utf-8")
-NAMEPLATE_FILES = [
+FILES = (
     "Nameplates/State.lua",
     "Nameplates/SpecialTargets.lua",
     "Nameplates/Visuals.lua",
     "Nameplates/ArcaneNameplates.lua",
     "Nameplates/ArcaneNameplatesOptions.lua",
-]
-sources = {name: (ROOT / name).read_text(encoding="utf-8") for name in NAMEPLATE_FILES}
+)
+SOURCES = {name: (ROOT / name).read_text(encoding="utf-8") for name in FILES}
+STATE = SOURCES["Nameplates/State.lua"]
+SPECIAL = SOURCES["Nameplates/SpecialTargets.lua"]
+VISUALS = SOURCES["Nameplates/Visuals.lua"]
+CONTROLLER = SOURCES["Nameplates/ArcaneNameplates.lua"]
+OPTIONS = SOURCES["Nameplates/ArcaneNameplatesOptions.lua"]
+TOOLTIP = (ROOT / "Frames" / "WorldTooltip.lua").read_text(encoding="utf-8")
+CORE_OPTIONS = (ROOT / "Core" / "Options.lua").read_text(encoding="utf-8")
+ARCH = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+
 
 def require(condition, message):
     if not condition:
         raise SystemExit("Arcane Nameplates audit failed: " + message)
 
-positions = [TOC.find(name) for name in NAMEPLATE_FILES]
-require(all(pos >= 0 for pos in positions), "all plate modules must be listed in Arcane.toc")
-require(positions == sorted(positions), "plate dependency/load order is incorrect")
-require(TOC.find("Core/Bars.lua") < positions[0], "shared Core bar renderer must load before Arcane Nameplates")
 
-state = sources["Nameplates/State.lua"]
-special = sources["Nameplates/SpecialTargets.lua"]
-visuals = sources["Nameplates/Visuals.lua"]
-controller = sources["Nameplates/ArcaneNameplates.lua"]
-options = sources["Nameplates/ArcaneNameplatesOptions.lua"]
-core_options = (ROOT / "Core/Options.lua").read_text(encoding="utf-8")
+# Load order and required ownership boundaries.
+ORDER = (
+    "Nameplates/State.lua",
+    "Nameplates/SpecialTargets.lua",
+    "Nameplates/Visuals.lua",
+    "Nameplates/ArcaneNameplates.lua",
+    "Nameplates/ArcaneNameplatesOptions.lua",
+)
+positions = [TOC.find(path) for path in ORDER]
+require(all(position >= 0 for position in positions), "all Nameplates modules must be listed in Arcane.toc")
+require(positions == sorted(positions), "Nameplates module dependency order is incorrect")
+require(TOC.find("Core/Bars.lua") < positions[0], "the shared Arcane bar renderer must load before Nameplates")
+require(TOC.find("Frames/WorldTooltip.lua") >= 0, "the world-hover tooltip guard must be loaded")
 
-require("CapturePoints" not in state and "RestorePoints" not in state,
-        "Arcane Nameplates must not snapshot or restore game-owned WorldFrame anchors")
-require("frame:SetPoint(" not in state and "frame:ClearAllPoints()" not in state,
-        "native restoration must not reposition the moving WorldFrame plate")
-require("SaveObjectState" in state and "object ~= plate" in state,
-        "native state snapshots must not own plate visibility")
-require('if state.shown then object:Show() else object:Hide() end' in state,
-        "captured child visibility must be restored exactly")
-require("if state.shown then frame:Show()" not in state,
-        "restoration must never re-show a pooled root nameplate")
-require("arcaneNameplatesNativeWidth" not in state
-        and "arcaneNameplatesNativeScale" not in state
-        and "arcaneNameplatesNativePoints" not in state,
-        "native restoration must not restore stale root geometry")
-require("regions[i]:Show()" not in state and "children[i]:Show()" not in state
-        and "SetAlpha(1)" not in state,
-        "do not use blanket show/alpha restoration when native state is unknown")
-require("frame.arcaneNameplatesSourceBar = nil" in state
-        and "frame.arcaneNameplatesStyledVisual = nil" in state,
-        "recycled plates must discard stale native-child references")
-require("bossGuardianNames = {}" in special and "bossGuardianUnitsByName = {}" in special,
+# Exact native 1.12 Azeroth Survivors plate contract: anonymous WorldFrame Button,
+# six root regions in fixed creation order, and one direct horizontal StatusBar child.
+for token in (
+    'frame:GetObjectType() ~= "Button"',
+    "frame:GetName() ~= nil",
+    "local regions = { frame:GetRegions() }",
+    "table.getn(regions) ~= 6",
+    "local children = { frame:GetChildren() }",
+    "table.getn(children) ~= 1",
+    'regions[1]:GetObjectType() ~= "Texture"',
+    'regions[2]:GetObjectType() ~= "Texture"',
+    'regions[3]:GetObjectType() ~= "FontString"',
+    'regions[4]:GetObjectType() ~= "FontString"',
+    'regions[5]:GetObjectType() ~= "Texture"',
+    'regions[6]:GetObjectType() ~= "Texture"',
+    "frame.arcaneNameplatesNativeRegions = regions",
+    "frame.arcaneNameplatesNativeBar = children[1]",
+    "width <= 512",
+    "height <= 128",
+):
+    require(token in STATE, f"exact native plate identification is missing {token!r}")
+require("local function GetPlateName(frame)" in STATE and "frame.arcaneNameplatesNameRegion" in STATE,
+        "known plate names must be read from the cached native name FontString")
+require("local function GetPlateLevel(frame)" in STATE and "frame.arcaneNameplatesLevelRegion" in STATE,
+        "known plate levels must be read from the cached native level FontString")
+require("local function ContainsStatusBar" not in STATE
+        and "local function CollectStatusBars" not in STATE
+        and "local function GetPlateName(frame, root)" not in STATE,
+        "native plate identification must not recursively search arbitrary children")
+
+# Dynamic native pool handling. Retired plate frames remain cached; reuse is detected from
+# OnShow/OnHide and the native name identity, without restoring root visibility or geometry.
+for token in (
+    'frame:GetScript("OnShow")',
+    'frame:GetScript("OnHide")',
+    'frame:SetScript("OnShow"',
+    'frame:SetScript("OnHide"',
+    "if oldOnShow then oldOnShow() end",
+    "if oldOnHide then oldOnHide() end",
+    "frame.arcaneNameplatesPendingReuse = true",
+    "frame.arcaneNameplatesNeedsStyle = true",
+    "frame.arcaneNameplatesNameChangedPending = true",
+    "RestoreNativeState(frame)",
+):
+    require(token in STATE, f"pooled plate lifecycle handling is missing {token!r}")
+require("if object ~= plate then" in STATE and "if state.shown then object:Show() else object:Hide() end" in STATE,
+        "native restoration must restore child state, never the root plate visibility")
+require("frame:SetPoint(" not in STATE and "frame:ClearAllPoints()" not in STATE,
+        "native restoration must not reposition the projected WorldFrame plate")
+require("local function HideNativePresentation(frame)" in STATE,
+        "native regions must have one targeted suppression path")
+for token in ("regions[3]", "regions[4]", "regions[index]", "frame.arcaneNameplatesNativeBar"):
+    require(token in STATE, f"native presentation suppression is missing {token!r}")
+require("regions[i]:Show()" not in STATE and "children[i]:Show()" not in STATE
+        and "SetAlpha(1)" not in STATE,
+        "do not use blanket show/alpha restoration")
+
+# The controller performs one-time structural recognition and processes known cached plate
+# objects each update; there must be no half-second discovery delay or recursive frame walk.
+require("local checkedWorldChildren = {}" in CONTROLLER,
+        "new WorldFrame children must be structurally classified once")
+require("local function DiscoverNativePool(children)" in CONTROLLER
+        and 'SafeCall("plate discovery", P.State.IdentifyNameplate, frame)' in CONTROLLER,
+        "unseen WorldFrame buttons must go through the exact native signature")
+require("local function ScanNameplates(updateDebuffs)" in CONTROLLER
+        and "return P.State.RegisterPlate(frame, knownPlates, orderedPlates)" in CONTROLLER,
+        "known pool entries must refresh their identity and reuse state")
+require("ScanNameplates(updateDebuffs)" in CONTROLLER and "scanFrame:SetScript(\"OnUpdate\"" in CONTROLLER,
+        "native plate lifecycle must be driven without a half-second timer")
+require("SCAN_INTERVAL" not in CONTROLLER and "scanClock" not in CONTROLLER,
+        "there must be no arbitrary half-second discovery delay")
+require("P.State.HideNativePresentation(frame)" in CONTROLLER,
+        "late native level/skull/raid/glow writes must be suppressed after the game updates them")
+require("frame.arcaneNameplatesNeedsStyle" in CONTROLLER
+        and "frame.arcaneNameplatesNameChangedPending" in CONTROLLER,
+        "same-frame plate reuse must trigger replacement styling and boss identity refresh")
+
+# Geometry is based on the cached direct native StatusBar. The replacement is centered
+# on the source bar, with bounded dimensions and no root-plate SetPoint/scale mutation.
+for token in (
+    "frame.arcaneNameplatesNativeBar",
+    "local originalWidth, originalHeight = source:GetWidth(), source:GetHeight()",
+    "local visualScale = P.Special.IsBossOrGuardianPlate(frame) and 1 or 0.75",
+    'overlay:SetPoint("CENTER", source, "CENTER", offsetX, offsetY)',
+    "frame.arcaneNameplatesSourceOriginalWidth",
+):
+    require(token in VISUALS, f"replacement bar geometry is missing {token!r}")
+require("FindStyledVisual" not in VISUALS and "CollectStatusBars" not in VISUALS,
+        "replacement-bar creation must not recursively search arbitrary visual trees")
+require("C.NewBar(frame, width, height, true)" in VISUALS
+        and "frame.arcaneNameplatesOverlay = bar.frame" in VISUALS,
+        "the Arcane bar must use the shared renderer and remain parented to the native plate")
+require("frame:ClearAllPoints()" not in VISUALS and "frame:SetPoint(" not in VISUALS,
+        "the WorldFrame plate root geometry remains game-owned")
+
+# Health values must not wrap at whitespace. The font is fitted only inside the bar's inner width.
+require('C.Short(hp) .. "/" .. C.Short(hpm)' in VISUALS
+        and 'C.Commas(hp) .. "/" .. C.Commas(hpm)' in VISUALS,
+        "current/maximum health must have no breakable whitespace around the separator")
+require('" / "' not in VISUALS,
+        "health text must not reintroduce a whitespace wrap point")
+require("local function FitHealthText(frame, width, baseSize)" in VISUALS
+        and "text:GetStringWidth()" in VISUALS
+        and "while measured > width and size > 6 do" in VISUALS,
+        "health text must fit its full measured string to the bar's usable width")
+require("frame.arcaneNameplatesOverlayWidth - 8" in VISUALS,
+        "health text must have inner padding from the Arcane bar rim")
+require("frame.arcaneNameplatesHealthTextValue" in VISUALS
+        and "frame.arcaneNameplatesHealthTextMaximum" in VISUALS,
+        "health text should be recomputed only when source values change")
+require("local size = math.max(16, math.min(20, frame.arcaneNameplatesOverlayHeight + 9))" in VISUALS,
+        "the level badge must be sized from the visible bar")
+
+# Keep all existing nameplate compatibility contracts.
+require("bossGuardianNames = {}" in SPECIAL and "bossGuardianUnitsByName = {}" in SPECIAL,
         "boss identity indexes must be rebuilt together")
-require("debuffCache[unitID]" in special,
-        "fallback debuff API reads must be cached by unit")
-require("runTimeRead" in special,
-        "run time should be queried at most once per plate update")
-require("local function ContainsStatusBar" not in visuals,
-        "recursive status-bar search must have one implementation")
-require("P.State.RegisterPlate" in controller and "P.Visuals.Apply(frame)" in controller,
-        "controller must delegate registration and presentation to their owning modules")
-require(re.search(r"if P\.Visuals\.Apply\(frame\) then[\s\S]+?frame\.arcaneNameplatesStyleRevision = styleRevision", controller) is not None,
-        "style revision must be recorded only after application succeeds")
-require('CreateFrame("Frame", "ArcaneNameplatesOptions", parent or UIParent)' in options,
-        "the settings panel must inherit visibility through its parent frame instead of replacing parent scripts")
-require("HasStatusBar" not in state,
-        "duplicate HasStatusBar helper should be consolidated into ContainsStatusBar")
+require("debuffCache[unitID]" in SPECIAL and "runTimeRead" in SPECIAL,
+        "special-target and debuff fallback queries must remain cached")
+require('CreateFrame("Frame", "ArcaneNameplatesOptions", parent or UIParent)' in OPTIONS,
+        "the settings frame must continue to inherit visibility from its parent")
+require('P.Option("hideShrunkPlates")' not in CONTROLLER
+        and 'd["hideShrunkPlates"] = nil' in CONTROLLER
+        and "hideShrunkPlates" not in VISUALS + OPTIONS,
+        "the retired second hide switch must remain removed")
+require("C.RegisterPart" not in CONTROLLER and "SetBinding" not in CONTROLLER + VISUALS,
+        "Nameplates remain required and must not intercept the native V key")
+require('C.DB("nameplates"' in CONTROLLER and 'C.DB("nameplates"' in OPTIONS,
+        "the existing ArcaneDB.nameplates saved-variable contract must remain stable")
+require('arg1 ~= "AZSUNITS"' in CONTROLLER and "AZS_UNITS" in SPECIAL,
+        "game integration identifiers must remain unchanged")
+require("C.ArcaneNameplatesToggleOptions" in CORE_OPTIONS,
+        "the options hub must call the canonical Arcane entry point")
 
+# World-hover information is the native default-anchored GameTooltip. Suppress only
+# GameTooltip.default; ordinary control tooltips use their own anchors and remain visible.
+for token in (
+    "GameTooltip.default",
+    'ChainTooltipScript("OnTooltipSetDefaultAnchor")',
+    'ChainTooltipScript("OnShow")',
+    "local previous = GameTooltip:GetScript(scriptName)",
+    "if previous then previous() end",
+    "GameTooltip:Hide()",
+):
+    require(token in TOOLTIP, f"default-tooltip suppression is missing {token!r}")
+require("local C = Arcane" not in TOOLTIP and "C.OnInit" not in TOOLTIP
+        and 'SetScript("OnUpdate"' not in TOOLTIP,
+        "tooltip guard must be standalone and must not run a per-frame poll")
+require("OnTooltipSetDefaultAnchor" in ARCH and "GameTooltip.default" in ARCH,
+        "default-tooltip ownership behavior must be documented")
 
-require("arcaneNameplatesStackOriginalWidth" not in visuals
-        and "arcaneNameplatesStackPoint" not in visuals
-        and "frame:ClearAllPoints()" not in visuals,
-        "Arcane Nameplates visuals must not rewrite game-owned plate root geometry")
+# Arcane-owned branding and namespace, game-owned APIs untouched.
+owned = CONTROLLER + OPTIONS + STATE + SPECIAL + VISUALS
+require("C.Nameplates" in STATE and "C.Nameplates" in SPECIAL
+        and "C.Nameplates" in VISUALS and "C.Nameplates" in CONTROLLER,
+        "all Nameplates modules must share the Arcane-owned namespace")
+require(("Tiny" + " Plates") not in owned and ("Arcane" + "Plates") not in owned,
+        "retired branding must not leak into Nameplates")
+require("Plates/" not in TOC, "the old module path must remain removed")
 
-require('P.Option("hideShrunkPlates")' not in controller
-        and 'd["hideShrunkPlates"] = nil' in controller
-        and "hideShrunkPlates" not in visuals
-        and "hideShrunkPlates" not in options,
-        "Arcane Nameplates must not have a second hide switch; only clear the retired saved key")
-require("Hide regular plates" not in options,
-        "the settings panel must not offer a fake stock-plate fallback")
-require("C.RegisterPart" not in controller and "SetEnabled" not in controller
-        and "local active" not in controller,
-        "Arcane Nameplates is a required Arcane renderer, not a separately toggleable part")
-require("C.NewBar(frame, width, height, true)" in visuals
-        and "frame.arcaneNameplatesOverlay = bar.frame" in visuals,
-        "the Arcane replacement bar must remain a child of the native plate so V visibility is inherited")
-require("frame.arcaneNameplatesHiddenByOption" not in controller
-        and "frame.arcaneNameplatesHiddenByOption" not in visuals,
-        "retired per-option plate masking state must be removed")
-require("local oldOnHide = parent:GetScript" not in options,
-        "the options panel should rely on parent-child visibility, not replace the hub OnHide script")
-require("frame.arcaneNameplatesHealthTextValue" in visuals
-        and "frame.arcaneNameplatesHealthTextMaximum" in visuals,
-        "health numbers should only be reformatted when the health values change")
-require("width >= 20 and height >= 3 and width >= height * 2" in state
-        and "P.State.IsHealthStatusBar(children[i])" in visuals,
-        "discovery and rendering must use the same plausible horizontal health-bar signature")
-require('if frame:GetObjectType() ~= "Button" then return false end' in state
-        and 'if objectType ~= "Button" then return end' in controller,
-        "only the game's native WorldFrame plate buttons should enter the registry")
-require("local fresh = {}" in state
-        and "frame.arcaneNameplatesNativeState = fresh" in state,
-        "recycled plate snapshots must replace stale child references instead of growing forever")
-require("C.OnLogout(function() RestoreAll() end)" in controller,
-        "native plate state must still be restored on logout")
-require("C.NewBar(frame, width, height, true)" in visuals,
-        "Arcane Nameplates must continue using Arcane's shared bar renderer")
-require("SetBinding" not in controller and "SetBinding" not in visuals,
-        "Arcane Nameplates must not replace or intercept the game's V key binding")
-require("reuses free pool slots" in controller,
-        "the registry lifecycle must document the game's native bounded frame pool")
-
-require(("Tiny" + " Plates") not in controller + options + state + special + visuals,
-        "retired upstream product branding must not leak into Arcane UI")
-require('C.DB("nameplates"' in controller and 'C.DB("nameplates"' in options,
-        "the established saved-variable bucket must remain stable for existing installs")
-require('arg1 ~= "AZSUNITS"' in controller and "AZS_UNITS" in special,
-        "game-facing addon message and unit table identifiers must remain unchanged")
-require('CreateFrame("Frame", "ArcaneNameplatesDriver")' in controller,
-        "the controller frame must use Arcane-owned naming")
-require("C.ArcaneNameplatesToggleOptions" in core_options
-        and "C.arcaneNameplatesOptions" not in core_options + options,
-        "the options hub must call the canonical Arcane-owned options entry point")
-require(all("C.Nameplates" in source for source in (state, special, visuals, controller)),
-        "the runtime nameplate modules must share the Arcane-owned subsystem namespace")
-owned_source = controller + options + state + special + visuals
-require(("arcane" + "Plates") not in owned_source
-        and ("Arcane" + "Plates") not in owned_source,
-        "retired Arcane-owned nameplate identifiers must not remain in runtime modules")
-require("Plates/" not in TOC,
-        "the retired module directory must not remain in the addon's load map")
-print("Arcane Nameplates ownership and regression audits passed.")
+print("PASS exact native 1.12 WorldFrame plate signature and cached references")
+print("PASS pooled plate reuse and per-update native-layer suppression")
+print("PASS no half-second frame-discovery delay or recursive visual search")
+print("PASS bounded replacement geometry centered on the native health bar")
+print("PASS one-line, dynamically fitted health text and right-side level badge")
+print("PASS native V, saved variables, AZS_* integration and shared bar renderer preserved")
+print("PASS world-hover GameTooltip is suppressed only when owned by UIParent")
