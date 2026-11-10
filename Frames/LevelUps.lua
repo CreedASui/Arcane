@@ -160,7 +160,7 @@ C.OnInit(function()
 	C.Vis(root, false)
 	C.Movable(root, "levelups", "Stored level-ups", function(f)
 		f:ClearAllPoints()
-		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 118) -- over the skill bar and its XP line
+		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 276) -- clear above the XP bar and HUD, at the tested height
 	end)
 	local driver = CreateFrame("Frame", "ArcaneLevelUpsDriver")
 	driver:SetScript("OnUpdate", function()
