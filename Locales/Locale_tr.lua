@@ -390,6 +390,6 @@ Arcane.AddLanguage("tr", "Türkçe", Arcane.FACE_LETTERS, {
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane ganimet bildirimi: her eşyanın simgesi, adı ve nadirlik rengi ile kazandığın nişanları gösterir. Oyunun bildirimini değiştirir.",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "ganimet bildirimi bir hatadan sonra durdu; oyunun bildirimi geri yüklendi: ",
 	["FPS display"] = "FPS göstergesi",
-	["The game's FPS readout in Arcane lettering and a small open metal frame. Ctrl+R toggles it too."] = "Oyunun FPS göstergesi Arcane yazı tipi ve küçük, açık metal çerçeveyle gösterilir. Ctrl+R ile de açılıp kapatılır.",
+	["Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."] = "Oyunun FPS göstergesini bu kutuyla açıp kapatın. Arcane yüklüyken Ctrl+R devre dışıdır.",
 
 })
