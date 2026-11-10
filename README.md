@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.5**
+**Current release: v0.7.6**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -13,16 +13,16 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Boss timer:** a themed countdown to each boss, with the run's time.
 - **Arcane Nameplates:** Arcane's built-in replacement for the game's enemy plates, with 75%-size regular bars, Arcane's shared FRIZQT typography, one-line health values and a right-side enemy-level badge. Bosses and guardians keep their full-size styling and debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Its settings window is draggable like the other Arcane submenus.
 - **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
-- **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
+- **Skulls and cache markers:** a horned skull with red eyes floats over each boss, a plainer one over each awake guardian, and a glowing gold chest marks every cache waiting on the field. Markers scale with distance and fade when their target is gone; cache markers share the Boss skulls toggle.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
 - **UI style:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the bronze Arcane treatment and supplied gold dragon/A artwork; Hybrid adds class treatment to the skill bar only, with the Arcane A medallion on the left and the active class crest on the right; Full Class carries the active class palette across the Arcane UI—including your frame, minimap, Stats, Damage meter, Luck and shared panels—alongside class-specific skill-bar rails and paired emblems. The top and bottom center diamonds are calibrated to the visible gold stripe on each rail, including as the kills/gold/cache dock expands. The level and XP label is optically centered inside its gold progress capsule. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
-- **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
+- **Stored level-ups:** Arcane's checkbox controls and mirrors the game's actual Store Level-Ups setting. When enabled, a glowing Level Up! button shows how many choices wait; its default position clears the skill bar and XP display.
 - **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
-- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows.
+- **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows. The unused stock **M** world-map shortcut is suppressed while Arcane is loaded, without overwriting saved or custom keybindings.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
 - **Standalone Stats window:** independently track the run's 29 stats in customizable groups; choose which values appear and see changes flash green or red.
 - **Chat:** dressed to match, and kept clear of the skill bar's full Arcane medallion.
@@ -30,7 +30,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **FPS display:** an Arcane-owned readout inside the standard movable-frame system, with a larger grab target in Move frames mode. Toggle it from Arcane Options; Ctrl+R is disabled while Arcane is loaded.
 - **Native game text:** positive buff/cast and healing feedback use Arcane's known-good text colors and font. Zone announcements such as “Tower of Azora” remain completely original; gameplay notices keep their existing Arcane theme.
 - **Damage-number customization:** six optional custom typefaces and six selectable critical-hit backdrops (Flame, Frost, Arcane, Holy, Shadow and Storm); existing defaults remain unchanged.
-- **Run summary:** when a run ends, your time, level, kills, bosses, damage dealt and taken, gold and caches on one panel.
+- **Run summary:** when a run ends, your time, level, kills, bosses, damage dealt and taken, gold and caches appear on one panel. In co-op, the summary keeps its initial results while teammates continue fighting; closing it stays effective until a new outcome or run.
 
 Every optional HUD part can be turned on or off, sized and moved. Arcane Nameplates follows the game's native **V** visibility control instead of adding a second toggle.
 
@@ -40,11 +40,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.5.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.5.md`](RELEASE_NOTES_v0.7.5.md). GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing the `v0.7.5` tag runs the same validation and publishes the official GitHub Release with the verified installer attached. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.6.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.6.md`](RELEASE_NOTES_v0.7.6.md). GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing the `v0.7.6` tag runs the same validation and publishes the official GitHub Release with the verified installer attached. The publisher updates an existing release and replaces its ZIP when rerun, instead of failing on an already-created release. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.5.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.6.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
