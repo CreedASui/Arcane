@@ -1,4 +1,6 @@
-## Unreleased
+## v0.7 — November 9, 2026
+
+- **Arcane Nameplates identity and upgrade safety:** finish the transition from the former Tiny Plates naming to Arcane-owned `Nameplates/` modules and identifiers. Preserve Azeroth Survivors' `AZS_*` APIs and the existing `ArcaneDB.nameplates` saved-settings bucket.
 
 - **Nameplate lifecycle and rendering audit:** identify the game's exact six-region/one-health-bar plate structure once, cache it, respond to native pool reuse immediately, suppress late native-region redraws, center Arcane's overlay on the native bar, and keep health text on one fitted line. Hide only the persistent default-anchored world-hover tooltip; ordinary control tooltips remain available. Keep the guard standalone and event-driven.
 
