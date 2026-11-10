@@ -319,6 +319,7 @@ Arcane.AddLanguage("ja", "日本語", Arcane.FACE_CJK, {
 	["Talents"] = "タレント",
 	["The game has no talent trees for this hero."] = "この英雄のタレントツリーはありません。",
 	["Boss skulls"] = "ボスのドクロ",
+	["A skull over each boss and awake guardian, and a gold chest over each cache, wherever they are on the screen: large when near, small when far."] = "各ボスと目覚めたガーディアンの上にドクロ、各キャッシュの上に金の宝箱。画面のどこにいても表示：近いと大きく、遠いと小さく。",
 	["A skull over each boss, wherever it is on the screen: large when it is near, small when it is far. Not over mini-bosses."] = "画面のどこにいても各ボスの頭上にドクロ：近いと大きく、遠いと小さく。ミニボスには出ません。",
 	["the boss skulls stopped after an error: "] = "ボスのドクロはエラーで停止しました：",
 	["Damage Taken"] = "被ダメージ",

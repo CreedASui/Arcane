@@ -36,7 +36,16 @@ if min(start, arm, run_wait, fresh_end, show) < 0 or not (start < arm < run_wait
 if '(e and not S.closed)' in source:
     fail("the summary's visibility must not depend on a possibly stale or cleared getter result")
 
+# Co-op: after you fall the run goes on and the game's end line keeps counting, so its snapshot
+# changes every update. Outside a new run, only a first summary or a new outcome may (re)open it;
+# reopening on every changed snapshot made the numbers flicker and undid the close button.
+if "elseif e and key ~= S.summaryKey then" in source:
+    fail("a co-op summary must not reopen each time the still-counting end line changes")
+if 'elseif e and (S.summaryKey == nil or tostring(e.result) ~= S.result) then' not in source:
+    fail("outside a new run, only a first summary or a new outcome may open the summary")
+
 print("PASS: starting a new run dismisses the previous summary")
 print("PASS: the next run's summary reopens even when its result label repeats")
 print("PASS: stale previous-run summary data cannot reopen before a new snapshot arrives")
 print("PASS: the stored summary remains visible after the live API clears its data")
+print("PASS: in co-op the summary keeps its numbers and stays closed while friends fight on")

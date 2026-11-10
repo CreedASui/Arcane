@@ -319,6 +319,7 @@ Arcane.AddLanguage("ko", "한국어", Arcane.FACE_CJK, {
 	["Talents"] = "특성",
 	["The game has no talent trees for this hero."] = "이 영웅의 특성 트리가 없습니다.",
 	["Boss skulls"] = "보스 해골",
+	["A skull over each boss and awake guardian, and a gold chest over each cache, wherever they are on the screen: large when near, small when far."] = "각 보스와 깨어난 수호자 위에 해골, 각 보물 상자 위에 금색 상자를 화면 어디에 있든 표시합니다: 가까우면 크게, 멀면 작게.",
 	["A skull over each boss, wherever it is on the screen: large when it is near, small when it is far. Not over mini-bosses."] = "화면 어디에 있든 각 보스 위에 해골: 가까우면 크게, 멀면 작게. 미니 보스에는 없습니다.",
 	["the boss skulls stopped after an error: "] = "보스 해골이 오류로 멈췄습니다: ",
 	["Damage Taken"] = "받은 피해",

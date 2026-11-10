@@ -83,6 +83,9 @@ jobs:
       - name: Audit run summary lifecycle
         run: python tools/audit_run_summary.py
 
+      - name: Audit boss skulls and cache marks
+        run: python tools/audit_skulls.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |

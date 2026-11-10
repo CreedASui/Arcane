@@ -1,3 +1,8 @@
+## Unreleased
+
+- **Co-op run summary:** after you fall, your friends fight on and the game's end line keeps counting; the summary no longer reopens with every new count. Its numbers stay still, and its **x** closes it for good. It opens again only for a new outcome (your friends win) or the next run's end.
+- **Cache marks:** every cache waiting on the field wears a gold chest in a gold glow, floating over it and sized by distance like the boss skulls, so a dropped cache is easy to find. It fades once taken. Part of Boss skulls, so the same toggle turns it off.
+
 ## v0.7.5 — November 10, 2026
 
 - **Movable FPS display:** put the FPS text inside Arcane's standard movable root so the text and gold grab outline move together. Add a larger grab target for Move frames mode, keep the existing Options checkbox, and suppress Ctrl+R at runtime without saving over the player's keymap.
