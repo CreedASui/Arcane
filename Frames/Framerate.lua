@@ -22,7 +22,7 @@ local function SuppressCtrlRToggle()
 	if ok and action == "TOGGLEFPS" then
 		pcall(SetBinding, "CTRL-R")
 	end
-	-- Intentionally do not call SaveBindings: the player's saved keymap stays untouched.
+	-- Leave the player's saved keymap untouched.
 end
 
 local function PositionReadout()
