@@ -12,7 +12,7 @@ local themeState = { palStamp = -1, styleStamp = -1 }
 local displayState = { shown = nil, elapsed = 0, themeElapsed = 0 }
 
 local function NativeShown()
-	return value and value.IsShown and value:IsShown() and true or false
+	return value and value.IsVisible and value:IsVisible() and true or false
 end
 
 local function PositionReadout()
@@ -58,10 +58,10 @@ local function SetShown(on)
 	end
 
 	-- Keep the pair together even if a client build exposes a partial native state.
-	if label:IsShown() ~= on then
+	if label:IsVisible() ~= on then
 		if on then label:Show() else label:Hide() end
 	end
-	if value:IsShown() ~= on then
+	if value:IsVisible() ~= on then
 		if on then value:Show() else value:Hide() end
 	end
 
@@ -72,7 +72,7 @@ end
 
 local function SyncFromGame()
 	local shown = NativeShown()
-	if label and label:IsShown() ~= shown then
+	if label and label:IsVisible() ~= shown then
 		if shown then label:Show() else label:Hide() end
 	end
 	if db then db.enabled = shown end
