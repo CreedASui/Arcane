@@ -3,7 +3,8 @@
 local C = Arcane
 local DEFAULTS = { enabled = false }
 
-local WIDTH, HEIGHT = 96, 22
+-- A generous move-only grab box around the compact native text.
+local WIDTH, HEIGHT = 144, 36
 local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 40, 46, 5
 local TEXT_Y = 0
 
@@ -31,6 +32,20 @@ local function PositionReadout()
 	label:SetPoint("RIGHT", frame, "CENTER", -6, TEXT_Y)
 	value:ClearAllPoints()
 	value:SetPoint("LEFT", label, "RIGHT", VALUE_GAP, 0)
+end
+
+local function PreserveSavedTextPosition()
+	-- The larger mover grows 24 px on each side and 7 px vertically. Shift its saved
+	-- top-left by the inverse so an already-positioned FPS readout stays where it was.
+	if db.moverBoxVersion then return end
+	local root = C.Root()
+	local pos = root and type(root.pos) == "table" and root.pos.fps
+	if type(pos) == "table" then
+		local scale = frame:GetScale() or 1
+		if tonumber(pos.x) then pos.x = tonumber(pos.x) - 24 * scale end
+		if tonumber(pos.y) then pos.y = tonumber(pos.y) + 7 * scale end
+	end
+	db.moverBoxVersion = 2
 end
 
 local function ApplyTheme()
@@ -94,6 +109,7 @@ C.OnInit(function()
 	frame:SetFrameStrata("MEDIUM")
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
+	PreserveSavedTextPosition()
 
 	C.SetFace(label, C.FONT, 14, "OUTLINE")
 	C.SetFace(value, C.FONT, 14, "OUTLINE")
@@ -114,12 +130,14 @@ C.OnInit(function()
 	mover = C.Movable(frame, "fps", "FPS display", function(f)
 		f:ClearAllPoints()
 		if ArcaneBar then
-			f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 8)
+			f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 1)
 		else
-			f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 200)
+			f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 193)
 		end
 	end)
-	mover.box:SetBackdrop(nil)
+	-- Keep the gold mover outline visible while Move frames is enabled, but leave
+	-- its interior transparent so the native FPS text remains unobstructed.
+	mover.box:SetBackdropColor(0, 0, 0, 0)
 	mover.box.text:Hide()
 
 	SetShown(db.enabled)
