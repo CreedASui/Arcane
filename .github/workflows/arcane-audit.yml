@@ -172,7 +172,7 @@ jobs:
           gh run download "$GITHUB_RUN_ID" \
             --name "Arcane-v0.7.5-test-$GITHUB_SHA" \
             --dir release-assets
-          test -s "release-assets/ArcaneV0.7.4.zip"
+          test -s "release-assets/ArcaneV0.7.5.zip"
 
       - name: Publish GitHub Release
         env:
