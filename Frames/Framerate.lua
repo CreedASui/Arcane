@@ -84,7 +84,7 @@ C.OnInit(function()
 			-- Default to the tested spot above the right side of the skill bar.
 			f:SetPoint("CENTER", ArcaneBar, "CENTER", 298, 49)
 		else
-			f:SetPoint("CENTER", UIParent, "CENTER", 298, -410)
+			f:SetPoint("CENTER", UIParent, "BOTTOM", 298, 103)
 		end
 	end)
 	-- Keep the standard Arcane gold outline visible in Move frames mode; no filled panel.
