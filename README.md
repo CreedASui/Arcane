@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.4**
+**Current release: v0.7.5**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -27,7 +27,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Standalone Stats window:** independently track the run's 29 stats in customizable groups; choose which values appear and see changes flash green or red.
 - **Chat:** dressed to match, and kept clear of the skill bar's full Arcane medallion.
 - **Damage numbers:** calm and readable; a spell hitting a crowd adds up into one number a second, and a number that keeps stacking grows.
-- **FPS display:** the game's native readout in Arcane's typography and accent color. Toggle it from Arcane Options; Ctrl+R is disabled while Arcane is loaded.
+- **FPS display:** an Arcane-owned readout inside the standard movable-frame system, with a larger grab target in Move frames mode. Toggle it from Arcane Options; Ctrl+R is disabled while Arcane is loaded.
 - **Native game text:** positive buff/cast and healing feedback use Arcane's known-good text colors and font. Zone announcements such as “Tower of Azora” remain completely original; gameplay notices keep their existing Arcane theme.
 - **Damage-number customization:** six optional custom typefaces and six selectable critical-hit backdrops (Flame, Frost, Arcane, Holy, Shadow and Storm); existing defaults remain unchanged.
 - **Run summary:** when a run ends, your time, level, kills, bosses, damage dealt and taken, gold and caches on one panel.
@@ -40,11 +40,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.4.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.4.md`](RELEASE_NOTES_v0.7.4.md). GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing the `v0.7.4` tag runs the same validation and publishes the official GitHub Release with the verified installer attached. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.5.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.5.md`](RELEASE_NOTES_v0.7.5.md). GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing the `v0.7.5` tag runs the same validation and publishes the official GitHub Release with the verified installer attached. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.4.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.5.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 

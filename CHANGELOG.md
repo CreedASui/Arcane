@@ -1,3 +1,9 @@
+## v0.7.5 — November 10, 2026
+
+- **Movable FPS display:** put the FPS text inside Arcane's standard movable root so the text and gold grab outline move together. Add a larger grab target for Move frames mode, keep the existing Options checkbox, and suppress Ctrl+R at runtime without saving over the player's keymap.
+- **Boss-bar default spacing:** keep boss and mini-boss bars horizontally centered below the timer, with the mover outline below the timer's drag hint. Existing saved positions remain untouched.
+- **Slash command fix:** call the Options hub refresh through `C.RefreshHub()` instead of a nonexistent global, removing the Lua error after slash commands while retaining all commands and aliases.
+
 ## v0.7.4 — November 10, 2026
 
 - **XP bar text alignment:** lift the level and experience label by 2 UI pixels so the visible glyphs sit optically centered inside the gold progress capsule. Preserve the existing font, size, horizontal centering, XP tracking, level-up animation, and progress behavior.
