@@ -11,8 +11,6 @@ assert 'local DEFAULTS = { enabled = false }' in CODE
 for token in (
     'getglobal("FramerateLabel")',
     'getglobal("FramerateText")',
-    'label:SetParent(frame)',
-    'value:SetParent(frame)',
     'local function SuppressCtrlRToggle()',
     'GetBindingAction, "CTRL-R"',
     'action == "TOGGLEFPS"',
@@ -33,7 +31,9 @@ for token in (
 assert CODE.count("SuppressCtrlRToggle()") >= 3, "Ctrl+R must be suppressed on load and world entry"
 assert "SaveBindings" not in CODE, "do not persistently overwrite the player's saved key map"
 assert "local WIDTH, HEIGHT = 144, 36" in CODE, "FPS mover must have a comfortable drag target around the compact text"
-assert "label:SetParent(frame)" in CODE and "value:SetParent(frame)" in CODE, "both native FPS strings must move with the Arcane grab box"
+assert "frame:GetCenter()" in CODE and 'label:SetPoint("RIGHT", UIParent, "BOTTOMLEFT"' in CODE, "native FPS text must be positioned from the mover's live screen coordinates"
+assert 'PositionReadout()\n\t\tdisplayState.elapsed = displayState.elapsed + dt' in CODE, "native FPS text must follow the mover on every update while dragging"
+assert "SetParent(frame)" not in CODE, "native FPS FontStrings must retain their original Blizzard parent"
 assert "mover.box:SetBackdropColor(0, 0, 0, 0)" in CODE, "FPS mover outline must stay visible without obscuring the native text"
 assert "PreserveSavedTextPosition()" in CODE, "resizing the FPS mover must preserve existing saved text positions"
 assert 'f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 1)' in CODE, "fresh FPS placement must preserve its previous readout center"
@@ -66,7 +66,7 @@ for path in (
     assert '["FPS display"]' in locale, f"{path} is missing the FPS option translation"
     assert f'["{tooltip}"]' in locale, f"{path} is missing the FPS tooltip translation"
 
-print("PASS native FramerateLabel and FramerateText are retained, themed, and parented to the movable FPS root")
+print("PASS native FramerateLabel and FramerateText are retained and themed; their screen position follows the movable FPS root")
 print("PASS the Options checkbox is the only FPS toggle; the Ctrl+R TOGGLEFPS binding is unbound at runtime")
 print("PASS the user's saved key map is not overwritten")
 print("PASS no visible panel, background, half-frame, or duplicate FPS counter is added")
