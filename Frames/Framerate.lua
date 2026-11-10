@@ -2,8 +2,8 @@
 -- The 1.12 client owns the live number; Arcane only themes and repositions its two FontStrings.
 local C = Arcane
 
-local WIDTH, HEIGHT = 132, 34
-local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 38, 48, 6
+local WIDTH, HEIGHT = 108, 28
+local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 40, 46, 5
 local TEXT_Y = -1
 
 local function PositionReadout(frame, label, value)
@@ -45,21 +45,21 @@ C.OnInit(function()
 	-- There is deliberately no fill, backdrop or lower rail.
 	local art = {}
 	local top = C.Tex(frame, "BORDER", C.ART .. "PanelRailT")
-	top:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, 0)
-	top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, 0)
+	top:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, 0)
+	top:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, 0)
 	top:SetHeight(6)
 	table.insert(art, top)
 
 	local left = C.Tex(frame, "BORDER", C.ART .. "PanelRailL")
 	left:SetWidth(6)
-	left:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, -2)
-	left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 8, 8)
+	left:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -2)
+	left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 7)
 	table.insert(art, left)
 
 	local right = C.Tex(frame, "BORDER", C.ART .. "PanelRailR")
 	right:SetWidth(6)
-	right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, -2)
-	right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -8, 8)
+	right:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -2)
+	right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 7)
 	table.insert(art, right)
 
 	for _, corner in ipairs({
@@ -67,9 +67,9 @@ C.OnInit(function()
 		{ "TOPRIGHT", "PanelCornerTR" },
 	}) do
 		local t = C.Tex(frame, "ARTWORK", C.ART .. corner[2])
-		t:SetWidth(12)
-		t:SetHeight(12)
-		t:SetPoint("CENTER", frame, corner[1], corner[1] == "TOPLEFT" and 8 or -8, -1)
+		t:SetWidth(9)
+		t:SetHeight(9)
+		t:SetPoint("CENTER", frame, corner[1], corner[1] == "TOPLEFT" and 6 or -6, -1)
 		table.insert(art, t)
 	end
 
