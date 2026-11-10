@@ -214,6 +214,14 @@ def main() -> None:
         fail("Hybrid center diamonds must use the active class gem color")
     if 'table.insert(root.deco.classGems, d)' not in bar:
         fail("Bar.lua must register the two center diamonds for class coloring")
+    if "local rails = { root.deco.railT, root.deco.railB }" not in bar:
+        fail("Center diamonds must use the top and bottom rail textures as their alignment references")
+    if "local railOffsets = { 2, -2 }" not in bar:
+        fail("Center diamonds must compensate for the top/bottom rail textures' transparent art padding")
+    if 'd:SetPoint("CENTER", rails[i], "CENTER", 0, railOffsets[i])' not in bar:
+        fail("Center diamonds must use the calibrated visual-center offset for each gold rail")
+    if 'd:SetPoint("CENTER", root, edge, 0, 0)' in bar or 'd:SetPoint("CENTER", root.panel, edge, 0, 0)' in bar:
+        fail("Center diamonds must not be positioned from a frame edge instead of the visible rail center")
     if 'panel.endLeft or {}' not in styles or 'panel.endRight or {}' in styles:
         fail("Hybrid must replace only the left panel end and preserve the complete right endcap beneath the class crest")
     if ("local HYBRID_MEDALLION_SIZE = P_SIGIL * 1.40" not in core

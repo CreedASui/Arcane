@@ -1,3 +1,11 @@
+## v0.7.3 — November 9, 2026
+
+- **Release stabilization and packaging:** align the addon runtime, TOC, README and CI installer at v0.7.3. Validate the install ZIP's `Arcane/Arcane.toc` root, required artwork, multilingual fonts and license notices. A `v0.7.3` tag now publishes the validated archive as the official GitHub Release after the full audit job succeeds. No additional HUD or gameplay behavior changes beyond the current v0.7.2 mainline.
+
+## v0.7.2 — November 9, 2026
+
+- **Skill-bar center ornament alignment:** anchor each diamond to its corresponding gold rail and compensate for transparent art padding so the diamond aligns with the visible stripe, not merely the texture rectangle. The pair stays centered horizontally as the kills/gold/cache dock expands or contracts. No artwork, sizing, color, slot layout or gameplay behavior changes.
+
 ## v0.7.1 — November 9, 2026
 
 - **Arcane Nameplates settings panel:** make the settings window draggable with the left mouse button on its open background, matching the Timer and Damage Numbers options submenus. Keep it clamped to the screen and parented to Arcane Options so it still follows the hub's show/hide lifecycle. No gameplay behavior, saved-variable keys or game-owned APIs change.

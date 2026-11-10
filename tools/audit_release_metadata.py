@@ -1,36 +1,42 @@
 #!/usr/bin/env python3
-"""Keep active release metadata, package naming and published notes aligned."""
+"""Keep Arcane's active release metadata and publishing workflow aligned."""
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.7.1"
+VERSION = "0.7.3"
 VERSION_TAG = "v" + VERSION
-RELEASE_ASSET = "ArcaneV0.7.1.zip"
-ARTIFACT_PREFIX = "Arcane-v0.7.1-test-"
+RELEASE_ASSET = "ArcaneV0.7.3.zip"
+ARTIFACT_PREFIX = "Arcane-v0.7.3-test-"
+INSTALL_ZIP = "ArcaneV0.7.3.zip"
 
 checks = (
-    (ROOT / "Core.lua", f'Arcane.VERSION = "{VERSION}"', "Core.VERSION must be 0.7.1"),
-    (ROOT / "Arcane.toc", f"## Version: {VERSION_TAG}", "TOC version must be v0.7.1"),
-    (ROOT / "README.md", f"**Current release: {VERSION_TAG}**", "README release must be v0.7.1"),
-    (ROOT / "README.md", RELEASE_ASSET, "README release package name must match v0.7.1"),
-    (ROOT / "CHANGELOG.md", "## v0.7.1 — November 9, 2026", "changelog must include the dated v0.7.1 section"),
-    (ROOT / "RELEASE_NOTES_v0.7.1.md", "# Arcane UI v0.7.1", "the full v0.7.1 release notes must exist"),
-    (ROOT / ".github/workflows/arcane-audit.yml", ARTIFACT_PREFIX, "CI test artifact name must use v0.7.1"),
+    (ROOT / "Core.lua", f'Arcane.VERSION = "{VERSION}"', "Core.VERSION must match the release version"),
+    (ROOT / "Arcane.toc", f"## Version: {VERSION_TAG}", "TOC version must match the release version"),
+    (ROOT / "README.md", f"**Current release: {VERSION_TAG}**", "README current release must match"),
+    (ROOT / "README.md", RELEASE_ASSET, "README installer filename must match"),
+    (ROOT / "README.md", f"RELEASE_NOTES_{VERSION_TAG}.md", "README must link to the current release notes"),
+    (ROOT / "CHANGELOG.md", f"## {VERSION_TAG} — November 9, 2026", "changelog must include the dated release section"),
+    (ROOT / f"RELEASE_NOTES_{VERSION_TAG}.md", f"# Arcane UI {VERSION_TAG}", "current release notes must exist"),
+    (ROOT / ".github/workflows/arcane-audit.yml", ARTIFACT_PREFIX, "CI artifact prefix must match the release version"),
+    (ROOT / ".github/workflows/arcane-audit.yml", f'archive="$RUNNER_TEMP/{INSTALL_ZIP}"', "CI installer filename must match the release asset"),
+    (ROOT / ".github/workflows/arcane-audit.yml", f'- "{VERSION_TAG}"', "CI must run for the release tag"),
+    (ROOT / ".github/workflows/arcane-audit.yml", "gh release create", "the validated tag build must publish a GitHub Release"),
+    (ROOT / ".github/workflows/arcane-audit.yml", "GH_TOKEN: ${{ github.token }}", "release publishing must authenticate with the Actions token"),
+    (ROOT / ".github/workflows/arcane-audit.yml", "gh run download", "release job must download the package from this workflow run"),
 )
 for path, expected, message in checks:
-    if expected not in path.read_text(encoding="utf-8"):
+    if not path.exists() or expected not in path.read_text(encoding="utf-8"):
         print("FAIL:", message, file=sys.stderr)
         raise SystemExit(1)
 
-# Previous changelog entries may mention older releases, but the active install/package metadata must match v0.7.1.
 readme = (ROOT / "README.md").read_text(encoding="utf-8")
 workflow = (ROOT / ".github" / "workflows" / "arcane-audit.yml").read_text(encoding="utf-8")
-if "ArcaneV0.7.zip" in readme:
-    print("FAIL: README still points at the v0.7 release asset", file=sys.stderr)
+if "ArcaneV0.7.2.zip" in readme:
+    print("FAIL: README still points at the v0.7.2 installer", file=sys.stderr)
     raise SystemExit(1)
-if "Arcane-v0.7-test-" in workflow:
-    print("FAIL: CI still labels test packages as v0.7", file=sys.stderr)
+if "Arcane-v0.7.2-test-" in workflow:
+    print("FAIL: CI still labels test packages as v0.7.2", file=sys.stderr)
     raise SystemExit(1)
 
-print("PASS: Arcane v0.7.1 runtime, TOC, README, changelog, release notes and CI package metadata are consistent")
+print("PASS: Arcane v0.7.3 runtime, TOC, README, changelog, release notes, CI package and tag publishing metadata are consistent")

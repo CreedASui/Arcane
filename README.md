@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.1**
+**Current release: v0.7.3**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -16,7 +16,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Skulls:** a horned skull with red eyes floating over each boss, and a plainer one over each guardian, wherever it is on the screen, large when near and small when far.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
-- **UI style:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the bronze Arcane treatment and supplied gold dragon/A artwork; Hybrid adds class treatment to the skill bar only, with the Arcane A medallion on the left and the active class crest on the right; Full Class carries the active class palette across the Arcane UI—including your frame, minimap, Stats, Damage meter, Luck and shared panels—alongside class-specific skill-bar rails and paired emblems. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
+- **UI style:** choose Classic Arcane, Hybrid or Full Class in Arcane Options. Classic keeps the bronze Arcane treatment and supplied gold dragon/A artwork; Hybrid adds class treatment to the skill bar only, with the Arcane A medallion on the left and the active class crest on the right; Full Class carries the active class palette across the Arcane UI—including your frame, minimap, Stats, Damage meter, Luck and shared panels—alongside class-specific skill-bar rails and paired emblems. The top and bottom center diamonds are calibrated to the visible gold stripe on each rail, including as the kills/gold/cache dock expands. Your abilities (with rank-up flashes), jewelry and XP remain in the shared bar renderer.
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** a glowing Level Up! button with how many wait (with the game's Store Level-Ups on).
@@ -39,11 +39,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.1.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.1.md`](RELEASE_NOTES_v0.7.1.md). GitHub Actions runs the Core, Numbers, timer and skill-bar architecture audits, compiles every Lua chunk with Lua 5.1, and recursively creates a test ZIP for pull requests to `main`. Those checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.3.zip`. The full release notes are in [`RELEASE_NOTES_v0.7.3.md`](RELEASE_NOTES_v0.7.3.md). GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing the `v0.7.3` tag runs the same validation and publishes the official GitHub Release with the verified installer attached. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.1.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.3.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
