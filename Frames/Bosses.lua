@@ -469,7 +469,8 @@ end
 local function Anchor(f)
 	f:ClearAllPoints()
 	if C.timerRoot then
-		f:SetPoint("TOP", C.timerRoot, "BOTTOM", 0, -6)
+		-- Keep the mover centered, with its top edge below the timer's drag hint.
+		f:SetPoint("TOP", C.timerRoot, "BOTTOM", 0, -20)
 	else
 		f:SetPoint("TOP", UIParent, "TOP", 0, -88)
 	end
