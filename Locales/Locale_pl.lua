@@ -390,6 +390,6 @@ Arcane.AddLanguage("pl", "Polski", Arcane.FACE_LETTERS, {
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Powiadomienia o łupach Arcane: przedmiot z ikoną, nazwą i kolorem rzadkości oraz zdobyte znaki. Zastępują powiadomienie gry.",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "powiadomienie o łupach zatrzymało się po błędzie; przywrócono powiadomienie gry: ",
 	["FPS display"] = "Wyświetlanie FPS",
-	["The game's FPS readout in Arcane lettering and a small open metal frame. Ctrl+R toggles it too."] = "Licznik FPS gry w kroju Arcane i z małą otwartą metalową ramką. Ctrl+R również go przełącza.",
+	["Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."] = "Pokaż lub ukryj licznik FPS gry tym polem wyboru. Ctrl+R jest wyłączone, gdy Arcane jest załadowany.",
 
 })
