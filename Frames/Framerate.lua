@@ -1,20 +1,14 @@
--- Arcane UI: theme and reposition the game's native FPS readout.
--- The 1.12 client owns the live number; the Options checkbox becomes its only toggle.
+-- Arcane UI: a compact FPS readout using the same movable-frame system as every other part.
+-- The value comes from the game's FPS API; the readout itself lives inside Arcane's movable root.
 local C = Arcane
 local DEFAULTS = { enabled = false }
 
--- A generous move-only grab box around the compact native text.
 local WIDTH, HEIGHT = 144, 36
-local LABEL_WIDTH, VALUE_WIDTH, VALUE_GAP = 40, 46, 5
-local TEXT_Y = 0
+local TEXT_WIDTH, TEXT_HEIGHT = 120, 20
 
-local db, frame, label, value, mover
+local db, frame, readout, mover
+local elapsed, themeElapsed = 0, 0
 local themeState = { palStamp = -1, styleStamp = -1 }
-local displayState = { shown = nil, elapsed = 0, themeElapsed = 0 }
-
-local function NativeShown()
-	return value and value.IsVisible and value:IsVisible() and true or false
-end
 
 local function SuppressCtrlRToggle()
 	-- Match the game's existing FPS binding only. Never overwrite a different Ctrl+R action.
@@ -26,24 +20,17 @@ local function SuppressCtrlRToggle()
 	-- Leave the player's saved keymap untouched.
 end
 
-local readoutX, readoutY
-
-local function PositionReadout()
-	-- WorldFrame does not reliably carry its native FontStrings with a different
-	-- movable frame during drag. Re-anchor them to the mover's current screen center.
-	local x, y = frame:GetCenter()
-	if not x or not y then return end
-	if readoutX == x and readoutY == y then return end
-	readoutX, readoutY = x, y
-	label:ClearAllPoints()
-	label:SetPoint("RIGHT", UIParent, "BOTTOMLEFT", x - 6, y + TEXT_Y)
-	value:ClearAllPoints()
-	value:SetPoint("LEFT", label, "RIGHT", VALUE_GAP, 0)
+local function HideNativeReadout()
+	-- Arcane draws the value inside its movable frame, so hide the two stock strings.
+	local label = getglobal("FramerateLabel")
+	local value = getglobal("FramerateText")
+	if label and type(label.Hide) == "function" then label:Hide() end
+	if value and type(value.Hide) == "function" then value:Hide() end
 end
 
 local function PreserveSavedTextPosition()
-	-- The larger mover grows 24 px on each side and 7 px vertically. Shift its saved
-	-- top-left by the inverse so an already-positioned FPS readout stays where it was.
+	-- The move box grows 24 px on each side and 7 px vertically. Keep the readout's
+	-- previous center when upgrading a saved FPS position to the larger movable root.
 	if db.moverBoxVersion then return end
 	local root = C.Root()
 	local pos = root and type(root.pos) == "table" and root.pos.fps
@@ -61,82 +48,36 @@ local function ApplyTheme()
 	local palStamp = C.palStamp or 0
 	if themeState.palStamp == palStamp and themeState.styleStamp == styleStamp then return end
 	themeState.palStamp, themeState.styleStamp = palStamp, styleStamp
-	C.TextColor(label, pal.title[1], pal.title[2], pal.title[3])
-	C.TextColor(value, pal.title[1], pal.title[2], pal.title[3])
+	C.TextColor(readout, pal.title[1], pal.title[2], pal.title[3])
 end
 
 local function SetShown(on)
+	if not frame then return end
 	on = on and true or false
-	if not frame or not label or not value then return end
-
-	-- Use the same native function as the original keybinding, but Ctrl+R is unbound.
-	if NativeShown() ~= on and type(ToggleFramerate) == "function" then
-		ToggleFramerate()
-	end
-
-	if label:IsVisible() ~= on then
-		if on then label:Show() else label:Hide() end
-	end
-	if value:IsVisible() ~= on then
-		if on then value:Show() else value:Hide() end
-	end
-
+	HideNativeReadout()
 	db.enabled = on
 	if on then frame:Show() else frame:Hide() end
-	displayState.shown = on
-end
-
-local function SyncFromGame()
-	local shown = NativeShown()
-	if label and label:IsVisible() ~= shown then
-		if shown then label:Show() else label:Hide() end
-	end
-	if db then db.enabled = shown end
-	if frame then
-		if shown then frame:Show() else frame:Hide() end
-	end
-	if displayState.shown ~= shown then
-		displayState.shown = shown
-		if C.RefreshHub then C.RefreshHub() end
-	end
 end
 
 C.OnInit(function()
 	db = C.DB("fps", DEFAULTS)
 	SuppressCtrlRToggle()
+	HideNativeReadout()
 
-	-- WoW 1.12 splits the native readout into "FPS:" and its separately updated number.
-	label = getglobal("FramerateLabel")
-	value = getglobal("FramerateText")
-	if not label or not value or type(label.ClearAllPoints) ~= "function"
-			or type(value.ClearAllPoints) ~= "function" then return end
-
-	-- Invisible movement root; the native FontStrings remain the only visible elements.
+	-- The text is a child of this root. Arcane's mover therefore moves the box and
+	-- the FPS readout together, using the exact same path as the other movable parts.
 	frame = CreateFrame("Frame", "ArcaneFPSPanel", UIParent)
 	frame:SetFrameStrata("MEDIUM")
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
-
-	-- Keep the native Blizzard FontStrings in their original parent; position them
-	-- from the mover's screen coordinates instead of changing their ownership.
 	PreserveSavedTextPosition()
 
-	C.SetFace(label, C.FONT, 14, "OUTLINE")
-	C.SetFace(value, C.FONT, 14, "OUTLINE")
-	label:SetJustifyH("RIGHT")
-	value:SetJustifyH("LEFT")
-	label:SetWidth(LABEL_WIDTH)
-	value:SetWidth(VALUE_WIDTH)
-	label:SetHeight(20)
-	value:SetHeight(20)
-	label:SetShadowColor(0, 0, 0, 1)
-	value:SetShadowColor(0, 0, 0, 1)
-	label:SetShadowOffset(1, -1)
-	value:SetShadowOffset(1, -1)
-	PositionReadout()
+	readout = C.Text(frame, C.FONT, 14, "OUTLINE", "CENTER", TEXT_WIDTH)
+	readout:SetPoint("CENTER", frame, "CENTER", 0, 0)
+	readout:SetHeight(TEXT_HEIGHT)
+	C.SetText(readout, "FPS: --")
 	ApplyTheme()
 
-	-- Arcane's native mover, with a transparent handle and its own saved position.
 	mover = C.Movable(frame, "fps", "FPS display", function(f)
 		f:ClearAllPoints()
 		if ArcaneBar then
@@ -145,8 +86,7 @@ C.OnInit(function()
 			f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 193)
 		end
 	end)
-	-- Keep the gold mover outline visible while Move frames is enabled, but leave
-	-- its interior transparent so the native FPS text remains unobstructed.
+	-- Keep the standard Arcane gold outline visible in Move frames mode; no filled panel.
 	mover.box:SetBackdropColor(0, 0, 0, 0)
 	mover.box.text:Hide()
 
@@ -154,23 +94,26 @@ C.OnInit(function()
 
 	C.OnWorld(function()
 		SuppressCtrlRToggle()
-		PositionReadout()
+		HideNativeReadout()
+		C.ApplyPos(mover)
 		SetShown(db.enabled)
 	end)
 
-	-- Poll only to mirror the native visibility into the Options checkbox.
-	local watch = CreateFrame("Frame", "ArcaneFPSThemeDriver")
+	local watch = CreateFrame("Frame", "ArcaneFPSDriver")
 	watch:SetScript("OnUpdate", function()
+		if not db.enabled then return end
 		local dt = arg1 or 0
-		PositionReadout()
-		displayState.elapsed = displayState.elapsed + dt
-		displayState.themeElapsed = displayState.themeElapsed + dt
-		if displayState.elapsed >= 0.15 then
-			displayState.elapsed = 0
-			SyncFromGame()
+		elapsed = elapsed + dt
+		themeElapsed = themeElapsed + dt
+		if elapsed >= 0.25 then
+			elapsed = 0
+			local fps = GetFramerate()
+			if type(fps) == "number" then
+				C.SetText(readout, string.format("FPS: %d", math.floor(fps + 0.5)))
+			end
 		end
-		if displayState.themeElapsed >= 0.5 then
-			displayState.themeElapsed = 0
+		if themeElapsed >= 0.5 then
+			themeElapsed = 0
 			ApplyTheme()
 		end
 	end)
