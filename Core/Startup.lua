@@ -92,6 +92,17 @@ local function RemoveUnusedBackpackKey()
 end
 C.OnWorld(RemoveUnusedBackpackKey)
 
+-- Azeroth Survivors does not need WoW's large world map. Suppress only the stock M
+-- binding when it is still assigned to TOGGLEWORLDMAP. Do not save the player's keymap;
+-- other M bindings and any custom key configuration remain untouched.
+local function RemoveUnusedWorldMapKey()
+	if type(GetBindingAction) ~= "function" or type(SetBinding) ~= "function" then return end
+	local ok, action = pcall(GetBindingAction, "M")
+	if not ok or action ~= "TOGGLEWORLDMAP" then return end
+	pcall(SetBinding, "M")
+end
+C.OnWorld(RemoveUnusedWorldMapKey)
+
 -- is the addon this part grew out of still running? then that part stays off
 function C.OldAddon(name)
 	return type(IsAddOnLoaded) == "function" and IsAddOnLoaded(name) and true or false
