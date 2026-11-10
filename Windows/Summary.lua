@@ -103,8 +103,11 @@ local function Step(dt, now)
 			S.runActive = false
 			Show(e, now)
 		end
-	elseif e and key ~= S.summaryKey then
-		-- Also support loading the addon while already outside a run with a summary ready.
+	elseif e and (S.summaryKey == nil or tostring(e.result) ~= S.result) then
+		-- Also support loading the addon while already outside a run with a summary ready, and
+		-- another ending of the same run (your friends win after you fell). In co-op the run goes
+		-- on after you fall and the game's end line keeps counting: that is still the same ending,
+		-- so the summary keeps the numbers it opened with (no flicker) and stays closed once closed.
 		S.summaryKey = key
 		S.result = tostring(e.result)
 		S.endT = tonumber(e.t)

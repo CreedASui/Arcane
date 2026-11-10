@@ -319,6 +319,7 @@ Arcane.AddLanguage("zh", "中文", Arcane.FACE_CJK, {
 	["Talents"] = "天赋",
 	["The game has no talent trees for this hero."] = "游戏没有这个英雄的天赋树。",
 	["Boss skulls"] = "首领骷髅",
+	["A skull over each boss and awake guardian, and a gold chest over each cache, wherever they are on the screen: large when near, small when far."] = "每个首领和醒着的守护者头上有骷髅，每个宝箱上有金色箱子，无论在屏幕何处：近大远小。",
 	["A skull over each boss, wherever it is on the screen: large when it is near, small when it is far. Not over mini-bosses."] = "每个首领头上一个骷髅，无论它在屏幕何处：近时大，远时小。小首领没有。",
 	["the boss skulls stopped after an error: "] = "首领骷髅出错后已停止：",
 	["Damage Taken"] = "承受伤害",

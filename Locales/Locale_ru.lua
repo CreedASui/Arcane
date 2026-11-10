@@ -319,6 +319,7 @@ Arcane.AddLanguage("ru", "Русский", Arcane.FACE_LETTERS, {
 	["Talents"] = "Таланты",
 	["The game has no talent trees for this hero."] = "У игры нет деревьев талантов для этого героя.",
 	["Boss skulls"] = "Черепа боссов",
+	["A skull over each boss and awake guardian, and a gold chest over each cache, wherever they are on the screen: large when near, small when far."] = "Череп над каждым боссом и бодрствующим стражем и золотой сундук над каждым тайником, где бы они ни были на экране: вблизи крупнее, вдали меньше.",
 	["A skull over each boss, wherever it is on the screen: large when it is near, small when it is far. Not over mini-bosses."] = "Череп над каждым боссом, где бы он ни был на экране: большой, когда он близко, маленький, когда далеко. Не над мини-боссами.",
 	["the boss skulls stopped after an error: "] = "черепа боссов остановились после ошибки: ",
 	["Damage Taken"] = "Получено урона",

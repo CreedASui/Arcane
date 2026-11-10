@@ -319,6 +319,7 @@ Arcane.AddLanguage("tr", "Türkçe", Arcane.FACE_LETTERS, {
 	["Talents"] = "Yetenekler",
 	["The game has no talent trees for this hero."] = "Oyunda bu kahraman için yetenek ağacı yok.",
 	["Boss skulls"] = "Boss kafatasları",
+	["A skull over each boss and awake guardian, and a gold chest over each cache, wherever they are on the screen: large when near, small when far."] = "Her boss ve uyanık muhafızın üstünde bir kafatası, her sandığın üstünde altın bir sandık, ekranın neresinde olurlarsa: yakındayken büyük, uzaktayken küçük.",
 	["A skull over each boss, wherever it is on the screen: large when it is near, small when it is far. Not over mini-bosses."] = "Ekranın neresinde olursa olsun her boss'un üstünde bir kafatası: yakınken büyük, uzaktayken küçük. Mini boss'ların üstünde değil.",
 	["the boss skulls stopped after an error: "] = "boss kafatasları bir hatadan sonra durdu: ",
 	["Damage Taken"] = "Alınan hasar",
