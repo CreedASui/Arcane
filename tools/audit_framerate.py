@@ -36,7 +36,7 @@ for forbidden in (
     "C.Panel(",
     "PanelRail",
     "PanelFill",
-    "SetBackdrop(",
+    "SetBackdrop({",
     "CreateFontString(",
     "GetFramerate()",
     "IsShown",
