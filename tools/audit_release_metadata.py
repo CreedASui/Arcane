@@ -21,6 +21,7 @@ checks = (
     (ROOT / f"RELEASE_NOTES_{VERSION_TAG}.md", f"# Arcane UI {VERSION_TAG}", "current release notes must exist"),
     (ROOT / ".github/workflows/arcane-audit.yml", ARTIFACT_PREFIX, "CI artifact prefix must match the release version"),
     (ROOT / ".github/workflows/arcane-audit.yml", f'archive="$RUNNER_TEMP/{INSTALL_ZIP}"', "CI installer filename must match the release asset"),
+    (ROOT / ".github/workflows/arcane-audit.yml", f'test -s "release-assets/{INSTALL_ZIP}"', "release job must verify the downloaded installer filename"),
     (ROOT / ".github/workflows/arcane-audit.yml", f'- "{VERSION_TAG}"', "CI must run for the release tag"),
     (ROOT / ".github/workflows/arcane-audit.yml", f"Audit {VERSION_TAG} release metadata consistency", "CI must run the matching metadata audit"),
     (ROOT / ".github/workflows/arcane-audit.yml", f"if: github.ref == 'refs/tags/{VERSION_TAG}'", "release job must be restricted to the matching tag"),
