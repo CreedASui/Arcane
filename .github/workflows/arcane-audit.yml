@@ -63,7 +63,7 @@ jobs:
       - name: Audit skill-bar style modules and class artwork
         run: python tools/audit_bar_styles.py
 
-      - name: Audit v0.7 release metadata consistency
+      - name: Audit v0.7.1 release metadata consistency
         run: python tools/audit_release_metadata.py
 
       - name: Audit Arcane Nameplates state and module ownership
@@ -97,7 +97,7 @@ jobs:
           set -euo pipefail
           stage="$RUNNER_TEMP/package"
           addon="$stage/Arcane"
-          archive="$RUNNER_TEMP/Arcane-v0.7-test-${GITHUB_SHA:0:12}.zip"
+          archive="$RUNNER_TEMP/Arcane-v0.7.1-test-${GITHUB_SHA:0:12}.zip"
 
           mkdir -p "$addon"
           while IFS= read -r -d '' file; do
@@ -117,7 +117,7 @@ jobs:
       - name: Upload test ZIP
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: Arcane-v0.7-test-${{ github.sha }}
+          name: Arcane-v0.7.1-test-${{ github.sha }}
           path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error
           retention-days: 14

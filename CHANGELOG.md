@@ -1,3 +1,7 @@
+## v0.7.1 — November 9, 2026
+
+- **Arcane Nameplates settings panel:** make the settings window draggable with the left mouse button on its open background, matching the Timer and Damage Numbers options submenus. Keep it clamped to the screen and parented to Arcane Options so it still follows the hub's show/hide lifecycle. No gameplay behavior, saved-variable keys or game-owned APIs change.
+
 ## v0.7 — November 9, 2026
 
 - **Arcane Nameplates identity and upgrade safety:** finish the transition from the former Tiny Plates naming to Arcane-owned `Nameplates/` modules and identifiers. Preserve Azeroth Survivors' `AZS_*` APIs and the existing `ArcaneDB.nameplates` saved-settings bucket.

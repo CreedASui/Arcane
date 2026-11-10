@@ -163,6 +163,14 @@ require("debuffCache[unitID]" in SPECIAL and "runTimeRead" in SPECIAL,
         "special-target and debuff fallback queries must remain cached")
 require('CreateFrame("Frame", "ArcaneNameplatesOptions", parent or UIParent)' in OPTIONS,
         "the settings frame must continue to inherit visibility from its parent")
+for token in (
+    "panel:SetMovable(true)",
+    "panel:SetClampedToScreen(true)",
+    'panel:RegisterForDrag("LeftButton")',
+    'panel:SetScript("OnDragStart", function() panel:StartMoving() end)',
+    'panel:SetScript("OnDragStop", function() panel:StopMovingOrSizing() end)',
+):
+    require(token in OPTIONS, f"the Nameplates settings window must support dragging: {token!r}")
 require('P.Option("hideShrunkPlates")' not in CONTROLLER
         and 'd["hideShrunkPlates"] = nil' in CONTROLLER
         and "hideShrunkPlates" not in VISUALS + OPTIONS,
@@ -207,5 +215,6 @@ print("PASS pooled plate reuse and per-update native-layer suppression")
 print("PASS no half-second frame-discovery delay or recursive visual search")
 print("PASS bounded replacement geometry centered on the native health bar")
 print("PASS one-line, dynamically fitted health text and right-side level badge")
+print("PASS draggable, screen-clamped Nameplates settings panel")
 print("PASS native V, saved variables, AZS_* integration and shared bar renderer preserved")
 print("PASS world-hover GameTooltip is suppressed only when owned by UIParent")
