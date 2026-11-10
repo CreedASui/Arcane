@@ -7,7 +7,7 @@ on:
       - "refactor/**"
       - "feature/**"
     tags:
-      - "v0.7.3"
+      - "v0.7.4"
     paths:
       - "**.lua"
       - "**.toc"
@@ -65,7 +65,7 @@ jobs:
       - name: Audit skill-bar style modules and class artwork
         run: python tools/audit_bar_styles.py
 
-      - name: Audit v0.7.3 release metadata consistency
+      - name: Audit v0.7.4 release metadata consistency
         run: python tools/audit_release_metadata.py
 
       - name: Audit Arcane Nameplates state and module ownership
@@ -99,7 +99,7 @@ jobs:
           set -euo pipefail
           stage="$RUNNER_TEMP/package"
           addon="$stage/Arcane"
-          archive="$RUNNER_TEMP/ArcaneV0.7.3.zip"
+          archive="$RUNNER_TEMP/ArcaneV0.7.4.zip"
 
           mkdir -p "$addon"
           while IFS= read -r -d '' file; do
@@ -139,15 +139,15 @@ jobs:
       - name: Upload test ZIP
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: Arcane-v0.7.3-test-${{ github.sha }}
+          name: Arcane-v0.7.4-test-${{ github.sha }}
           path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error
           retention-days: 14
 
 
   publish-release:
-    name: Publish v0.7.3 GitHub Release
-    if: github.ref == 'refs/tags/v0.7.3'
+    name: Publish v0.7.4 GitHub Release
+    if: github.ref == 'refs/tags/v0.7.4'
     needs: audit-and-package
     runs-on: ubuntu-latest
     permissions:
@@ -167,9 +167,9 @@ jobs:
           set -euo pipefail
           mkdir -p release-assets
           gh run download "$GITHUB_RUN_ID" \
-            --name "Arcane-v0.7.3-test-$GITHUB_SHA" \
+            --name "Arcane-v0.7.4-test-$GITHUB_SHA" \
             --dir release-assets
-          test -s "release-assets/ArcaneV0.7.3.zip"
+          test -s "release-assets/ArcaneV0.7.4.zip"
 
       - name: Publish GitHub Release
         env:
@@ -177,8 +177,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "v0.7.3"
-          gh release create "$GITHUB_REF_NAME" "release-assets/ArcaneV0.7.3.zip" \
-            --title "Arcane UI v0.7.3" \
-            --notes-file "RELEASE_NOTES_v0.7.3.md" \
+          test "$GITHUB_REF_NAME" = "v0.7.4"
+          gh release create "$GITHUB_REF_NAME" "release-assets/ArcaneV0.7.4.zip" \
+            --title "Arcane UI v0.7.4" \
+            --notes-file "RELEASE_NOTES_v0.7.4.md" \
             --verify-tag

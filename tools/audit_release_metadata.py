@@ -4,11 +4,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.7.3"
+VERSION = "0.7.4"
 VERSION_TAG = "v" + VERSION
-RELEASE_ASSET = "ArcaneV0.7.3.zip"
-ARTIFACT_PREFIX = "Arcane-v0.7.3-test-"
-INSTALL_ZIP = "ArcaneV0.7.3.zip"
+RELEASE_ASSET = "ArcaneV0.7.4.zip"
+ARTIFACT_PREFIX = "Arcane-v0.7.4-test-"
+INSTALL_ZIP = "ArcaneV0.7.4.zip"
 
 checks = (
     (ROOT / "Core.lua", f'Arcane.VERSION = "{VERSION}"', "Core.VERSION must match the release version"),
@@ -16,7 +16,7 @@ checks = (
     (ROOT / "README.md", f"**Current release: {VERSION_TAG}**", "README current release must match"),
     (ROOT / "README.md", RELEASE_ASSET, "README installer filename must match"),
     (ROOT / "README.md", f"RELEASE_NOTES_{VERSION_TAG}.md", "README must link to the current release notes"),
-    (ROOT / "CHANGELOG.md", f"## {VERSION_TAG} — November 9, 2026", "changelog must include the dated release section"),
+    (ROOT / "CHANGELOG.md", f"## {VERSION_TAG} — November 10, 2026", "changelog must include the dated release section"),
     (ROOT / f"RELEASE_NOTES_{VERSION_TAG}.md", f"# Arcane UI {VERSION_TAG}", "current release notes must exist"),
     (ROOT / ".github/workflows/arcane-audit.yml", ARTIFACT_PREFIX, "CI artifact prefix must match the release version"),
     (ROOT / ".github/workflows/arcane-audit.yml", f'archive="$RUNNER_TEMP/{INSTALL_ZIP}"', "CI installer filename must match the release asset"),
@@ -32,11 +32,11 @@ for path, expected, message in checks:
 
 readme = (ROOT / "README.md").read_text(encoding="utf-8")
 workflow = (ROOT / ".github" / "workflows" / "arcane-audit.yml").read_text(encoding="utf-8")
-if "ArcaneV0.7.2.zip" in readme:
-    print("FAIL: README still points at the v0.7.2 installer", file=sys.stderr)
+if "ArcaneV0.7.3.zip" in readme:
+    print("FAIL: README still points at the v0.7.3 installer", file=sys.stderr)
     raise SystemExit(1)
-if "Arcane-v0.7.2-test-" in workflow:
-    print("FAIL: CI still labels test packages as v0.7.2", file=sys.stderr)
+if "Arcane-v0.7.3-test-" in workflow:
+    print("FAIL: CI still labels test packages as v0.7.3", file=sys.stderr)
     raise SystemExit(1)
 
-print("PASS: Arcane v0.7.3 runtime, TOC, README, changelog, release notes, CI package and tag publishing metadata are consistent")
+print("PASS: Arcane v0.7.4 runtime, TOC, README, changelog, release notes, CI package and tag publishing metadata are consistent")
