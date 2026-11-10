@@ -1,4 +1,10 @@
-## Unreleased
+## v0.7.6 — November 10, 2026
+
+- **Co-op run summary:** after you fall, the run continues for your teammates and the game's end line keeps counting. Arcane now keeps the opening snapshot, does not replay the count-up or reopen on each update, and remains closed after the X is clicked. A new outcome or the next run can show a new summary.
+- **Cache marks:** every cache waiting on the field wears a floating gold chest in a gold glow, sized by distance and faded once collected. Cache marks are included in the Boss skulls toggle.
+- **Stored Level-Ups integration:** the Arcane checkbox now reads and changes the game's native Store Level-Ups preference; the native Options page and Arcane hub stay synchronized.
+- **Stored Level-Ups placement:** raise the default Level Up button clear above the skill bar and XP display. Existing saved positions are preserved.
+- **Unused world-map shortcut:** suppress M only when it is assigned to the stock `TOGGLEWORLDMAP` action. Custom M bindings are untouched and the saved key map is not overwritten.
 
 - **Co-op run summary:** after you fall, your friends fight on and the game's end line keeps counting; the summary no longer reopens with every new count. Its numbers stay still, and its **x** closes it for good. It opens again only for a new outcome (your friends win) or the next run's end.
 - **Cache marks:** every cache waiting on the field wears a gold chest in a gold glow, floating over it and sized by distance like the boss skulls, so a dropped cache is easy to find. It fades once taken. Part of Boss skulls, so the same toggle turns it off.
