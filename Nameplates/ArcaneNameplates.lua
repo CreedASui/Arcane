@@ -1,10 +1,10 @@
--- Tiny Plates controller: scanning, update cadence and lifecycle.
+-- Arcane Nameplates controller: scanning, update cadence and lifecycle.
 local C = Arcane
-C.Plates = C.Plates or {}
-local P = C.Plates
+C.Nameplates = C.Nameplates or {}
+local P = C.Nameplates
 
 P.Option = function(key)
-	if type(C.ArcanePlatesOption) == "function" then return C.ArcanePlatesOption(key) end
+	if type(C.ArcaneNameplatesOption) == "function" then return C.ArcaneNameplatesOption(key) end
 	return false
 end
 
@@ -29,7 +29,7 @@ local function ReportError(scope, err)
 	local message = tostring(err)
 	if reportedErrors[scope] == message then return end
 	reportedErrors[scope] = message
-	C.Print(C.L("Tiny Plates encountered an error in ") .. scope .. ": " .. message)
+	C.Print(C.L("Arcane Nameplates encountered an error in ") .. scope .. ": " .. message)
 end
 
 local function SafeCall(scope, callback, first, second)
@@ -59,16 +59,16 @@ local function ApplyKnownPlate(frame, updateDebuffs)
 
 	local special = P.Special.IsBossOrGuardianPlate(frame)
 	local category = special and "boss" or "regular"
-	if frame.arcanePlatesAppliedCategory ~= category
-			or frame.arcanePlatesStyleRevision ~= styleRevision then
+	if frame.arcaneNameplatesAppliedCategory ~= category
+			or frame.arcaneNameplatesStyleRevision ~= styleRevision then
 		if P.Visuals.Apply(frame) then
 			-- Commit the revision only after all replacement visuals were created and applied.
 			-- An incomplete native plate stays eligible for retry on the next scan.
-			frame.arcanePlatesAppliedCategory = category
-			frame.arcanePlatesStyleRevision = styleRevision
+			frame.arcaneNameplatesAppliedCategory = category
+			frame.arcaneNameplatesStyleRevision = styleRevision
 		else
-			frame.arcanePlatesAppliedCategory = nil
-			frame.arcanePlatesStyleRevision = -1
+			frame.arcaneNameplatesAppliedCategory = nil
+			frame.arcaneNameplatesStyleRevision = -1
 		end
 	end
 
@@ -80,7 +80,7 @@ local function ApplyKnownPlate(frame, updateDebuffs)
 				P.Special.HideDebuffs(frame)
 			end
 		end
-	elseif frame.arcanePlatesDebuffRow then
+	elseif frame.arcaneNameplatesDebuffRow then
 		P.Special.HideDebuffs(frame)
 	end
 end
@@ -94,8 +94,8 @@ local function StyleKnownPlates(updateDebuffs)
 		if not ok then
 			-- Retry this plate on the next scan. Never disable the whole renderer because
 			-- one recycled or malformed game frame behaved unexpectedly.
-			frame.arcanePlatesAppliedCategory = nil
-			frame.arcanePlatesStyleRevision = -1
+			frame.arcaneNameplatesAppliedCategory = nil
+			frame.arcaneNameplatesStyleRevision = -1
 		end
 	end
 end
@@ -123,17 +123,17 @@ local function RestoreAll()
 		local frame = orderedPlates[i]
 		if frame then
 			SafeCall("native plate restoration", P.State.RestoreNativeState, frame)
-			if frame.arcanePlatesOverlay then frame.arcanePlatesOverlay:Hide() end
+			if frame.arcaneNameplatesOverlay then frame.arcaneNameplatesOverlay:Hide() end
 			P.Special.HideDebuffs(frame)
-			if frame.arcanePlatesBossGuardianLabel then frame.arcanePlatesBossGuardianLabel:Hide() end
-			if frame.arcanePlatesBossGuardianLabelHolder then frame.arcanePlatesBossGuardianLabelHolder:Hide() end
-			if frame.arcanePlatesShrunkLabelHolder then frame.arcanePlatesShrunkLabelHolder:Hide() end
-			frame.arcanePlatesNativeRestored = true
+			if frame.arcaneNameplatesBossGuardianLabel then frame.arcaneNameplatesBossGuardianLabel:Hide() end
+			if frame.arcaneNameplatesBossGuardianLabelHolder then frame.arcaneNameplatesBossGuardianLabelHolder:Hide() end
+			if frame.arcaneNameplatesShrunkLabelHolder then frame.arcaneNameplatesShrunkLabelHolder:Hide() end
+			frame.arcaneNameplatesNativeRestored = true
 		end
 	end
 end
 
-C.ArcanePlatesRefresh = function(force)
+C.ArcaneNameplatesRefresh = function(force)
 	styleRevision = styleRevision + 1
 	if force then RefreshAll() else refreshPending = true end
 end
@@ -143,10 +143,10 @@ C.OnInit(function()
 		showDebuffs = true, hideBossName = false,
 		showShrunkName = false, showHealthText = true,
 	})
-	-- Tiny Plates is always active while Arcane is loaded; remove its retired global toggle.
+	-- Arcane Nameplates is always active while Arcane is loaded; remove its retired global toggle.
 	d["enabled"] = nil
 	d["hideShrunkPlates"] = nil
-	scanFrame = CreateFrame("Frame", "ArcanePlatesDriver")
+	scanFrame = CreateFrame("Frame", "ArcaneNameplatesDriver")
 	scanFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	scanFrame:RegisterEvent("CHAT_MSG_ADDON")
 	scanFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
@@ -185,7 +185,7 @@ C.OnInit(function()
 			SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
 			for i = 1, table.getn(orderedPlates) do
 				local frame = orderedPlates[i]
-				if frame.arcanePlatesBossGuardian and frame:IsVisible() and P.Option("showDebuffs") then
+				if frame.arcaneNameplatesBossGuardian and frame:IsVisible() and P.Option("showDebuffs") then
 					SafeCall("boss debuff update", P.Special.UpdateDebuffs, frame)
 				end
 			end

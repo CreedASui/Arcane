@@ -11,17 +11,18 @@
 - **Full Class palette propagation:** Full Class now applies the active class palette across Arcane's shared UI, including player and party frames, the minimap, Stats, Damage meter, Luck, Character window, pet and stored-level-up panels. Arcane and Hybrid keep their existing bronze UI outside the skill-bar treatment; the boss timer keeps its own zone palette.
 - **UI style selector:** the Options hub now labels the selector by its full scope rather than implying it only changes the skill bar.
 
-- **Remove the redundant target pane:** keep the player frame, Tiny Plates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
+- **Remove the redundant target pane:** keep the player frame, Arcane Nameplates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
 - **Party layout:** move the default party-frame stack directly below the player frame.
 - **Remove unused legacy access:** B no longer opens the backpack or bags while Arcane is active; other B bindings and the saved key map are left alone. Keep the game's Honor tab hidden whether Arcane's Character panel is enabled or disabled.
 
 ## v0.6 — November 8, 2026
 
-- **Tiny Plates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.
+- **Arcane Nameplates identity:** move the integrated enemy-plate renderer into Arcane-owned modules, namespace and frame-state names. Preserve the game's `AZS_*` integration and the existing `ArcaneDB.nameplates` saved settings for upgrades.
+- **Arcane Nameplates refactor:** reorganize the built-in enemy-plate replacement into state, special-target, visual and controller modules. Keep its health bars on Arcane's shared bar renderer.
 - **Native visibility ownership:** the game's `V` command remains the only enemy-plate visibility control. Arcane's replacement is attached to the same pooled native plate buttons, with no second enable/hide switch or stock-renderer fallback.
 - **Safer native restoration:** capture and restore only native child visibility and alpha; leave the game's projected plate position and geometry untouched. Avoid blanket show-all recovery when the original state is unknown.
 - **Pooled-frame and update fixes:** identify only the game's native plate buttons, refresh reused pool slots without stale state, retry incomplete styling, cache special-target/debuff lookups, and isolate errors to the affected plate.
-- **Regression coverage:** add a dedicated Tiny Plates audit to the repository's CI checks.
+- **Regression coverage:** add a dedicated Arcane Nameplates audit to the repository's CI checks.
 
 ## v0.5 — November 8, 2026
 
@@ -55,7 +56,7 @@ This release consolidates the current Arcane UI feature set and the previously r
 
 - **Lua 5.0 compatibility:** the addon source targets the client's Lua 5.0 runtime.
 - **Repository layout:** addon source modules and assets live at the repository root; release packages place them inside the required `Arcane/` install folder.
-- **Tiny Plates:** regular nameplates now use Arcane's shared FRIZQT face, hostile-name color and layered enemy-red bars; bosses and guardians use the same bar style at full size. The health numbers inside the bars have their own Show health numbers toggle, independent of bar visibility. The game's health values, V visibility toggle and native restoration when Tiny Plates is off are preserved.
+- **Arcane Nameplates:** regular nameplates now use Arcane's shared FRIZQT face, hostile-name color and layered enemy-red bars; bosses and guardians use the same bar style at full size. The health numbers inside the bars have their own Show health numbers toggle, independent of bar visibility. The game's health values, V visibility toggle and captured native child visibility and alpha are restored during pooled-frame reuse and logout.
 - **Bronze gold everywhere:** every frame's metal (your frame, your target and party, the boss bars, the minimap ring, the meter, the luck window and the rest) is the skill bar's bronze gold in every zone, instead of taking the zone's colors. The boss timer keeps its own.
 - **Dragons:** both face out now, perched on the bar's ends with the end rail behind them.
 - **The skill bar keeps one size:** it no longer grows when a run starts and the kills, gold and cache show up, or as their numbers get longer.

@@ -22,7 +22,7 @@ This document describes the source layout and the runtime rules behind it. The a
 | `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames. |
 | `Minimap/` | Minimap presentation, edge button, cache pins and lair pins. |
 | `Windows/` | Tally, meter, damage/healing, pets, luck, summary, character, stats, talents and chat windows. |
-| `Plates/` | Tiny Plates replacement and its options. |
+| `Nameplates/` | Arcane Nameplates replacement and its options. |
 | `Loot/` | Loot-set data and loot notifications. |
 
 ## Shared components
@@ -45,16 +45,18 @@ Use a shared helper when the behavior and its contract are genuinely the same. D
 
 The largest remaining feature files are candidates for later, isolated extractions: `Timer/Timer.lua`, `Windows/Meter.lua` and `Windows/Character.lua`. Each owns a coherent feature but may still contain internal responsibilities worth separating when the boundaries are clear. Split those by data intake, presentation, interaction and lifecycle only when the boundaries can be kept explicit and the live client can verify the result.
 
-## Tiny Plates
+## Arcane Nameplates
 
-Tiny Plates is split by responsibility rather than by individual helper:
-- `Plates/State.lua` owns native plate discovery, child-state snapshots and safe visibility restoration.
-- `Plates/SpecialTargets.lua` owns boss/guardian identity and debuff presentation.
-- `Plates/Visuals.lua` owns replacement bars, labels and plate styling.
-- `Plates/ArcanePlates.lua` owns discovery cadence, update scheduling and addon lifecycle.
-- `Plates/ArcanePlatesOptions.lua` owns the settings UI and saved option access.
+Arcane Nameplates is split by responsibility rather than by individual helper:
+- `Nameplates/State.lua` owns native plate discovery, child-state snapshots and safe visibility restoration.
+- `Nameplates/SpecialTargets.lua` owns boss/guardian identity and debuff presentation.
+- `Nameplates/Visuals.lua` owns replacement bars, labels and plate styling.
+- `Nameplates/ArcaneNameplates.lua` owns discovery cadence, update scheduling and addon lifecycle.
+- `Nameplates/ArcaneNameplatesOptions.lua` owns the settings UI and saved option access.
 
-The controller delegates to these modules in TOC order. Tiny Plates is not a separately toggleable Arcane part: it is the UX's enemy-plate renderer and remains active whenever Arcane is loaded. The game's native `V` command owns enemy-plate visibility. Azeroth Survivors creates anonymous `Button` children under `WorldFrame`, hides retired plates, and reuses free pool slots. The Arcane replacement bar is parented to the same button, so it follows the game's show/hide state without binding or overriding `V`. The registry is therefore bounded by the game's high-water plate pool; no guessed cleanup timer is needed. There is no second hide checkbox and no stock-renderer fallback.
+The controller delegates to these modules in TOC order. Arcane Nameplates is Arcane's required enemy-plate renderer and remains active whenever Arcane is loaded. The game's native `V` command owns enemy-plate visibility. Azeroth Survivors creates anonymous `Button` children under `WorldFrame`, hides retired plates, and reuses free pool slots. The Arcane replacement bar is parented to the same button, so it follows the game's show/hide state without binding or overriding `V`. The registry is therefore bounded by the game's high-water plate pool; no guessed cleanup timer is needed. There is no second hide checkbox and no stock-renderer fallback.
+
+Arcane-owned code uses the `C.Nameplates` namespace and `arcaneNameplates*` frame state. The existing `ArcaneDB.nameplates` saved-settings key is intentionally retained so upgrades keep custom colors and display preferences. `AZSUNITS`, `AZS_UNITS` and the other `AZS_*` names belong to Azeroth Survivors and must remain unchanged; they are integration contracts, not Arcane branding.
 
 
-Tiny Plates does not own the `WorldFrame` plate root's dimensions, scale or projected position. Azeroth Survivors updates the root anchor as units move; Tiny Plates anchors its overlay to the native health bar and restores only native child visibility/alpha that it changed.
+Arcane Nameplates does not own the `WorldFrame` plate root's dimensions, scale or projected position. Azeroth Survivors updates the root anchor as units move; Arcane Nameplates anchors its overlay to the native health bar and restores only native child visibility/alpha that it changed.
