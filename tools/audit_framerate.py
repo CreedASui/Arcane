@@ -41,8 +41,8 @@ assert "ToggleFramerate" not in CODE, "the hidden native text toggle must not co
 assert "CreateFontString(" not in CODE, "use Arcane's shared C.Text factory"
 assert "C.Panel(" not in CODE and "SetBackdrop({" not in CODE, "the FPS display must remain text-only outside the standard mover outline"
 assert "local WIDTH, HEIGHT = 144, 36" in CODE, "the FPS mover must retain its comfortable grab area"
-assert 'f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 1)' in CODE, "fresh FPS placement must preserve its previous readout center"
-assert 'f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 193)' in CODE, "fallback FPS placement must preserve its previous readout center"
+assert 'f:SetPoint("CENTER", ArcaneBar, "CENTER", 298, 49)' in CODE, "fresh FPS placement must default above the skill bar's right side"
+assert 'f:SetPoint("CENTER", UIParent, "BOTTOM", 298, 103)' in CODE, "fallback FPS placement must match the skill-bar-relative default spot"
 assert "PreserveSavedTextPosition()" in CODE, "resizing the FPS mover must preserve existing saved positions"
 
 tooltip = "Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."
