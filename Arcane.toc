@@ -61,6 +61,7 @@ Frames/WorldTooltip.lua
 SkillBar/StylesData.lua
 SkillBar/Styles.lua
 SkillBar/Bar.lua
+Frames/Framerate.lua
 
 Windows/Tally.lua
 Frames/LevelUps.lua
