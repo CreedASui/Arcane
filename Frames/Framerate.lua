@@ -109,6 +109,12 @@ C.OnInit(function()
 	frame:SetFrameStrata("MEDIUM")
 	frame:SetWidth(WIDTH)
 	frame:SetHeight(HEIGHT)
+
+	-- The Blizzard readout strings are siblings under WorldFrame by default. Reparent
+	-- the native strings to the movable root so the text and Arcane's grab box are
+	-- one unit: dragging the box can never leave the FPS text behind.
+	label:SetParent(frame)
+	value:SetParent(frame)
 	PreserveSavedTextPosition()
 
 	C.SetFace(label, C.FONT, 14, "OUTLINE")
