@@ -18,7 +18,7 @@ for token in (
     'if NativeShown() ~= on and type(ToggleFramerate) == "function" then',
     'value:IsVisible()',
     'C.Movable(frame, "fps", "FPS display"',
-    'mover.box:SetBackdrop(nil)',
+    'mover.box:SetBackdropColor(0, 0, 0, 0)',
     'C.RegisterPart({',
     'key = "fps"',
     'C.RefreshHub()',
@@ -30,6 +30,11 @@ for token in (
 
 assert CODE.count("SuppressCtrlRToggle()") >= 3, "Ctrl+R must be suppressed on load and world entry"
 assert "SaveBindings" not in CODE, "do not persistently overwrite the player's saved key map"
+assert "local WIDTH, HEIGHT = 144, 36" in CODE, "FPS mover must have a comfortable drag target around the compact text"
+assert "mover.box:SetBackdropColor(0, 0, 0, 0)" in CODE, "FPS mover outline must stay visible without obscuring the native text"
+assert "PreserveSavedTextPosition()" in CODE, "resizing the FPS mover must preserve existing saved text positions"
+assert 'f:SetPoint("BOTTOM", ArcaneBar, "TOP", 0, 1)' in CODE, "fresh FPS placement must preserve its previous readout center"
+assert 'f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 193)' in CODE, "fallback FPS placement must preserve its previous readout center"
 
 # No panel, fill, rail, extra FontString, or second FPS counter: only the native text is visible.
 for forbidden in (
@@ -62,5 +67,5 @@ print("PASS native FramerateLabel and FramerateText are both retained and themed
 print("PASS the Options checkbox is the only FPS toggle; the Ctrl+R TOGGLEFPS binding is unbound at runtime")
 print("PASS the user's saved key map is not overwritten")
 print("PASS no visible panel, background, half-frame, or duplicate FPS counter is added")
-print("PASS FPS display uses Arcane's native saved-position mover")
+print("PASS FPS display uses Arcane's native saved-position mover with a larger transparent grab box")
 print("PASS FPS option and tooltip are translated in all 11 bundled languages")
