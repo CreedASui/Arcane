@@ -77,6 +77,9 @@ jobs:
       - name: Audit stock error-frame controls
         run: python tools/audit_stock_frame_controls.py
 
+      - name: Audit native FPS display and Ctrl+R synchronization
+        run: python tools/audit_framerate.py
+
       - name: Audit run summary lifecycle
         run: python tools/audit_run_summary.py
 

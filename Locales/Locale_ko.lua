@@ -389,4 +389,7 @@ Arcane.AddLanguage("ko", "한국어", Arcane.FACE_CJK, {
 	["{1} in all"] = "총 {1}개",
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Arcane 전리품 알림: 아이템 아이콘, 이름, 희귀도 색상과 획득한 징표를 표시합니다. 게임 알림을 대체합니다.",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "전리품 알림이 오류로 중지되어 게임 알림을 복원했습니다: ",
+	["FPS display"] = "FPS 표시",
+	["Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."] = "이 체크박스로 게임 FPS 표시를 켜거나 끕니다. Arcane이 로드된 동안 Ctrl+R은 비활성화됩니다.",
+
 })

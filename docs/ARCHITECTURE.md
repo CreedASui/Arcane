@@ -19,7 +19,7 @@ This document describes the source layout and the runtime rules behind it. The a
 | `Timer/` | Boss timer data and its renderer/controller. |
 | `Numbers/` | Damage-number configuration, combat intake, icons, labels, world anchors, layout, culling, placement, animation, lifecycle, options and commands. |
 | `SkillBar/` | Class/style data, visual style controller and the skill-slot/XP renderer. |
-| `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames, stock notifications and native text styling. |
+| `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames, native FPS readout, stock notifications and native text styling. |
 | `Minimap/` | Minimap presentation, edge button, cache pins and lair pins. |
 | `Windows/` | Tally, meter, damage/healing, pets, luck, summary, character, stats, talents and chat windows. |
 | `Nameplates/` | Arcane Nameplates replacement and its options. |

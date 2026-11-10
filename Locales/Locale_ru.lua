@@ -389,4 +389,7 @@ Arcane.AddLanguage("ru", "Русский", Arcane.FACE_LETTERS, {
 	["{1} in all"] = "Всего {1}",
 	["Arcane's loot pop-up: each drop with its icon, name and rarity color, plus the marks you earn. Replaces the game's loot pop-up."] = "Уведомления о добыче Arcane: значок, название и цвет редкости каждого предмета, а также полученные знаки. Заменяет уведомление игры.",
 	["the loot pop-up stopped after an error, so the game's own is back: "] = "уведомление о добыче остановилось после ошибки; уведомление игры восстановлено: ",
+	["FPS display"] = "Отображение FPS",
+	["Show or hide the game's FPS readout with this checkbox. Ctrl+R is disabled while Arcane is loaded."] = "Показывайте или скрывайте FPS игры этим флажком. Пока Arcane загружен, Ctrl+R отключён.",
+
 })
