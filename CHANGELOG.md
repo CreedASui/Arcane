@@ -1,60 +1,219 @@
+# Arcane UI — Release History
+
+This is the single source of truth for versioned release notes. Add each new release as a dated section at the top of this file. GitHub Actions extracts the matching section when publishing a version tag; separate per-version release-note files are not used.
+
 ## v0.7.6 — November 10, 2026
 
-- **Co-op run summary:** after you fall, the run continues for your teammates and the game's end line keeps counting. Arcane now keeps the opening snapshot, does not replay the count-up or reopen on each update, and remains closed after the X is clicked. A new outcome or the next run can show a new summary.
-- **Cache marks:** every cache waiting on the field wears a floating gold chest in a gold glow, sized by distance and faded once collected. Cache marks are included in the Boss skulls toggle.
-- **Stored Level-Ups integration:** the Arcane checkbox now reads and changes the game's native Store Level-Ups preference; the native Options page and Arcane hub stay synchronized.
-- **Stored Level-Ups placement:** raise the default Level Up button clear above the skill bar and XP display. Existing saved positions are preserved.
-- **Unused world-map shortcut:** suppress M only when it is assigned to the stock `TOGGLEWORLDMAP` action. Custom M bindings are untouched and the saved key map is not overwritten.
+Arcane v0.7.6 brings a multiplayer run-summary fix, clearer cache markers, a properly connected Stored Level-Ups setting, and a little less unused game UI.
 
-- **Co-op run summary:** after you fall, your friends fight on and the game's end line keeps counting; the summary no longer reopens with every new count. Its numbers stay still, and its **x** closes it for good. It opens again only for a new outcome (your friends win) or the next run's end.
-- **Cache marks:** every cache waiting on the field wears a gold chest in a gold glow, floating over it and sized by distance like the boss skulls, so a dropped cache is easy to find. It fades once taken. Part of Boss skulls, so the same toggle turns it off.
+### What's changed
+
+- **Co-op run summary:** when you fall while your teammates continue the run, the game's end-of-run statistics can keep changing. Arcane now keeps the original summary snapshot instead of reopening and replaying its count-up animation on every update. Closing the summary stays effective while the run continues, and a genuinely new outcome or the next run can show a new summary.
+- **Gold cache markers:** caches waiting on the field now have a floating gold chest marker with a matching glow. It scales with distance and fades after the cache is collected. The feature is part of **Boss skulls** and follows the same Options toggle.
+- **Stored Level-Ups setting:** Arcane's Stored level-ups checkbox now reads and changes the game's actual Store Level-Ups preference. The Arcane menu and the game's native Options page stay synchronized, and the custom Level Up button is used when the game setting is enabled.
+- **Stored Level-Ups placement:** raised the default button position so it clears the skill bar and XP display. Existing saved positions are preserved; the new anchor applies to fresh layouts or after resetting positions.
+- **Remove unused world-map shortcut:** Arcane suppresses the stock **M** binding only when M is assigned to `TOGGLEWORLDMAP`. Custom M bindings are left alone, and the player's saved key configuration is not overwritten.
+
+### Preserved behavior
+
+- Existing saved frame positions and per-part settings, except that fresh/reset Stored Level-Ups placement uses the higher default.
+- The minimap, its ring, clock, chest and lair pins, and the Arcane A options button. Only the unused stock M world-map shortcut is suppressed.
+- The player's saved keybinding file and any custom M binding.
+- Existing Store Level-Ups gameplay behavior and native game Options control.
+- Boss skulls, guardian markers and the existing minimap chest markers.
+
+### Compatibility and validation
+
+- Targets Azeroth Survivors 1.12.1 and its Lua 5.0 runtime.
+- Repository architecture and regression audits passed.
+- All Lua chunks compiled with Lua 5.1 as a syntax check.
+- The install ZIP was validated for archive integrity, the `Arcane/` folder layout, required artwork, multilingual fonts and license notices.
+
+Lua 5.1 compilation and static audits do not replace a live test in the client's Lua 5.0 runtime. In particular, the co-op summary behavior should be verified in a multiplayer run.
 
 ## v0.7.5 — November 10, 2026
 
-- **Movable FPS display:** put the FPS text inside Arcane's standard movable root so the text and gold grab outline move together. Add a larger grab target for Move frames mode, keep the existing Options checkbox, and suppress Ctrl+R at runtime without saving over the player's keymap.
-- **Boss-bar default spacing:** keep boss and mini-boss bars horizontally centered below the timer, with the mover outline below the timer's drag hint. Existing saved positions remain untouched.
-- **Slash command fix:** call the Options hub refresh through `C.RefreshHub()` instead of a nonexistent global, removing the Lua error after slash commands while retaining all commands and aliases.
+Arcane v0.7.5 is a focused usability and reliability update. It brings the FPS readout into Arcane's normal movable-frame system, improves the default placement of the boss bars, and fixes an error at the end of slash-command handling.
+
+### What's changed
+
+- **FPS display and mover:** the FPS text now lives inside Arcane's own movable frame and moves with its gold grab outline. The larger move target makes it easier to pick up in Move frames mode. Toggle the display from Arcane Options; Ctrl+R is unbound while Arcane is loaded.
+- **Boss and mini-boss bar placement:** the default/reset position remains horizontally centered beneath the boss timer, with the mover outline lowered below the timer's drag hint to prevent overlap.
+- **Slash command reliability:** fix the command router's final Options refresh to call `C.RefreshHub()` through Arcane's namespace. This removes the Lua error raised after commands such as `/Arcane reset`, while keeping the existing commands and aliases.
+
+### Preserved behavior
+
+- Existing saved frame positions and per-part settings.
+- The FPS display's Options checkbox and Arcane's standard `C.Movable` drag/lock/reset behavior.
+- The player's saved keybinding file; Ctrl+R suppression is runtime-only.
+- Existing slash commands, aliases, part toggles and language commands.
+- Boss-bar health, debuff display, sizing and gameplay behavior.
+
+### Compatibility and validation
+
+- Targets Azeroth Survivors 1.12.1 and its Lua 5.0 runtime.
+- Repository architecture and regression audits passed.
+- All Lua chunks compiled with Lua 5.1 as a syntax check.
+- The install ZIP was validated for archive integrity, the `Arcane/` folder layout, required artwork, multilingual fonts and license notices.
+
+Lua 5.1 compilation is not a substitute for testing in the client's Lua 5.0 runtime.
 
 ## v0.7.4 — November 10, 2026
 
-- **XP bar text alignment:** lift the level and experience label by 2 UI pixels so the visible glyphs sit optically centered inside the gold progress capsule. Preserve the existing font, size, horizontal centering, XP tracking, level-up animation, and progress behavior.
+Arcane v0.7.4 is a focused visual-polish update for the skill bar's experience display.
+
+### What's changed
+
+- **XP level text alignment:** move the level and experience label up by 2 UI pixels so the visible text sits more naturally centered inside the gold progress capsule.
+- **Visual consistency:** preserve the existing font, size, color treatment, and horizontal centering.
+
+### Preserved behavior
+
+- XP tracking and calculations.
+- Level progression and level-up animation.
+- Progress-bar fill and animation.
+- Skill slots, abilities, and jewelry layout.
+- Existing saved settings and customization options.
+
+### Compatibility and validation
+
+- Targets Azeroth Survivors 1.12.1 and its Lua 5.0 runtime.
+- Automated architecture and regression audits passed.
+- Lua 5.1 compilation passed as a syntax check.
+- The install ZIP is validated for archive integrity, expected folder layout, required artwork, multilingual fonts, and license notices.
+
+Lua 5.1 compilation is not a substitute for a live in-game test with the client's Lua 5.0 runtime.
 
 ## v0.7.3 — November 9, 2026
 
-- **Release stabilization and packaging:** align the addon runtime, TOC, README and CI installer at v0.7.3. Validate the install ZIP's `Arcane/Arcane.toc` root, required artwork, multilingual fonts and license notices. A `v0.7.3` tag now publishes the validated archive as the official GitHub Release after the full audit job succeeds. No additional HUD or gameplay behavior changes beyond the current v0.7.2 mainline.
+Arcane v0.7.3 packages the current mainline HUD as a consistent, verified install. It carries forward the v0.7.2 skill-bar alignment correction and the existing Arcane feature set; this is a packaging and release-process update, not a new gameplay or UI behavior release.
+
+### Included
+
+- The current Arcane HUD, including the center-diamond alignment to the visible gold rails.
+- Existing Classic Arcane, Hybrid and Full Class styling.
+- Arcane Nameplates, damage numbers, boss and party frames, minimap, loot, Stats, Damage meter, Luck, Character and run-summary panels.
+- Existing language support, artwork, bundled fonts and their license notices.
+
+### Install package
+
+- **Download:** `ArcaneV0.7.3.zip`
+- **Archive layout:** the ZIP opens directly to `Arcane/Arcane.toc`.
+- **Assets:** includes the complete `Art/` and `Fonts/` folders, multilingual font files, and attribution/license notices.
+- **Upgrade:** extract into `Interface/AddOns`; keep the installed folder named `Arcane`. Existing `ArcaneDB` saved settings are retained.
+
+### Validation
+
+The release-tag workflow runs the repository architecture and regression audits, compiles every Lua chunk with Lua 5.1 as a syntax check, creates the install ZIP, verifies archive integrity and required assets, and publishes the GitHub Release only after those steps pass.
+
+The target remains Azeroth Survivors 1.12.1 and its Lua 5.0 runtime. Lua 5.1 compilation does not establish live Lua 5.0 compatibility; an in-game smoke test is still required.
 
 ## v0.7.2 — November 9, 2026
 
-- **Skill-bar center ornament alignment:** anchor each diamond to its corresponding gold rail and compensate for transparent art padding so the diamond aligns with the visible stripe, not merely the texture rectangle. The pair stays centered horizontally as the kills/gold/cache dock expands or contracts. No artwork, sizing, color, slot layout or gameplay behavior changes.
+Arcane v0.7.2 is a focused visual-alignment patch.
+
+### Skill bar
+
+- Correct the top and bottom center diamond anchors so each diamond sits on the visible gold stripe of its corresponding rail, compensating for transparent artwork padding.
+- Both diamonds remain centered horizontally on the full outer panel as the kills, gold and cache dock expands or contracts.
+- Preserve the existing diamond artwork, dimensions, palette behavior and vertical placement.
+
+### Compatibility and validation
+
+- Targets Azeroth Survivors 1.12.1 and its Lua 5.0 runtime.
+- Existing skill slots, XP display, jewelry, tally dock, saved settings, languages, artwork and fonts are unchanged.
+- Automated audits and Lua compilation run in GitHub Actions; the Lua 5.1 compiler is a syntax check only and does not replace live testing in the game's Lua 5.0 client.
+- The full CI install package retains all existing Art and Fonts assets and license notices.
 
 ## v0.7.1 — November 9, 2026
 
-- **Arcane Nameplates settings panel:** make the settings window draggable with the left mouse button on its open background, matching the Timer and Damage Numbers options submenus. Keep it clamped to the screen and parented to Arcane Options so it still follows the hub's show/hide lifecycle. No gameplay behavior, saved-variable keys or game-owned APIs change.
+Arcane v0.7.1 is a focused usability patch release.
+
+### Arcane Nameplates settings
+
+- The Arcane Nameplates settings panel can now be dragged with the left mouse button using its open background, just like the Timer and Damage Numbers settings windows.
+- The panel is clamped to the screen so it cannot be dragged completely off-screen.
+- It remains a child of the main Arcane Options hub, preserving the existing behavior where hiding the hub also hides the Nameplates settings panel.
+- The existing controls, color presets, saved settings and native nameplate behavior are unchanged.
+
+### Compatibility and validation
+
+- Targets Azeroth Survivors 1.12.1 and its Lua 5.0 runtime.
+- The automated workflow compiles Lua chunks with Lua 5.1 as a syntax check; this does not replace live testing in the game's Lua 5.0 client.
+- Existing font files, language support, artwork and license notices remain part of the full CI-generated install package.
 
 ## v0.7 — November 9, 2026
 
-- **Arcane Nameplates identity and upgrade safety:** finish the transition from the former Tiny Plates naming to Arcane-owned `Nameplates/` modules and identifiers. Preserve Azeroth Survivors' `AZS_*` APIs and the existing `ArcaneDB.nameplates` saved-settings bucket.
+Arcane v0.7 is a substantial polish and reliability release. It builds on the v0.6 architecture refactor and focuses on the parts of the HUD that matter most during a run: readable enemy plates, correct native-frame lifecycle handling, consistent text and palette behavior, dependable run summaries, and a cleaner layout.
 
-- **Nameplate lifecycle and rendering audit:** identify the game's exact six-region/one-health-bar plate structure once, cache it, respond to native pool reuse immediately, suppress late native-region redraws, center Arcane's overlay on the native bar, and keep health text on one fitted line. Hide only the persistent default-anchored world-hover tooltip; ordinary control tooltips remain available. Keep the guard standalone and event-driven.
+### Enemy nameplates — bigger, clearer, and more reliable
 
-- **Arcane Nameplates sizing:** regular enemy bars are enlarged from half to 75% of the native health-bar dimensions so current / maximum health reads comfortably inside the bar. A compact right-side glass-and-metal badge displays the enemy's native level when available; its frame follows the native plate pool and V visibility.
+- **Arcane Nameplates identity and upgrade path.** The former Tiny Plates subsystem is now consistently named and namespaced as Arcane Nameplates. Azeroth Survivors' `AZS_*` integration identifiers remain untouched, and the existing `ArcaneDB.nameplates` settings bucket is retained so saved colors and display preferences survive the upgrade.
 
-- **Run summary lifecycle:** keep the end-of-run summary visible during “Move to begin,” dismiss it when the next run starts, and show the next end summary even when consecutive runs have the same outcome. Compare the full end snapshot so stale data cannot reopen the old summary during the new run.
+- **Regular enemy bars are larger.** The standard replacement bar now uses 75% of the native health-bar dimensions instead of 50%, giving health values more room without changing the game's projected nameplate position.
+- **Health values stay on one line.** Current and maximum health are rendered without breakable spacing around the separator. The text measures itself and fits to the usable inner width of the bar, including larger health totals.
+- **Enemy level is visible at a glance.** A compact square badge sits on the right side of the health bar, using Arcane's dark glass fill, metallic rim, and active title color.
+- **The bar is aligned to the actual health bar.** The replacement is centered directly on the native StatusBar rather than reusing an offset calculated from a different anchor point.
+- **Native plate discovery is exact and cached.** Arcane recognizes the Azeroth Survivors 1.12 plate structure instead of recursively searching unrelated UI descendants for something that merely resembles a nameplate.
+- **Pooled plates update immediately.** Azeroth Survivors reuses native plate buttons. Arcane tracks those known frames, responds to their show/hide lifecycle, refreshes the enemy identity, and reapplies the correct presentation without the old half-second discovery delay.
+- **Native visual leftovers stay hidden.** The game can update its own name, level, border, glow, skull, raid marker, and health-bar regions after a plate is created or reused. Arcane suppresses those specific native layers after the game's update so they do not flash through or stack with the replacement.
+- **The game's plate ownership stays intact.** Arcane does not reposition, resize, or rescale the WorldFrame root plate. The native `V` key remains the only visibility control, and the replacement follows the same pooled plate.
+- **Bosses and guardians keep their full-size treatment.** The regular-enemy size change does not shrink the special-target presentation or remove its debuff handling.
+- **World-hover information can stay out of the way.** The persistent default-anchored world tooltip for hovered units, corpses, and world objects is suppressed. Normal tooltips owned by actual UI controls remain available.
 
-- **Stats default position:** Stats now resets directly above the Damage meter on the right side, aligned to the meter's right edge. The Damage meter and Luck keep their original right-side default positions.
+### Text and notification theming
 
-- **Stock gameplay notification text:** keep the native message feed transparent and borderless; its text uses the active Arcane UX palette in Arcane, Hybrid and Full Class modes. The feed remains movable through Arcane's Move frames system, while genuine Lua script errors stay in their separate error window.
+- **Buff and aura feedback uses Arcane's palette.** Positive spell/aura messages—including gained and fading effects—use the active Arcane title color treatment.
+- **Healing feedback follows the healing palette.** Healing and critical/periodic healing messages use the established Arcane healing accent.
+- **The native gameplay notification feed is themed.** Stock gameplay messages use Arcane typography and the active UX palette in Arcane, Hybrid, and Full Class modes.
+- **The notification feed stays transparent and borderless.** It can be repositioned with Move frames and controlled from Arcane Options without replacing the game's message queue or event routing.
+- **Real Lua script errors remain separate.** The gameplay notification feed is not confused with the client's actual script-error window.
+- **Zone announcements remain original.** Names such as “Tower of Azora” keep Blizzard's original wording, font, size, contextual color, position, and fade. No Arcane banner, outline, trim, or overlay is applied to zone or subzone text.
 
-- **Native floating status text:** retain the known-good Arcane styling for positive aura/cast and healing feedback, plus the themed gameplay notification feed. Zone/subzone announcements are left entirely to the game: original wording, font, size, color, placement and fade, with no Arcane overlay or hook.
+### UI styles and palette consistency
 
-- **Stock error-frame controls:** the original `UIErrorsFrame` can now be shown or hidden from Arcane Options and repositioned with Arcane's Move frames mode. Hiding it is visual only; its original error, info and system-message event handling stays intact for A/B testing.
+- **Full Class now reaches the wider Arcane UI.** The active class palette is applied across shared panels and consumers, including player and party frames, minimap, Stats, Damage meter, Luck, Character, pet and stored-level-up panels.
+- **Classic Arcane remains bronze.** Its established bronze/gold treatment is preserved.
+- **Hybrid keeps its intended split.** The skill bar receives its class treatment while the rest of the shared UI retains the bronze Arcane look.
+- **The boss timer keeps its own zone palette.** Its contextual treatment is not overwritten by the global Full Class palette.
+- **The selector is now named for its real scope.** The Options label describes the overall UI style rather than implying that it only affects the skill bar.
 
-- **Full Class palette propagation:** Full Class now applies the active class palette across Arcane's shared UI, including player and party frames, the minimap, Stats, Damage meter, Luck, Character window, pet and stored-level-up panels. Arcane and Hybrid keep their existing bronze UI outside the skill-bar treatment; the boss timer keeps its own zone palette.
-- **UI style selector:** the Options hub now labels the selector by its full scope rather than implying it only changes the skill bar.
+### Layout, movement, and native UI cleanup
 
-- **Remove the redundant target pane:** keep the player frame, Arcane Nameplates, and boss/guardian bars without a separate selected-target portrait and health window. Native target selection is unchanged; the stock target pane and its combo-point overlay stay hidden.
-- **Party layout:** move the default party-frame stack directly below the player frame.
-- **Remove unused legacy access:** B no longer opens the backpack or bags while Arcane is active; other B bindings and the saved key map are left alone. Keep the game's Honor tab hidden whether Arcane's Character panel is enabled or disabled.
+- **Move frames is the deliberate positioning mode.** Ordinary clicks no longer drag Stats, Luck, and Damage meter windows by accident. Use the mover overlay to reposition them; the established saved-position and resize behavior remains.
+- **Stats has a cleaner default position.** It resets directly above the Damage meter, aligned to the meter's right edge. Damage meter and Luck retain their right-side defaults.
+- **Party frames sit below the player frame.** The default party stack is aligned with the player frame instead of occupying a disconnected position.
+- **The redundant target pane is removed.** Arcane keeps its player frame and the enemy/boss presentation without adding a separate selected-target portrait and health window. Native target selection is unchanged.
+- **Unused bag access is removed safely.** The B key is cleared only when it is currently assigned to a bag-opening action. Other B bindings and the player's saved key map are not overwritten.
+- **The unused Honor tab stays hidden.** This remains true even when Arcane's custom Character panel is disabled.
+- **The duplicate Luck stat row is gone.** Luck remains available in its own dedicated window; it no longer appears a second time in the Stats plate.
+
+### Run summary lifecycle
+
+- **The summary survives the transition screen.** It remains visible during “Move to begin” after a run ends.
+- **It dismisses when the next run actually starts.** The summary closes on the transition into active play rather than disappearing too early.
+- **Repeated outcomes work correctly.** A second run that ends with the same result as the first still receives its own summary.
+- **The summary uses a stable end-of-run snapshot.** It compares the full run result and statistics so stale data from the previous run cannot reopen an old summary during the next run.
+- **Close and endless-victory behavior are preserved.** The stored summary remains available after the live API clears its end data, and the close control continues to work.
+
+### Compatibility and upgrade notes
+
+- Arcane remains targeted at **Azeroth Survivors 1.12.1 and its Lua 5.0 runtime**.
+- Azeroth Survivors integration names such as `AZSUNITS`, `AZS_UNITS`, and other `AZS_*` APIs remain game-owned and unchanged.
+- Existing saved-variable contracts—including `ArcaneDB.nameplates`—are preserved. This release does not require wiping Arcane settings.
+- The native enemy-plate `V` key remains in charge of plate visibility.
+- Install by replacing the existing `Arcane/` addon folder with the v0.7 package. Keep the folder named exactly `Arcane`.
+
+### Validation
+
+- Repository architecture and regression audits passed.
+- Lua source chunks compiled and the local-variable limits passed.
+- The installable addon ZIP passed archive validation.
+- The CI compiler uses Lua 5.1 as a syntax and chunk-limit check; it does not emulate the game's Lua 5.0 client. Live-client checks remain the authority for in-game behavior.
+
+**Thank you for playing with Arcane!**
+
+---
 
 ## v0.6 — November 8, 2026
 
