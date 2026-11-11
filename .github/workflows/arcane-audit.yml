@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(sed -n 's/^Arcane.VERSION = "\\([^"]*\\)"/\\1/p' Core.lua | head -n 1)"
+          version="$(awk -F'"' '/^Arcane.VERSION = "/ { print $2; exit }' Core.lua)"
           test -n "$version"
           if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
             echo "Tag $GITHUB_REF_NAME does not match Core.VERSION $version."
