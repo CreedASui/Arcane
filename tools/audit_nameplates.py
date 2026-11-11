@@ -21,7 +21,10 @@ CONTROLLER = SOURCES["Nameplates/ArcaneNameplates.lua"]
 OPTIONS = SOURCES["Nameplates/ArcaneNameplatesOptions.lua"]
 TOOLTIP = (ROOT / "Frames" / "WorldTooltip.lua").read_text(encoding="utf-8")
 CORE_OPTIONS = (ROOT / "Core" / "Options.lua").read_text(encoding="utf-8")
-ARCH = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+README = (ROOT / "README.md").read_text(encoding="utf-8")
+ARCH = README.split("## Architecture and module ownership", 1)[1].split(
+    "## Attribution and project provenance", 1
+)[0]
 
 
 def require(condition, message):

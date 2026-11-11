@@ -7,7 +7,10 @@ ROOT = Path(__file__).resolve().parents[1]
 TOC = (ROOT / "Arcane.toc").read_text(encoding="utf-8")
 THEME = (ROOT / "Frames" / "NativeText.lua").read_text(encoding="utf-8")
 STOCK = (ROOT / "Frames" / "StockErrors.lua").read_text(encoding="utf-8")
-ARCH = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+README = (ROOT / "README.md").read_text(encoding="utf-8")
+ARCH = README.split("## Architecture and module ownership", 1)[1].split(
+    "## Attribution and project provenance", 1
+)[0]
 
 assert "Frames/StockErrors.lua\nFrames/NativeText.lua" in TOC
 
