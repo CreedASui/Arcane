@@ -13,11 +13,11 @@ local ROW_H = 38          -- name line + bar
 local ROW_GAP = 2
 local DATA_EVERY = 0.1
 local DB_SIZE, DB_GAP, DB_MAX, DB_ROW = 18, 4, 10, 22 -- the debuff icons under a bar
--- A boss's row, and a guardian's: narrower, thinner and closer, so four guardians up at once
--- stay a small stack under the bosses' full bars.
+-- A boss's row, and a guardian's: guardians go two side by side under the bosses' full bars, each
+-- half as wide, thin and close, so four guardians up at once take two short lines, not a tower.
 local LOOKS = {
 	boss = { w = 1, row = ROW_H, bar = BAR_H, font = 12, gem = 24, db = DB_SIZE, dbRow = DB_ROW, gap = ROW_GAP },
-	guardian = { w = 0.7, row = 27, bar = 8, font = 11, gem = 18, db = 14, dbRow = 18, gap = 1 },
+	guardian = { half = true, row = 24, bar = 8, font = 11, gem = 18, db = 13, dbRow = 16, gap = 4, side = 24, dbMax = 8 },
 }
 local DISPEL = { Magic = { 0.2, 0.6, 1 }, Curse = { 0.6, 0.2, 1 }, Disease = { 0.6, 0.4, 0 }, Poison = { 0, 0.6, 0 } }
 
@@ -134,7 +134,7 @@ local function StepDebuffs(r, list, since)
 	if type(list) == "table" then
 		for i = 1, table.getn(list) do
 			local data = list[i]
-			if n < DB_MAX and type(data) == "table" and type(data.icon) == "string" then
+			if n < (r.look.dbMax or DB_MAX) and type(data) == "table" and type(data.icon) == "string" then
 				n = n + 1
 				local d = r.debuffs[n] or NewDebuff(r)
 				d.frame.data = data
@@ -182,13 +182,16 @@ local function Look(r, guardian)
 	local L = guardian and LOOKS.guardian or LOOKS.boss
 	if r.look == L then return end
 	r.look = L
-	local w = math.floor(db.width * L.w + 0.5)
+	-- a guardian's half: its gem pokes out on the left, so the two sit a gem's width apart
+	local w = L.half and math.floor((db.width - L.side) / 2) or math.floor(db.width * L.w + 0.5)
 	r.frame:SetWidth(w)
 	r.frame:SetHeight(L.row)
 	C.BarLayout(r.bar, w, L.bar)
 	r.bar.frame:ClearAllPoints()
 	r.bar.frame:SetPoint("TOPLEFT", r.frame, "TOPLEFT", 0, -(L.row - 6 - L.bar))
-	r.name:SetWidth(math.max(80, w - 130))
+	-- a guardian's health line is short (its health and the percent), so its name has more room
+	r.name:SetWidth(math.max(80, w - (L.half and 76 or 130)))
+	r.name:SetHeight(L.font + 4) -- one line: a long name ends in "..." rather than wrapping
 	C.SetFace(r.name, C.FONT, L.font, "OUTLINE")
 	C.SetFace(r.value, C.FONT, L.font, "OUTLINE")
 	r.mark:SetWidth(L.gem)
@@ -282,13 +285,15 @@ local SAMPLE = {
 }
 
 ------------------------------------------------------------------------ drawing
-local function StepRow(r, e, slotY, dt, now, pal, since)
+local function StepRow(r, e, slotX, slotY, dt, now, pal, since)
 	Look(r, r.kind == "guardian")
-	-- gliding into its place in the stack
-	if not r.y then r.y = slotY - 10 end
+	-- gliding into its place in the stack (and across, when the guardians pair up again)
+	if not r.y then r.y, r.x = slotY - 10, slotX end
 	r.y, r.yv = C.Spring(r.y, r.yv, slotY, 13, dt)
 	if math.abs(r.y - slotY) < 0.05 and math.abs(r.yv) < 0.05 then r.y, r.yv = slotY, 0 end
-	C.Place(r.frame, "TOP", root, "TOP", 0, -r.y)
+	r.x, r.xv = C.Spring(r.x or slotX, r.xv or 0, slotX, 13, dt)
+	if math.abs(r.x - slotX) < 0.05 and math.abs(r.xv) < 0.05 then r.x, r.xv = slotX, 0 end
+	C.Place(r.frame, "TOP", root, "TOP", math.floor(r.x + 0.5), -r.y)
 
 	local want = r.gone and 0 or 1
 	r.alpha = C.Toward(r.alpha, want, want > r.alpha and 7 or 5, dt)
@@ -348,6 +353,7 @@ local function StepRow(r, e, slotY, dt, now, pal, since)
 	local pct = math.floor(frac * 100 + 0.5)
 	if frac > 0 and pct == 0 then pct = 1 end
 	local v = C.Short(r.hp) .. " / " .. C.Short(r.hpm) .. "   |cffffd27a" .. pct .. "%|r"
+	if r.kind == "guardian" then v = C.Short(r.hp) .. "  |cffffd27a" .. pct .. "%|r" end
 	if r.gone and r.drain then v = "|cffffd27a0%|r" end
 	if r.valueText ~= v then
 		r.valueText = v
@@ -403,6 +409,7 @@ local function Step(dt)
 			end
 			if r then
 				r.key, r.y, r.yv, r.alpha, r.gone, r.drain, r.dh = e.key, nil, 0, 0, false, false, 0
+				r.x, r.xv = nil, 0
 				r.bar.snap = true
 				r.rage, r.colorsFor, r.palStamp, r.valueText = 0, nil, nil, nil
 				byKey[e.key] = r
@@ -424,27 +431,53 @@ local function Step(dt)
 		end
 	end
 
-	-- the stack: live rows in order, a fading one keeps its slot until it's gone
+	-- a row faded out is let go
+	for key, r in pairs(byKey) do
+		if r.gone and r.alpha < 0.01 and now - (r.goneAt or now) > 0.4 then
+			byKey[key] = nil
+			r.key = nil
+			C.Vis(r.frame, false)
+		end
+	end
+	-- the stack: the bosses in order, then the guardians two by two (a lone last one in the
+	-- middle); a fading one keeps its place until it's gone
 	local order = {}
-	for key, r in pairs(byKey) do table.insert(order, r) end
-	table.sort(order, function(a, b) return (a.order or 99) < (b.order or 99) end)
+	local guards = 0
+	for key, r in pairs(byKey) do
+		table.insert(order, r)
+		if r.kind == "guardian" then guards = guards + 1 end
+	end
+	table.sort(order, function(a, b)
+		local ga, gb = a.kind == "guardian", b.kind == "guardian"
+		if ga ~= gb then return gb end
+		return (a.order or 99) < (b.order or 99)
+	end)
 	local y, any = 0, false
+	local col, lineH, k = 0, 0, 0
+	local half = (math.floor((db.width - LOOKS.guardian.side) / 2) + LOOKS.guardian.side) / 2
 	local pal = C.Pal()
 	-- the run's clock (and the debuffs' with it) runs only while playing
 	local since = (phase == "playing" and S.readAt) and (now - S.readAt) or 0
 	for i = 1, table.getn(order) do
 		local r = order[i]
-		StepRow(r, r.entry or SAMPLE[1], y, dt, now, pal, since)
-		if r.gone and r.alpha < 0.01 and now - (r.goneAt or now) > 0.4 then
-			byKey[r.key] = nil
-			r.key = nil
-			C.Vis(r.frame, false)
+		local weight = r.gone and C.Smooth(r.alpha) or 1
+		if r.kind == "guardian" then
+			k = k + 1
+			local x = 0
+			if not (k == guards and col == 0) then x = (col == 0) and -half or half end
+			StepRow(r, r.entry or SAMPLE[1], x, y, dt, now, pal, since)
+			local L = r.look
+			lineH = math.max(lineH, (L.row + (r.dh or 0) + L.gap) * weight)
+			col = col + 1
+			if col == 2 or k == guards then
+				y, col, lineH = y + lineH, 0, 0
+			end
 		else
-			local weight = r.gone and C.Smooth(r.alpha) or 1
+			StepRow(r, r.entry or SAMPLE[1], 0, y, dt, now, pal, since)
 			local L = r.look or LOOKS.boss
 			y = y + (L.row + (r.dh or 0) + L.gap) * weight
-			any = true
 		end
+		any = true
 	end
 
 	local want = (any and db.enabled and not C.cardsUp) and 1 or 0 -- away while the cards are up

@@ -12,7 +12,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 
 - **Boss timer:** a themed countdown to each boss, with the run's time.
 - **Arcane Nameplates:** Arcane's built-in replacement for the game's enemy plates, with 75%-size regular bars, Arcane's shared FRIZQT typography, one-line health values and a right-side enemy-level badge. Bosses and guardians keep their full-size styling and debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Its settings window is draggable like the other Arcane submenus.
-- **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
+- **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them; guardians go two side by side, so several at once stay a small stack.
 - **Skulls and cache markers:** a horned skull with red eyes floats over each boss, a plainer one over each awake guardian, and a glowing gold chest marks every cache waiting on the field. Markers scale with distance and fade when their target is gone; cache markers share the Boss skulls toggle.
 - **Your frame and your target:** your health, shield, power, class meter and extra lives; click a monster and its frame shows its name and real health, with the gold elite dragon on a boss and the silver one on a guardian. Turning **Target frame** off in Arcane Options gives back the game's own.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.

@@ -110,6 +110,9 @@ jobs:
       - name: Audit Party DPS best skills and skill ranks
         run: python tools/audit_meter_and_ranks.py
 
+      - name: Audit guardian bars two side by side
+        run: python tools/audit_guardian_bars.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
