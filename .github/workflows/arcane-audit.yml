@@ -137,7 +137,7 @@ jobs:
             cp "$file" "$addon/$relative"
           done < <(find . -type f \( -name '*.lua' -o -name '*.toc' \) -not -path './.git/*' -print0)
           cp -R Art Fonts "$addon/"
-          cp ATTRIBUTION.md ArcaneNameplates-LICENSE.txt "$addon/"
+          cp ATTRIBUTION.txt ArcaneNameplates-LICENSE.txt "$addon/"
 
           cd "$stage"
           zip -qr "$archive" Arcane
@@ -152,7 +152,7 @@ jobs:
             "Arcane/Fonts/LettersCJK.ttf" \
             "Arcane/Fonts/LICENSE.txt" \
             "Arcane/Fonts/NumberFonts-LICENSE.txt" \
-            "Arcane/ATTRIBUTION.md" \
+            "Arcane/ATTRIBUTION.txt" \
             "Arcane/ArcaneNameplates-LICENSE.txt"; do
             grep -Fxq "$required" "$entries" || { echo "Missing package entry: $required"; exit 1; }
           done
