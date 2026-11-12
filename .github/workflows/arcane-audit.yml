@@ -217,7 +217,14 @@ jobs:
           else
             test "$GITHUB_REF_NAME" = "main"
             # An old version tag must never move to a new main commit.
-            old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null || true)"
+            if old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null)"; then
+              :
+            elif [[ "$old_sha" == *'"status"'* && "$old_sha" == *'404'* ]]; then
+              old_sha=""
+            else
+              echo "Tag lookup failed: $old_sha"
+              exit 1
+            fi
             # Ignore absent JSON fields, but never treat a malformed value as a tag SHA.
             if [[ -n "$old_sha" && ! "$old_sha" =~ ^[0-9a-f]{40}$ ]]; then
               echo "Unexpected tag lookup value: $old_sha"
@@ -268,7 +275,14 @@ jobs:
           # GITHUB_TOKEN-created tags do not start another Actions run.
           # Publish here, in the same successful main-branch workflow.
           if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
-            old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null || true)"
+            if old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null)"; then
+              :
+            elif [[ "$old_sha" == *'"status"'* && "$old_sha" == *'404'* ]]; then
+              old_sha=""
+            else
+              echo "Tag lookup failed: $old_sha"
+              exit 1
+            fi
             if [[ -n "$old_sha" && ! "$old_sha" =~ ^[0-9a-f]{40}$ ]]; then
               echo "Unexpected tag lookup value: $old_sha"
               exit 1
