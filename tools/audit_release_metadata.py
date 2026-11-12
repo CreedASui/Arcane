@@ -47,15 +47,18 @@ checks = (
     ("### Documentation rule — one Markdown file" in readme, "README must state the one-file documentation policy"),
     ('tags:\n      - "v*"' in workflow, "CI must validate all version tags"),
     ("tools/extract_release_notes.py" in workflow, "tag publisher must extract notes from README"),
-    ("if: startsWith(github.ref, 'refs/tags/v')" in workflow, "release publishing must run for version tags"),
+    ("github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')" in workflow,
+     "release publishing must run on main and on matching version tags"),
+    ("gh api -X POST" in workflow and 'refs/tags/$tag' in workflow,
+     "automatic release publishing must create a version tag from the validated main commit"),
     ("gh release create" in workflow, "validated version tags must publish a GitHub Release"),
-    ('gh release upload "$GITHUB_REF_NAME" "release-assets/$asset" --clobber' in workflow,
+    ('gh release upload "$tag" "release-assets/$asset" --clobber' in workflow,
      "release reruns must replace the existing installer"),
-    ('gh release edit "$GITHUB_REF_NAME"' in workflow,
+    ('gh release edit "$tag"' in workflow,
      "release reruns must keep the release title and notes current"),
     ('--notes-file "$RUNNER_TEMP/release-notes.md"' in workflow,
      "GitHub Releases must use the extracted README section"),
-    ('python tools/extract_release_notes.py "$version" "$RUNNER_TEMP/release-notes.md"' in workflow,
+    ('python tools/extract_release_notes.py "$VERSION" "$RUNNER_TEMP/release-notes.md"' in workflow,
      "the release job must extract its matching release section"),
     ('cp ATTRIBUTION.txt ArcaneNameplates-LICENSE.txt "$addon/"' in workflow,
      "the install ZIP must retain its plain-text attribution notice"),
@@ -87,7 +90,7 @@ with tempfile.TemporaryDirectory(prefix="arcane-release-notes-") as temp_dir:
     if result.returncode != 0:
         fail("release-note extraction failed: " + result.stderr.strip())
     extracted = output.read_text(encoding="utf-8")
-    if not extracted.startswith(f"## {VERSION_TAG} —") or "Gold cache markers" not in extracted:
+    if not extracted.startswith(f"## {VERSION_TAG} —") or len(extracted.splitlines()) < 6:
         fail("extracted current release notes are incomplete or mismatched")
 
 print(f"PASS: Arcane {VERSION_TAG} metadata, one-Markdown policy, architecture, attribution, package and tag publisher are consistent")

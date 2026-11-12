@@ -35,7 +35,7 @@ def main() -> int:
 
     end = len(lines)
     for index in range(start + 1, len(lines)):
-        if re.match(r"^### v[0-9]", lines[index]):
+        if re.match(r"^### (?:v[0-9]|Developer reference)", lines[index]):
             end = index
             break
 
