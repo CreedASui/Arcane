@@ -11,13 +11,16 @@ local BIGGER = 1.2         -- boss and mini-boss bars 20% larger; user scale app
 local BAR_H = 12          -- the trough, as the timer's
 local ROW_H = 38          -- name line + bar
 local ROW_GAP = 2
+local GUARD_PAIR_MIN = 340 -- below this width, use one readable guardian per line
 local DATA_EVERY = 0.1
 local DB_SIZE, DB_GAP, DB_MAX, DB_ROW = 18, 4, 10, 22 -- the debuff icons under a bar
--- A boss's row, and a guardian's: guardians go two side by side under the bosses' full bars, each
--- half as wide, thin and close, so four guardians up at once take two short lines, not a tower.
+-- Guardians keep the compact paired grid at readable widths. Their name sits ABOVE
+-- the bar and health/percent sit ON the bar instead of fighting for the same line.
+-- Narrow user widths switch to one guardian per line, never a squeezed pair.
 local LOOKS = {
 	boss = { w = 1, row = ROW_H, bar = BAR_H, font = 12, gem = 24, db = DB_SIZE, dbRow = DB_ROW, gap = ROW_GAP },
-	guardian = { half = true, row = 24, bar = 8, font = 11, gem = 18, db = 13, dbRow = 16, gap = 4, side = 24, dbMax = 8 },
+	guardian = { half = true, row = 36, bar = 12, font = 11, valueFont = 10, gem = 18, db = 13, dbRow = 16, gap = 4, side = 24, dbMax = 8 },
+	guardianSingle = { w = 1, row = 36, bar = 12, font = 11, valueFont = 10, gem = 18, db = 13, dbRow = 16, gap = 4, dbMax = 10 },
 }
 local DISPEL = { Magic = { 0.2, 0.6, 1 }, Curse = { 0.6, 0.2, 1 }, Disease = { 0.6, 0.4, 0 }, Poison = { 0, 0.6, 0 } }
 
@@ -186,7 +189,7 @@ end
 
 -- a row takes a boss's look or a guardian's (rows are reused, so this runs when its unit's kind changes)
 local function Look(r, guardian)
-	local L = guardian and LOOKS.guardian or LOOKS.boss
+	local L = guardian and (db.width < GUARD_PAIR_MIN and LOOKS.guardianSingle or LOOKS.guardian) or LOOKS.boss
 	if r.look == L then return end
 	r.look = L
 	-- a guardian's half: its gem pokes out on the left, so the two sit a gem's width apart
@@ -196,18 +199,23 @@ local function Look(r, guardian)
 	C.BarLayout(r.bar, w, L.bar)
 	r.bar.frame:ClearAllPoints()
 	r.bar.frame:SetPoint("TOPLEFT", r.frame, "TOPLEFT", 0, -(L.row - 6 - L.bar))
-	-- a guardian's health line is short (its health and the percent), so its name has more room
-	-- Split name and health text widths so paired guardian bars do not overlap.
-	if L.half then
-		r.name:SetWidth(math.max(28, math.floor(w * 0.36)))
-		r.value:SetWidth(math.max(52, math.floor(w * 0.49)))
+	if guardian then
+		-- A name has nearly the entire bar width now. Health/percent have their own
+		-- line inside the bar, so the Four Horsemen can display readable names.
+		r.name:SetWidth(w - 22)
+		r.value:SetWidth(w - 16)
+		r.value:ClearAllPoints()
+		r.value:SetPoint("CENTER", r.bar.frame, "CENTER", 0, 0)
 	else
+		-- Preserve the original full-width boss name + health placement.
 		r.name:SetWidth(math.max(80, w - 130))
 		r.value:SetWidth(220)
+		r.value:ClearAllPoints()
+		r.value:SetPoint("BOTTOMRIGHT", r.bar.frame, "TOPRIGHT", 0, 4)
 	end
-	r.name:SetHeight(L.font + 4) -- keep long names on one line
+	r.name:SetHeight(L.font + 4) -- one line; no text wrapping into the bar
 	C.SetFace(r.name, C.FONT, L.font, "OUTLINE")
-	C.SetFace(r.value, C.FONT, L.font, "OUTLINE")
+	C.SetFace(r.value, C.FONT, L.valueFont or L.font, "OUTLINE")
 	r.mark:SetWidth(L.gem)
 	r.mark:SetHeight(L.gem)
 	r.valueText = nil
@@ -468,6 +476,7 @@ local function Step(dt)
 	end)
 	local y, any = 0, false
 	local col, lineH, k = 0, 0, 0
+	local paired = db.width >= GUARD_PAIR_MIN
 	local half = (math.floor((db.width - LOOKS.guardian.side) / 2) + LOOKS.guardian.side) / 2
 	local pal = C.Pal()
 	-- the run's clock (and the debuffs' with it) runs only while playing
@@ -478,12 +487,12 @@ local function Step(dt)
 		if r.kind == "guardian" then
 			k = k + 1
 			local x = 0
-			if not (k == guards and col == 0) then x = (col == 0) and -half or half end
+			if paired and not (k == guards and col == 0) then x = (col == 0) and -half or half end
 			StepRow(r, r.entry or SAMPLE[1], x, y, dt, now, pal, since)
 			local L = r.look
 			lineH = math.max(lineH, (L.row + (r.dh or 0) + L.gap) * weight)
 			col = col + 1
-			if col == 2 or k == guards then
+			if not paired or col == 2 or k == guards then
 				y, col, lineH = y + lineH, 0, 0
 			end
 		else

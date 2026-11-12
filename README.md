@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.7**
+**Current release: v0.7.8**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -12,7 +12,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 
 - **Boss timer:** a themed countdown to each boss, with the run's time.
 - **Arcane Nameplates:** Arcane's built-in replacement for the game's enemy plates, with 75%-size regular bars, Arcane's shared FRIZQT typography, one-line health values and a right-side enemy-level badge. Bosses and guardians keep their full-size styling and debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Its settings window is draggable like the other Arcane submenus.
-- **Boss and mini-boss bars:** red bars with real health numbers and debuffs. Guardians sit in compact pairs below the full-width bosses, avoiding a tall stack when several are active.
+- **Boss and mini-boss bars:** red bars with real health numbers and debuffs. Guardians sit in compact pairs below full-width bosses, with the name above each bar and HP/percent on the bar. Very narrow layouts use single full-width guardians instead of squeezing the labels.
 - **Skulls and cache markers:** a horned skull with red eyes floats over each boss, a plainer one over each awake guardian, and a glowing gold chest marks every cache waiting on the field. Markers scale with distance and fade when their target is gone; cache markers share the Boss skulls toggle.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
@@ -40,11 +40,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.7.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.8.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.7.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.8.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
@@ -267,6 +267,27 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### v0.7.8 — November 12, 2026
+
+The guardian bar layout gets a readability pass based on live in-game testing with four Horsemen and a boss. This build is for in-game QA before the manually approved public release.
+
+#### Improved
+
+- **Guardian names:** give each guardian's name nearly the entire bar width instead of forcing name and HP onto the same line. Four Horsemen names have far more room and no longer compete with damage numbers.
+- **Health labels:** show HP and percent together on the guardian's own health bar, where they have a separate line. Full-width boss health text stays in its original location.
+- **Spacing:** slightly increase guardian row height and bar thickness to avoid crowding, while retaining two compact guardian columns below full-width bosses.
+- **Narrow widths:** automatically switch to one readable guardian per row if the custom boss-bar width is below 340 rather than squeezing two tiny bars together. Debuffs stay bounded by the actual bar width.
+
+#### Preserved behavior
+
+- The selected-target pane stays intentionally removed.
+- Existing boss and guardian health data, debuff behavior, animations, saved positions, scales, native HUD restoration, and the manually approved release gate remain unchanged.
+
+#### Validation
+
+- Static guardian geometry checks now cover 240–700 width, paired and single layouts, four guardians, and full-width boss placement.
+- Lua compilation, architecture audits, and ZIP integrity checks run before packaging; final text rendering still requires live in-game testing.
+
 ### v0.7.7 — November 12, 2026
 
 Arcane v0.7.7 improves co-op meter readability, fixes skill-rank badges, and makes multiple guardian fights less cluttered. The selected-target pane remains intentionally removed.
