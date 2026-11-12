@@ -1,4 +1,4 @@
-name: Arcane architecture audits and test package
+name: Arcane QA and Manual Release
 
 on:
   push:
@@ -13,6 +13,10 @@ on:
       - "**.lua"
       - "**.toc"
       - "**.md"
+      - "Art/**"
+      - "Fonts/**"
+      - "ATTRIBUTION.txt"
+      - "ArcaneNameplates-LICENSE.txt"
       - "tools/**"
       - ".github/workflows/arcane-audit.yml"
   pull_request:
@@ -22,6 +26,10 @@ on:
       - "**.lua"
       - "**.toc"
       - "**.md"
+      - "Art/**"
+      - "Fonts/**"
+      - "ATTRIBUTION.txt"
+      - "ArcaneNameplates-LICENSE.txt"
       - "tools/**"
       - ".github/workflows/arcane-audit.yml"
   workflow_dispatch:
@@ -182,9 +190,11 @@ jobs:
 
 
   publish-release:
-    name: Publish versioned GitHub Release
-    # Only validated main merges or matching version tags can publish.
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    name: Publish versioned GitHub Release (manual approval)
+    # Never publish on merge, push or a tag event. Explicitly choose Actions >
+    # Arcane QA and Manual Release > Run workflow, selecting the main branch.
+    # After that click, audit-and-package must still succeed before publication.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: audit-and-package
     runs-on: ubuntu-latest
     permissions:
@@ -212,30 +222,26 @@ jobs:
           version="$(awk -F'"' '/^Arcane.VERSION = "/ { print $2; exit }' Core.lua)"
           test -n "$version"
           tag="v${version}"
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            test "$GITHUB_REF_NAME" = "$tag"
+          test "$GITHUB_REF_NAME" = "main"
+          # Do not move an existing version tag to a newer commit. A new tested
+          # build needs a new version. An already-tagged exact commit can be
+          # explicitly rerun to repair a missing or incomplete release asset.
+          if old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null)"; then
+            :
+          elif [[ "$old_sha" == *'"status"'* && "$old_sha" == *'404'* ]]; then
+            old_sha=""
           else
-            test "$GITHUB_REF_NAME" = "main"
-            # An old version tag must never move to a new main commit.
-            if old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null)"; then
-              :
-            elif [[ "$old_sha" == *'"status"'* && "$old_sha" == *'404'* ]]; then
-              old_sha=""
-            else
-              echo "Tag lookup failed: $old_sha"
-              exit 1
-            fi
-            # Ignore absent JSON fields, but never treat a malformed value as a tag SHA.
-            if [[ -n "$old_sha" && ! "$old_sha" =~ ^[0-9a-f]{40}$ ]]; then
-              echo "Unexpected tag lookup value: $old_sha"
-              exit 1
-            fi
-            echo "Resolved existing version tag: ${old_sha:-none}"
-            if [[ -n "$old_sha" && "$old_sha" != "$GITHUB_SHA" ]]; then
-              echo "Tag $tag belongs to an older commit; skip release for this merge."
-              echo "publish=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
+            echo "Tag lookup failed: $old_sha"
+            exit 1
+          fi
+          if [[ -n "$old_sha" && ! "$old_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Unexpected tag lookup value: $old_sha"
+            exit 1
+          fi
+          if [[ -n "$old_sha" && "$old_sha" != "$GITHUB_SHA" ]]; then
+            echo "Cannot publish $tag: that tag belongs to commit $old_sha, not this build."
+            echo "Bump the release version before clicking Run workflow."
+            exit 1
           fi
           echo "publish=true" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -273,7 +279,7 @@ jobs:
           tag="$RELEASE_TAG"
           asset="$ASSET"
           # GITHUB_TOKEN-created tags do not start another Actions run.
-          # Publish here, in the same successful main-branch workflow.
+          # Only this manually approved build can create the tag and release.
           if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
             if old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha // empty' 2>/dev/null)"; then
               :
