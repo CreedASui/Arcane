@@ -255,16 +255,32 @@ end
 local function BestSkills(snap)
 	local list = type(snap.rows) == "table" and snap.rows or {}
 	local sources = type(snap.sources) == "table" and snap.sources or {}
-	local best = {}
+	local grouped, best = {}, {}
 	for i = 1, table.getn(list) do
 		local row = list[i]
 		local amount = type(row) == "table" and tonumber(row.displayAmount) or 0
-		if amount > 0 and row.ownerId ~= nil and (not best[row.ownerId] or amount > best[row.ownerId].amount) then
-			local src = sources[row.sourceKey] or {}
-			local name = (type(src.name) == "string" and src.name ~= "" and src.name)
-				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
-			best[row.ownerId] = { name = name, amount = amount,
-				rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate) }
+		if amount > 0 and row.ownerId ~= nil and row.sourceKey ~= nil then
+			local owner = row.ownerId
+			local perOwner = grouped[owner]
+			if not perOwner then perOwner = {}; grouped[owner] = perOwner end
+			local key = tostring(row.sourceKey)
+			local e = perOwner[key]
+			if not e then
+				local src = sources[row.sourceKey] or {}
+				local name = (type(src.name) == "string" and src.name ~= "" and src.name)
+					or (string.gsub(key, ":r%d+.*$", ""))
+				e = { name = name, amount = 0, rate = 0 }
+				perOwner[key] = e
+			end
+			e.amount = e.amount + amount
+			e.rate = e.rate + (RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage)
+				or RateValue(row.displayRate) or 0)
+		end
+	end
+	-- Combine a player's multiple actors or pet rows without confusing two players.
+	for owner, skills in pairs(grouped) do
+		for _, e in pairs(skills) do
+			if not best[owner] or e.amount > best[owner].amount then best[owner] = e end
 		end
 	end
 	for i = 1, S.n do
@@ -279,7 +295,6 @@ local function FromSnapshot(snap, tab)
 	if tab == "party" then
 		n = OwnerLines(snap)
 		S.n = n
-		BestSkills(snap)
 	else
 		n = SourceLines(snap, tab)
 		S.n = n
@@ -328,6 +343,13 @@ local function ReadSnapshot(tab)
 	S.emptyText = nil
 	FromSnapshot(snap, tab)
 	C.NoteSources(snap.sources) -- for the damage numbers: each line's own icon
+	if tab == "party" then
+		-- Keep both actor and source attribution for the party; grouping every player
+		-- together by source can lose the owner needed for the best-skill label.
+		query.groupBy = "actor_source"
+		local bySkill = Call(AZS_GetMeterSnapshot, query)
+		if type(bySkill) == "table" then BestSkills(bySkill) end
+	end
 	return true
 end
 

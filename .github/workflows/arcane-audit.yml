@@ -6,6 +6,7 @@ on:
       - main
       - "refactor/**"
       - "feature/**"
+      - "release/**"
     tags:
       - "v*"
     paths:
@@ -107,6 +108,12 @@ jobs:
       - name: Audit native Store Level-Ups setting integration
         run: python tools/audit_levelups.py
 
+      - name: Audit Party DPS skill ownership and rank badges
+        run: python tools/audit_meter_and_ranks.py
+
+      - name: Audit paired guardian bar layout
+        run: python tools/audit_guardian_bars.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
@@ -175,15 +182,16 @@ jobs:
 
 
   publish-release:
-    name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: Publish versioned GitHub Release
+    # Only validated main merges or matching version tags can publish.
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     needs: audit-and-package
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: write
     steps:
-      - name: Check out tagged source
+      - name: Check out validated source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
@@ -193,40 +201,81 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Download the validated install ZIP
+      - name: Decide whether this commit should publish
+        id: release_meta
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          asset="ArcaneV${version}.zip"
-          artifact="Arcane-v${version}-test-${GITHUB_SHA}"
+          version="$(awk -F'"' '/^Arcane.VERSION = "/ { print $2; exit }' Core.lua)"
+          test -n "$version"
+          tag="v${version}"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            test "$GITHUB_REF_NAME" = "$tag"
+          else
+            test "$GITHUB_REF_NAME" = "main"
+            # An old version tag must never move to a new main commit.
+            old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha' 2>/dev/null || true)"
+            if [[ -n "$old_sha" && "$old_sha" != "$GITHUB_SHA" ]]; then
+              echo "Tag $tag belongs to an older commit; skip release for this merge."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "asset=ArcaneV${version}.zip" >> "$GITHUB_OUTPUT"
+          echo "artifact=Arcane-v${version}-test-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Download validated ZIP and extract release notes
+        if: steps.release_meta.outputs.publish == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.release_meta.outputs.version }}
+          ASSET: ${{ steps.release_meta.outputs.asset }}
+          ARTIFACT: ${{ steps.release_meta.outputs.artifact }}
+        run: |
+          set -euo pipefail
           mkdir -p release-assets
-          gh run download "$GITHUB_RUN_ID" \
-            --name "$artifact" \
-            --dir release-assets
-          test -s "release-assets/$asset"
-          python tools/extract_release_notes.py "$version" "$RUNNER_TEMP/release-notes.md"
+          gh run download "$GITHUB_RUN_ID" --name "$ARTIFACT" --dir release-assets
+          test -s "release-assets/$ASSET"
+          python tools/extract_release_notes.py "$VERSION" "$RUNNER_TEMP/release-notes.md"
           test -s "$RUNNER_TEMP/release-notes.md"
 
-      - name: Publish GitHub Release
+      - name: Tag and publish this validated build
+        if: steps.release_meta.outputs.publish == 'true'
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release_meta.outputs.tag }}
+          ASSET: ${{ steps.release_meta.outputs.asset }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          asset="ArcaneV${version}.zip"
-          test "$GITHUB_REF_NAME" = "v$version"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" \
-              --title "Arcane UI v$version" \
+          tag="$RELEASE_TAG"
+          asset="$ASSET"
+          # GITHUB_TOKEN-created tags do not start another Actions run.
+          # Publish here, in the same successful main-branch workflow.
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
+            old_sha="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq '.object.sha' 2>/dev/null || true)"
+            if [[ -z "$old_sha" ]]; then
+              gh api -X POST "repos/$GH_REPO/git/refs" \
+                -f ref="refs/tags/$tag" -f sha="$GITHUB_SHA"
+            else
+              test "$old_sha" = "$GITHUB_SHA"
+            fi
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "Arcane UI $tag" \
               --notes-file "$RUNNER_TEMP/release-notes.md"
-            gh release upload "$GITHUB_REF_NAME" "release-assets/$asset" --clobber
+            gh release upload "$tag" "release-assets/$asset" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" "release-assets/$asset" \
-              --title "Arcane UI v$version" \
-              --notes-file "$RUNNER_TEMP/release-notes.md" \
-              --verify-tag
+            gh release create "$tag" "release-assets/$asset" \
+              --title "Arcane UI $tag" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
           fi

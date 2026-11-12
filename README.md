@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.6**
+**Current release: v0.7.7**
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -12,7 +12,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 
 - **Boss timer:** a themed countdown to each boss, with the run's time.
 - **Arcane Nameplates:** Arcane's built-in replacement for the game's enemy plates, with 75%-size regular bars, Arcane's shared FRIZQT typography, one-line health values and a right-side enemy-level badge. Bosses and guardians keep their full-size styling and debuffs below. The game's **V** key controls plate visibility, and Arcane's replacement follows it. Its settings window is draggable like the other Arcane submenus.
-- **Boss and mini-boss bars:** red bars with real health numbers and the debuffs on them.
+- **Boss and mini-boss bars:** red bars with real health numbers and debuffs. Guardians sit in compact pairs below the full-width bosses, avoiding a tall stack when several are active.
 - **Skulls and cache markers:** a horned skull with red eyes floats over each boss, a plainer one over each awake guardian, and a glowing gold chest marks every cache waiting on the field. Markers scale with distance and fade when their target is gone; cache markers share the Boss skulls toggle.
 - **Party shields:** detected absorbs show as a glass-and-stripe overlay on each party health bar.
 - **Downed friends (co-op):** a warning and a sound when a friend goes down, a glowing mark with their class crest where you can revive them, and an arrow at the screen's edge with the distance while they're off it.
@@ -20,7 +20,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** Arcane's checkbox controls and mirrors the game's actual Store Level-Ups setting. When enabled, a glowing Level Up! button shows how many choices wait; its default position clears the skill bar and XP display.
-- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS and Damage Taken, with icons, per second and shares. Resizable from any edge.
+- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS (with each member's best skill) and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
 - **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows. The unused stock **M** world-map shortcut is suppressed while Arcane is loaded, without overwriting saved or custom keybindings.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
@@ -40,11 +40,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.6.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Pushing a matching version tag (for example, `v0.7.7`) runs the same validation and publishes the official GitHub Release with the verified installer attached. The publisher updates an existing release and replaces its ZIP when rerun, instead of failing on an already-created release. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.7.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. On a merge into `main` that introduces a new release version, GitHub Actions validates the code, builds the installer, creates its version tag, and publishes the GitHub Release automatically. Ordinary mainline merges without a version bump do not republish old releases. Explicit matching version-tag pushes also remain supported. The publisher updates an existing release and replaces its ZIP when rerun, instead of failing on an already-created release. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.6.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.7.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
@@ -125,7 +125,7 @@ A rare issue is still worth fixing when the correction is cheap, safe and well u
 **`README.md` is the only Markdown document in this repository and the single source of truth for project documentation.**
 
 - Put product overview, install instructions, architecture, attribution/provenance, release history, roadmap, QA standards and project handoff information in this file.
-- For a new release, add its dated changelog entry at the top of the embedded release-history section. The release workflow extracts the matching versioned entry from this README; do not create a separate changelog or release-notes file.
+- For a new release, update the version in `Core.lua`, `Arcane.toc`, and the README's current version and installer name, then add the dated changelog entry at the top of the embedded release-history section. After the release-ready PR is merged, CI builds, tags, and publishes automatically; do not create a separate changelog or release-notes file.
 - Update the architecture and working-agreement sections in place when they change. Keep one current description rather than creating another handoff, audit summary or architecture document.
 - Do not add other Markdown files. CI enforces this rule.
 - Required third-party license notices remain separate plain-text files where the license requires them. The packaged attribution summary is `ATTRIBUTION.txt`, not another Markdown document.
@@ -258,6 +258,27 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### v0.7.7 — November 12, 2026
+
+Arcane v0.7.7 improves co-op meter readability, fixes skill-rank badges, and makes multiple guardian fights less cluttered. The selected-target pane remains intentionally removed.
+
+#### Fixed and improved
+
+- **Party DPS best skill:** a party member's leading skill is named rather than displayed as missing or "nil". Skill damage is read by actor and source, and totals are combined separately for each player.
+- **Skill-rank badges:** a badge first uses the rank recorded for that slot and icon; if the icon is missing, it falls back to the slot rank, then the highest matching icon rank. Duplicate or stale ability entries no longer override the appropriate rank.
+- **Guardian bars:** guardians appear in two compact columns below full-width boss bars. A single unmatched guardian stays centered. Name and health text use bounded widths, and debuff icons stay within their own bar's space.
+
+#### Preserved behavior
+
+- There is deliberately no click-to-target pane. The game still handles target selection, while nameplates and boss/guardian bars provide health information.
+- Existing saved frame positions, addon settings, player frame, and established gameplay behavior are preserved.
+- Install ZIPs retain third-party attribution and required font and nameplate license notices.
+
+#### Validation
+
+- Release publishing requires passing the architecture audits, regression checks, Lua compilation, and install-package validation.
+- In-game verification remains recommended for multiplayer best-skill attribution, skill-rank updates and crowded guardian encounters. Static CI does not emulate the game's Lua 5.0 runtime.
+
 ### v0.7.6 — November 10, 2026
 
 Arcane v0.7.6 brings a multiplayer run-summary fix, clearer cache markers, a properly connected Stored Level-Ups setting, and a little less unused game UI.
