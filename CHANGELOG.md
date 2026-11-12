@@ -2,6 +2,14 @@
 
 This is the single source of truth for versioned release notes. Add each new release as a dated section at the top of this file. GitHub Actions extracts the matching section when publishing a version tag; separate per-version release-note files are not used.
 
+## Unreleased
+
+### Fixed
+
+- **Target frame is back:** clicking a monster shows its frame again, with its name and real health (and the gold elite dragon on a boss, the silver one on a guardian). v0.7.6 removed Arcane's target frame but still hid the game's own, so a clicked monster showed nothing. It's a part again in Arcane Options (**Target frame**): turning it off gives back the game's own target frame.
+- **Party DPS best skills:** each friend's best skill on Party DPS shows its name instead of "nil". The lines by player carry no skill, so the best skills are read from the same party's damage grouped by skill.
+- **Skill ranks:** a skill's rank box no longer sticks at an old rank (it stayed at 2) when the game lists that skill more than once with the same icon. The entry in that very slot wins, else the highest rank.
+
 ## v0.7.6 — November 10, 2026
 
 Arcane v0.7.6 brings a multiplayer run-summary fix, clearer cache markers, a properly connected Stored Level-Ups setting, and a little less unused game UI.

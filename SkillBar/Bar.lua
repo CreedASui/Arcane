@@ -320,14 +320,22 @@ IconKey = function(path)
 	return base
 end
 
--- the ranks by icon and by slot; false out of a run, nil while the game can't say yet
+-- the higher of a kept rank and a new one
+local function Higher(list, key, rank)
+	if not list[key] or rank > list[key] then list[key] = rank end
+end
+
+-- The ranks by icon, by slot and by both; false out of a run, nil while the game can't say yet.
+-- The loadout can list more than one ability with a slot's icon (the same skill twice, or an
+-- older entry of it): the one in that very slot wins, else the highest rank, never just whichever
+-- came last (it kept a skill's box at 2 while the skill itself was higher).
 local function ReadRanks()
 	if type(AZS_GetMeterLoadout) ~= "function" or type(AZS_GetMeterContext) ~= "function" then return false end
 	local context = Call(AZS_GetMeterContext)
 	if type(context) ~= "table" or not context.runId then return false end
 	local l = Call(AZS_GetMeterLoadout, { apiVersion = 1, runId = context.runId })
 	if type(l) ~= "table" or type(l.abilities) ~= "table" then return nil end
-	local byIcon, bySlot, icons = {}, {}, false
+	local byIcon, bySlot, bySlotIcon, icons = {}, {}, {}, false
 	local sources = type(l.sources) == "table" and l.sources or {}
 	for i = 1, table.getn(l.abilities) do
 		local a = l.abilities[i]
@@ -335,14 +343,16 @@ local function ReadRanks()
 		if rank and a.learned ~= false and not a.passive then
 			local src = a.sourceKey and sources[a.sourceKey]
 			local icon = type(src) == "table" and type(src.icon) == "table" and src.icon.status == "ready" and IconKey(src.icon.path)
+			local slot = tonumber(a.slotId)
 			if icon then
-				byIcon[icon] = rank
+				Higher(byIcon, icon, rank)
+				if slot then Higher(bySlotIcon, slot .. "|" .. icon, rank) end
 				icons = true
 			end
-			if tonumber(a.slotId) then bySlot[tonumber(a.slotId)] = rank end
+			if slot then Higher(bySlot, slot, rank) end
 		end
 	end
-	return byIcon, bySlot, icons
+	return byIcon, bySlot, icons, bySlotIcon
 end
 
 local function SetRank(s, rank)
@@ -360,13 +370,18 @@ local function SetRank(s, rank)
 end
 
 local function UpdateRanks()
-	local byIcon, bySlot, icons = ReadRanks()
+	local byIcon, bySlot, icons, bySlotIcon = ReadRanks()
 	if byIcon == nil then return end
 	for i = 1, table.getn(ABILITY_SLOTS) do
 		local s = slots[i]
 		local rank = nil
 		if byIcon and s.has then
-			if icons then rank = byIcon[IconKey(s.tex) or ""] else rank = bySlot[s.action] end
+			if icons then
+				local icon = IconKey(s.tex) or ""
+				rank = bySlotIcon[s.action .. "|" .. icon] or byIcon[icon]
+			else
+				rank = bySlot[s.action]
+			end
 		end
 		SetRank(s, rank)
 	end

@@ -207,18 +207,28 @@ def check_shared_unit_frame_helpers() -> None:
     print("PASS: player and party frames share health formatting and power colors")
 
 
-def check_selected_target_pane_removed() -> None:
+def check_target_frame() -> None:
     units = (ROOT / "Frames/Units.lua").read_text(encoding="utf-8")
     party = (ROOT / "Frames/Party.lua").read_text(encoding="utf-8")
-    for retired in ("ArcaneTarget", "StepTarget", 'key = "target"'):
-        if retired in units:
-            fail(f"Frames/Units.lua still contains retired target-pane code: {retired}")
-    for stock in ('C.HideStock("TargetFrame")', 'C.HideStock("ComboFrame")'):
-        if stock not in units:
-            fail(f"Frames/Units.lua must keep the unused stock target UI hidden: {stock}")
+    # Clicking a monster must show its health: Arcane's target frame is a part of its own, and
+    # it only tucks the game's TargetFrame away while it is on.
+    for needed in ('"ArcaneTarget"', "local function StepTarget", 'key = "target"', "local function ApplyTarget"):
+        if needed not in units:
+            fail(f"Frames/Units.lua must keep the target frame: {needed}")
+    apply_target = re.search(r"local function ApplyTarget\(\)(.*?)\nend\n", units, re.S)
+    if not apply_target:
+        fail("Frames/Units.lua must turn the target frame on and off in ApplyTarget")
+    body = apply_target.group(1)
+    for stock in ("TargetFrame", "ComboFrame"):
+        if f'C.HideStock("{stock}")' not in body or f'C.RestoreStock("{stock}")' not in body:
+            fail(f"the target frame must hide {stock} while on and bring it back when off")
+    if "HideUnusedTargetStock" in units:
+        fail("Frames/Units.lua must not hide the game's target frame with nothing in its place")
+    if units.count('C.RestoreStock("TargetFrame")') < 2:
+        fail("after an error the game's own target frame must come back")
     if "Call(TargetUnit, unit)" not in party:
         fail("Party-member target selection must remain available")
-    print("PASS: no selected-target pane; native targeting remains available and stock target UI stays hidden")
+    print("PASS: a clicked target shows its health; turning the target frame off gives back the game's own")
 
 
 def check_unused_backpack_and_honor_access_removed() -> None:
@@ -342,7 +352,7 @@ def main() -> None:
     entries = read_toc()
     check_core_structure(entries)
     check_shared_unit_frame_helpers()
-    check_selected_target_pane_removed()
+    check_target_frame()
     check_unused_backpack_and_honor_access_removed()
     check_frame_drag_requires_move_mode()
     check_module_ownership()

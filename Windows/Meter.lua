@@ -259,7 +259,8 @@ local function BestSkills(snap)
 	for i = 1, table.getn(list) do
 		local row = list[i]
 		local amount = type(row) == "table" and tonumber(row.displayAmount) or 0
-		if amount > 0 and row.ownerId ~= nil and (not best[row.ownerId] or amount > best[row.ownerId].amount) then
+		if amount > 0 and row.ownerId ~= nil and row.sourceKey ~= nil
+			and (not best[row.ownerId] or amount > best[row.ownerId].amount) then
 			local src = sources[row.sourceKey] or {}
 			local name = (type(src.name) == "string" and src.name ~= "" and src.name)
 				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
@@ -279,7 +280,6 @@ local function FromSnapshot(snap, tab)
 	if tab == "party" then
 		n = OwnerLines(snap)
 		S.n = n
-		BestSkills(snap)
 	else
 		n = SourceLines(snap, tab)
 		S.n = n
@@ -328,6 +328,13 @@ local function ReadSnapshot(tab)
 	S.emptyText = nil
 	FromSnapshot(snap, tab)
 	C.NoteSources(snap.sources) -- for the damage numbers: each line's own icon
+	if tab == "party" then
+		-- Each hero's best skill: the same party's damage, read again by skill. The lines by player
+		-- carry no skill, so their best skill read "nil".
+		query.groupBy = "source"
+		local bySkill = Call(AZS_GetMeterSnapshot, query)
+		if type(bySkill) == "table" then BestSkills(bySkill) end
+	end
 	return true
 end
 

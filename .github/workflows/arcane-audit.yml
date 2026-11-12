@@ -107,6 +107,9 @@ jobs:
       - name: Audit native Store Level-Ups setting integration
         run: python tools/audit_levelups.py
 
+      - name: Audit Party DPS best skills and skill ranks
+        run: python tools/audit_meter_and_ranks.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |
