@@ -49,6 +49,8 @@ checks = (
     ("tools/extract_release_notes.py" in workflow, "tag publisher must extract notes from README"),
     ("github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')" in workflow,
      "release publishing must run on main and on matching version tags"),
+    ("--jq '.object.sha // empty'" in workflow,
+     "tag detection must not confuse a missing API field with an existing tag"),
     ("gh api -X POST" in workflow and 'refs/tags/$tag' in workflow,
      "automatic release publishing must create a version tag from the validated main commit"),
     ("gh release create" in workflow, "validated version tags must publish a GitHub Release"),
