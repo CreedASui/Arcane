@@ -40,7 +40,7 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.7.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. On a merge into `main` that introduces a new release version, GitHub Actions validates the code, builds the installer, creates its version tag, and publishes the GitHub Release automatically. Ordinary mainline merges without a version bump do not republish old releases. Explicit matching version-tag pushes also remain supported. The publisher updates an existing release and replaces its ZIP when rerun, instead of failing on an already-created release. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.7.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
@@ -82,6 +82,15 @@ Every audit finding, bug report and proposed cleanup should receive a severity a
 | **P3 — Edge case / polish** | Backlog unless cheap and safe to resolve. | Extremely rare combinations, harmless cosmetic imperfections, theoretical lifecycle concerns, and low-impact refinements. |
 
 A rare issue is still worth fixing when the correction is cheap, safe and well understood. A speculative issue that requires a multi-day investigation but has negligible impact stays in P3 until evidence justifies the effort. Do not spend days chasing a one-in-a-billion scenario while higher-priority work remains.
+
+### Manual release approval
+
+1. Merge reviewed code to `main` after CI passes. The Actions run produces a **test ZIP artifact**, not a public GitHub Release.
+2. Download the `Arcane-vVERSION-test-COMMIT` artifact from the successful **Arcane QA and Manual Release** run and install the `ArcaneVVERSION.zip` inside it. Test the changes in-game before publishing.
+3. When you approve the build, open **Actions → Arcane QA and Manual Release → Run workflow**, select the **main** branch, and click **Run workflow**. This is the publish button.
+4. The approval run repeats the audits, Lua syntax checks and ZIP verification. Only a successful run can create the new `vVERSION` tag, GitHub Release page and `ArcaneVVERSION.zip` release asset. If the version was already tagged to different code, the job fails instead of replacing the tag.
+
+**Never release automatically on merge or by pushing a tag.** Without an explicit button click, Actions only builds and tests.
 
 ### Test proportionally to risk
 
@@ -125,7 +134,7 @@ A rare issue is still worth fixing when the correction is cheap, safe and well u
 **`README.md` is the only Markdown document in this repository and the single source of truth for project documentation.**
 
 - Put product overview, install instructions, architecture, attribution/provenance, release history, roadmap, QA standards and project handoff information in this file.
-- For a new release, update the version in `Core.lua`, `Arcane.toc`, and the README's current version and installer name, then add the dated changelog entry at the top of the embedded release-history section. After the release-ready PR is merged, CI builds, tags, and publishes automatically; do not create a separate changelog or release-notes file.
+- For a new release, update the version in `Core.lua`, `Arcane.toc`, and the README's current version and installer name, then add the dated changelog entry at the top of the embedded release-history section. CI builds a test ZIP on the release-ready PR and again when merged to `main`. Test that artifact in-game; **do not create a public release until you manually select Actions → Arcane QA and Manual Release → Run workflow on `main`**. That single approval reruns the checks and publishes the tag, installer ZIP and release page. Do not create another Markdown file.
 - Update the architecture and working-agreement sections in place when they change. Keep one current description rather than creating another handoff, audit summary or architecture document.
 - Do not add other Markdown files. CI enforces this rule.
 - Required third-party license notices remain separate plain-text files where the license requires them. The packaged attribution summary is `ATTRIBUTION.txt`, not another Markdown document.
