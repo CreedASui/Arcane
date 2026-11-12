@@ -51,6 +51,8 @@ checks = (
      "release publishing must run on main and on matching version tags"),
     ("--jq '.object.sha // empty'" in workflow,
      "tag detection must not confuse a missing API field with an existing tag"),
+    (workflow.count('if old_sha="$(gh api') == 2,
+     "both tag checks must handle API exit status instead of treating error JSON as a SHA"),
     ("gh api -X POST" in workflow and 'refs/tags/$tag' in workflow,
      "automatic release publishing must create a version tag from the validated main commit"),
     ("gh release create" in workflow, "validated version tags must publish a GitHub Release"),
