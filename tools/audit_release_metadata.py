@@ -58,7 +58,7 @@ checks = (
      "release reruns must keep the release title and notes current"),
     ('--notes-file "$RUNNER_TEMP/release-notes.md"' in workflow,
      "GitHub Releases must use the extracted README section"),
-    ('python tools/extract_release_notes.py "$version" "$RUNNER_TEMP/release-notes.md"' in workflow,
+    ('python tools/extract_release_notes.py "$VERSION" "$RUNNER_TEMP/release-notes.md"' in workflow,
      "the release job must extract its matching release section"),
     ('cp ATTRIBUTION.txt ArcaneNameplates-LICENSE.txt "$addon/"' in workflow,
      "the install ZIP must retain its plain-text attribution notice"),

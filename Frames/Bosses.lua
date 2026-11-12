@@ -131,10 +131,17 @@ end
 -- the row's debuffs, read with its unit; `since` seconds of run clock have passed since
 local function StepDebuffs(r, list, since)
 	local n = 0
+	local cap = r.look.dbMax or DB_MAX
+	if r.look.half then
+		-- The player can make the root much narrower than the default width.
+		-- Never let debuffs cross into the adjacent guardian's half.
+		local width = r.frame:GetWidth()
+		cap = math.min(cap, math.max(0, math.floor((width - 16 + DB_GAP) / (r.look.db + DB_GAP))))
+	end
 	if type(list) == "table" then
 		for i = 1, table.getn(list) do
 			local data = list[i]
-			if n < (r.look.dbMax or DB_MAX) and type(data) == "table" and type(data.icon) == "string" then
+			if n < cap and type(data) == "table" and type(data.icon) == "string" then
 				n = n + 1
 				local d = r.debuffs[n] or NewDebuff(r)
 				d.frame.data = data
@@ -192,8 +199,8 @@ local function Look(r, guardian)
 	-- a guardian's health line is short (its health and the percent), so its name has more room
 	-- Split name and health text widths so paired guardian bars do not overlap.
 	if L.half then
-		r.name:SetWidth(math.max(35, math.floor(w * 0.41)))
-		r.value:SetWidth(math.max(54, math.floor(w * 0.50)))
+		r.name:SetWidth(math.max(28, math.floor(w * 0.36)))
+		r.value:SetWidth(math.max(52, math.floor(w * 0.49)))
 	else
 		r.name:SetWidth(math.max(80, w - 130))
 		r.value:SetWidth(220)

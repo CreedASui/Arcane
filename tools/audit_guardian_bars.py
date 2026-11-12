@@ -26,7 +26,8 @@ for fragment, message in (
     ("if not (k == guards and col == 0) then x = (col == 0) and -half or half end",
      "guardians must go two by two, a lone last one in the middle"),
     ("if col == 2 or k == guards then", "a line of guardians must end after two, or after the last"),
-    ("n < (r.look.dbMax or DB_MAX)", "a guardian's debuff icons must stop before its neighbour's bar"),
+    ("n < cap", "the number of guardian debuffs must follow the available bar width"),
+    ("math.floor((width - 16 + DB_GAP) / (r.look.db + DB_GAP))", "debuff capacity must scale down with bar width"),
     ('r.name:SetHeight(L.font + 4)', "a long guardian name must stay on one line"),
 ):
     if fragment not in source:
