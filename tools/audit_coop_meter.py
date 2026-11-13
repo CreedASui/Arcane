@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Static regression checks for Party DPS in co-op: it keeps moving while the game's ledger answers
-"not ready", names each friend's best skill (procs too), and reads new meter data right away."""
+"not ready", names each friend's best skill (procs too), reads new meter data right away, and a
+click on a hero's line opens that hero's own skills."""
 from pathlib import Path
 import re
 import sys
@@ -35,10 +36,39 @@ for fragment, message in (
     ("e.portrait = S.portraitOf[l.name]", "a hero must keep their portrait on the game's lines"),
     ('driver:RegisterEvent("CHAT_MSG_ADDON")', "the meter must hear the game's meter data arrive"),
     ('if arg1 ~= "AZSM" and arg1 ~= "AZSPARTY" then return end', "only the meter's own messages may hurry a read"),
-    ('if db.tab == "party" then\n\t\t\t\t\ttagW = Fit(r.petTag, e.pet, left)',
+    ('if db.tab == "party" and not S.focus then\n\t\t\t\t\ttagW = Fit(r.petTag, e.pet, left)',
      "a best skill short of room must keep its first words, not its last"),
 ):
     if fragment not in meter:
         fail(message)
 
-print("PASS: Party DPS keeps moving in co-op, names each friend's best skill and reads new data at once")
+# A click on a hero's line opens that hero's own skills; the title goes back.
+focus = re.search(r"local function ReadFocus\(\)(.*?)\nend\n", meter, re.S)
+if not focus:
+    fail("Windows/Meter.lua must read a clicked hero's own skills in ReadFocus")
+for fragment, message in (
+    ('query.scope, query.ownerId = "owner", f.ownerId', "a friend's skills must be read with scope owner"),
+    ('if own then query.scope = "self"', "your own line must read your own skills"),
+    ('FromSnapshot(snap, "friend")', "a friend's skills must not overwrite your pet bar's"),
+    ('code == "UNKNOWN_OWNER" or code == "OWNER_NOT_PRESENT"', "a friend who left must send the view back to Party DPS"),
+):
+    if fragment not in focus.group(1):
+        fail(message)
+for fragment, message in (
+    ('f:SetScript("OnMouseUp", function()', "a meter line must take clicks"),
+    ('if button ~= "LeftButton" or drag.moving or GetTime() - drag.endedAt < 0.25 then return end',
+     "only a left click that ends no drag may open a hero"),
+    ('if focus then names = { "< " .. focus.name } end', "a hero's view must be titled with their name and the way back"),
+    ('C.L("Click for their skills.")', "a hero's line must say a click opens their skills"),
+    ('if db.tab == "party" and not S.focus then return e.color', "a hero's skills must take their schools' colors, not a class's"),
+    ("S.focus, S.headKey = nil, nil\n\t\t\tClearRows()", "picking a view must leave a hero's view"),
+):
+    if fragment not in meter:
+        fail(message)
+for name in ("Locale_zh", "Locale_ru", "Locale_ja", "Locale_ko", "Locale_pl", "Locale_tr"):
+    if '["Click for their skills."]' not in (ROOT / f"Locales/{name}.lua").read_text(encoding="utf-8"):
+        fail(f"Locales/{name}.lua must translate the click hint")
+if '{ "Click for their skills.",' not in (ROOT / "Locales/Locale.lua").read_text(encoding="utf-8"):
+    fail("Locales/Locale.lua must translate the click hint")
+
+print("PASS: Party DPS keeps moving in co-op, names each friend's best skill, reads new data at once, and opens a hero's skills on a click")

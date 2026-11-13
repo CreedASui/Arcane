@@ -179,6 +179,7 @@ Arcane.AddLanguage("ko", "한국어", Arcane.FACE_CJK, {
 	["Last 10 seconds"] = "최근 10초",
 	["Share"] = "비율",
 	["Best spell"] = "최고 주문",
+	["Click for their skills."] = "클릭하여 기술 보기.",
 	["A talent's or amulet's own damage."] = "특성이나 목걸이 자체의 피해.",
 	["Since you pressed Reset."] = "초기화를 누른 뒤부터.",
 	["+{1} more"] = "+{1}개 더",

@@ -179,6 +179,7 @@ Arcane.AddLanguage("tr", "Türkçe", Arcane.FACE_LETTERS, {
 	["Last 10 seconds"] = "Son 10 saniye",
 	["Share"] = "Pay",
 	["Best spell"] = "En iyi büyü",
+	["Click for their skills."] = "Becerilerini görmek için tıkla.",
 	["A talent's or amulet's own damage."] = "Bir yeteneğin ya da muskanın kendi hasarı.",
 	["Since you pressed Reset."] = "Sıfırla'ya bastığından beri.",
 	["+{1} more"] = "+{1} daha",

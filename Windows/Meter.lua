@@ -63,7 +63,7 @@ local rows = {}          -- row widgets
 local byKey = {}         -- line key -> row widget
 local S = { list = {}, n = 0, total = 0, rate = nil, readClock = 0, offset = 0, alpha = 0, stamp = -1,
 	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false,
-	portraitOf = {}, partyAt = nil }
+	portraitOf = {}, partyAt = nil, ownerOf = {}, focus = nil }
 local SOON = 0.05 -- a read this soon after the game sends new meter data
 
 local Call = C.Call -- no stray nil arguments (see Core)
@@ -90,7 +90,7 @@ end
 
 -- a line's color: a hero's class color in Party DPS, else its skill's own
 local function ColorOf(e)
-	if db.tab == "party" then return e.color or { 0.7, 0.7, 0.7 } end
+	if db.tab == "party" and not S.focus then return e.color or { 0.7, 0.7, 0.7 } end -- a hero's class
 	return ColorFor(e.proc and ((e.name or "?") .. " #proc") or e.name) -- a proc line apart from its skill's
 end
 
@@ -104,6 +104,15 @@ end
 local function RateValue(r)
 	if type(r) == "table" and r.status == "ready" and tonumber(r.value) then return r.value end
 	return nil
+end
+
+-- every row let go: another view (or a friend's own) starts on fresh lines
+local function ClearRows()
+	for key, r in pairs(byKey) do
+		r.key, r.entry = nil, nil
+		C.Vis(r.frame, false)
+		byKey[key] = nil
+	end
 end
 
 ------------------------------------------------------------------------ reading: the meter API
@@ -249,6 +258,7 @@ local function OwnerLines(snap)
 			-- keyed by name, as the game's own party lines are, so a line keeps its place whichever
 			-- of the two it was read from
 			e.key = "o" .. (e.name ~= "?" and e.name or tostring(row.ownerId))
+			S.ownerOf[e.name] = row.ownerId -- a click on the line opens their own skills
 			e.classKey = type(actor.classKey) == "string" and string.upper(actor.classKey) or nil
 			e.color = CLASS_COLORS[e.classKey or ""]
 			if type(actor.portrait) == "table" and actor.portrait.status == "ready" then
@@ -340,6 +350,42 @@ local function FromSnapshot(snap, tab)
 	S.rate = RateValue(totals.recentRate) or RateValue(totals.displayRate)
 	S.status = (n == 0) and "empty" or nil
 	S.runId = type(snap.context) == "table" and snap.context.runId or S.runId
+end
+
+-- Party DPS, a hero clicked: that hero's own skills, as your Damage Done shows yours (each skill
+-- on its line, their pets and summons on one Pet line). Yours are read as yours; a friend's need
+-- the party's ledgers, and while the game answers "not ready" the lines shown stay. The view
+-- goes back to Party DPS when the friend leaves, the party ends or another run starts.
+local function ReadFocus()
+	local f = S.focus
+	local context = Call(AZS_GetMeterContext)
+	if type(context) ~= "table" or not context.runId then return end
+	local own = f.ownerId == context.localOwnerId
+	if context.runId ~= f.runId or (not own and context.partyState == "solo") then
+		S.focus, S.headKey = nil, nil
+		ClearRows()
+		S.readClock = 0
+		return
+	end
+	local query = { apiVersion = 1, runId = context.runId, metric = "damage", period = "run", groupBy = "actor_source",
+		windowSeconds = 10 }
+	if own then query.scope = "self" else query.scope, query.ownerId = "owner", f.ownerId end
+	if S.checkpoint then query.checkpointId = S.checkpoint end
+	local snap, err = Call(AZS_GetMeterSnapshot, query)
+	if type(snap) ~= "table" then
+		local code = type(err) == "table" and err.code or nil
+		if code == "CHECKPOINT_EXPIRED" or code == "CHECKPOINT_INVALIDATED" or code == "INVALID_CHECKPOINT" then
+			S.checkpoint = nil
+			S.readClock = 0
+		elseif code == "UNKNOWN_OWNER" or code == "OWNER_NOT_PRESENT" or code == "NO_PARTY" or code == "RUN_MISMATCH" then
+			S.focus, S.headKey = nil, nil
+			ClearRows()
+			S.readClock = 0
+		end
+		return
+	end
+	S.emptyText = nil
+	FromSnapshot(snap, "friend") -- not "damage": your pet bar keeps your own pets' skills
 end
 
 -- true when it read the API (or it answered "wait" or "nothing there"); false when the API can't
@@ -447,6 +493,7 @@ local function ReadLines(tab)
 						e.color = CLASS_COLORS[e.classKey or ""]
 						if type(l.top) == "string" and l.top ~= "" then e.pet, e.top, e.topRate = l.top, l.top, tonumber(l.topdps) end
 						e.portrait = S.portraitOf[l.name] -- the hero's portrait, as the ledger last gave it
+						e.ownerId = S.ownerOf[l.name]
 					else
 						e.icon = (tab == "taken") and TAKEN_ICON or C.icons[l.name]
 						e.color = nil
@@ -496,6 +543,12 @@ end
 
 local function Read()
 	local tab = db.tab
+	if tab == "party" and S.focus then
+		ReadFocus()
+		S.lastRead = GetTime()
+		SortLines()
+		return
+	end
 	local done = false
 	if tab ~= "taken" and type(AZS_GetMeterSnapshot) == "function" and type(AZS_GetMeterContext) == "function" then
 		done = ReadSnapshot(tab)
@@ -620,6 +673,9 @@ local function NewRow()
 		if S.tipRow == r then S.tipRow = nil end
 		if GameTooltip then GameTooltip:Hide() end
 	end)
+	f:SetScript("OnMouseUp", function()
+		if S.rowClick then S.rowClick(r, arg1) end
+	end)
 	f:Hide()
 	return r
 end
@@ -652,11 +708,8 @@ local function BuildMenu()
 			ShowMenu(false)
 			S.offset = 0
 			S.readClock = 0
-			for key, r in pairs(byKey) do
-				r.key, r.entry = nil, nil
-				C.Vis(r.frame, false)
-				byKey[key] = nil
-			end
+			S.focus, S.headKey = nil, nil
+			ClearRows()
 		end)
 		b.text:SetJustifyH("LEFT")
 		b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -4 - (i - 1) * 18)
@@ -956,6 +1009,9 @@ local function ShowTip(r)
 		GameTooltip:AddDoubleLine(C.L("Best spell"), e.top .. (e.topRate and ("  " .. Amount(e.topRate) .. " dps") or ""), 0.8, 0.8, 0.8, 1, 1, 1)
 	end
 	if e.proc then GameTooltip:AddLine(C.L("A talent's or amulet's own damage."), 0.55, 0.75, 1, 1) end
+	if db.tab == "party" and not S.focus and (e.ownerId or S.ownerOf[e.name or ""]) then
+		GameTooltip:AddLine(C.L("Click for their skills."), 0.6, 0.85, 1)
+	end
 	if S.checkpoint or S.base then GameTooltip:AddLine(C.L("Since you pressed Reset."), 0.6, 0.6, 0.6) end
 	C.ShowTip()
 end
@@ -1013,7 +1069,7 @@ local function FitWords(r, rank, e, room)
 			C.SetText(r.petTag, e.pet)
 			tagW = r.petTag:GetStringWidth() or 0
 			if tagW > left then
-				if db.tab == "party" then
+				if db.tab == "party" and not S.focus then
 					tagW = Fit(r.petTag, e.pet, left)
 				else
 					local last = string.gsub(e.pet, "^.*%s", "")
@@ -1044,15 +1100,18 @@ end
 local HEAD_L, CARET_ROOM, HEAD_GAP = 9, 14, 8
 local HEAD_R = 4 + 16 + 1 + 16 + 1 + 36 + 5 -- from the right edge to the total's end: x, ^ and Reset (Build)
 local function FitHead(tab)
+	local focus = (tab.key == "party") and S.focus or nil
+	C.Vis(root.caret, not focus) -- a hero's own view: its title goes back to Party DPS instead
 	if not S.rate or S.rateTab ~= tab.key then S.rateRoom = 0 end
 	S.rateTab = tab.key
 	local rateW = S.rate and C.TextWidth(root.rate) or 0
 	if rateW > S.rateRoom then S.rateRoom = rateW end
 	local room = math.floor(W - HEAD_L - CARET_ROOM - HEAD_GAP - S.rateRoom - HEAD_R)
-	local key = tab.key .. "|" .. room .. "|" .. C.langStamp
+	local key = tab.key .. "|" .. room .. "|" .. C.langStamp .. "|" .. (focus and focus.name or "")
 	if S.headKey == key then return end
 	local names = { C.L(tab.name) }
 	for i = 1, table.getn(tab.short or {}) do names[i + 1] = C.L(tab.short[i]) end
+	if focus then names = { "< " .. focus.name } end
 	local w
 	for i = 1, table.getn(names) do
 		C.SetText(root.title, names[i])
@@ -1100,7 +1159,7 @@ local function StepRow(r, e, rank, slot, max, dt, now)
 	end
 
 	-- the icon: the spell's, or a hero's portrait
-	local look = e.portrait and ("portrait:" .. e.portrait) or (e.icon or (db.tab ~= "party" and QUESTION) or "class")
+	local look = e.portrait and ("portrait:" .. e.portrait) or (e.icon or ((db.tab ~= "party" or S.focus) and QUESTION) or "class")
 	if r.look ~= look then
 		r.look = look
 		if e.portrait and S.runId then
@@ -1288,8 +1347,26 @@ local function Scripts(mover)
 	for i = 1, table.getn(rows) do drag.handle(rows[i].frame) end
 	root.head:SetScript("OnClick", function()
 		if GetTime() - drag.endedAt < 0.25 then return end -- the end of a drag, not a click
+		if S.focus then
+			-- "< Name": back to Party DPS
+			S.focus, S.headKey, S.offset, S.readClock = nil, nil, 0, 0
+			ClearRows()
+			return
+		end
 		ShowMenu(not S.menuOpen)
 	end)
+	-- Party DPS: a click on a hero's line opens that hero's own skills
+	S.rowClick = function(r, button)
+		if button ~= "LeftButton" or drag.moving or GetTime() - drag.endedAt < 0.25 then return end
+		local e = r.entry
+		if db.tab ~= "party" or S.focus or not e then return end
+		local owner = e.ownerId or S.ownerOf[e.name or ""]
+		if not owner or not S.runId then return end
+		ShowMenu(false)
+		S.focus = { ownerId = owner, name = e.name or "?", runId = S.runId }
+		S.headKey, S.offset, S.readClock = nil, 0, 0
+		ClearRows()
+	end
 	S.mover = mover -- the edges save the place they leave it in
 	root:SetScript("OnMouseWheel", function()
 		if not arg1 then return end

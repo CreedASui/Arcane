@@ -179,6 +179,7 @@ Arcane.AddLanguage("ja", "日本語", Arcane.FACE_CJK, {
 	["Last 10 seconds"] = "直近10秒",
 	["Share"] = "割合",
 	["Best spell"] = "最強の呪文",
+	["Click for their skills."] = "クリックでスキルを表示。",
 	["A talent's or amulet's own damage."] = "タレントやアミュレット自身のダメージ。",
 	["Since you pressed Reset."] = "クリアを押してから。",
 	["+{1} more"] = "+{1} 件",

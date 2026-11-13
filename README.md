@@ -20,7 +20,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** Arcane's checkbox controls and mirrors the game's actual Store Level-Ups setting. When enabled, a glowing Level Up! button shows how many choices wait; its default position clears the skill bar and XP display.
-- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS (with each member's best skill) and Damage Taken, with icons, per second and shares. Resizable from any edge.
+- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS (with each member's best skill; click a member to see their own skills) and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
 - **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows. The unused stock **M** world-map shortcut is suppressed while Arcane is loaded, without overwriting saved or custom keybindings.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
@@ -269,7 +269,11 @@ Add each new release as a dated section at the top of this embedded history. Git
 <!-- RELEASE_HISTORY_BEGIN -->
 ### Unreleased
 
-Keeps Party DPS moving in co-op and names every friend's best skill.
+Keeps Party DPS moving in co-op, names every friend's best skill, and opens any player's own skills with a click.
+
+#### New
+
+- **A player's own skills:** click a player's line on Party DPS to see their skills, laid out like your Damage Done. Each skill gets its own line with its damage, per second and share, procs are tagged, and their pets and summons share one Pet line. The title reads "< Name"; click it to go back. Your own line opens your skills. The view goes back to Party DPS when that player leaves, the party ends or a new run starts. A player's line tooltip says "Click for their skills." (in all 11 languages).
 
 #### Fixed
 
@@ -281,6 +285,7 @@ Keeps Party DPS moving in co-op and names every friend's best skill.
 #### Validation
 
 - `tools/audit_coop_meter.py` (in CI) fails on v0.7.8 and passes here. All audits pass, and all 74 Lua chunks compile under Lua 5.0.
+- Seventeen stand-in client checks cover a player's own skills: the click hint, the title, their skills (not yours), the Pet line, the proc tag, your pet bar left alone, lines kept while the game isn't ready, right clicks ignored, the way back, your own line, a player leaving, and changing views.
 - In a stand-in client with a party ledger that answers "not ready", nine checks pass here and five fail on v0.7.8. Lines follow the game's party lines; the order follows the numbers; portraits stay; procs are named; the game's lines never replace newer ledger numbers; new data shows within 0.2 s.
 - Not yet seen in game: whether the game still sends `AZS_PARTY` in co-op. If it doesn't, the meter behaves exactly as before.
 
