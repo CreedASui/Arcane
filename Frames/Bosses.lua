@@ -192,7 +192,7 @@ local function Look(r, guardian)
 	local L = guardian and (db.width < GUARD_PAIR_MIN and LOOKS.guardianSingle or LOOKS.guardian) or LOOKS.boss
 	if r.look == L then return end
 	r.look = L
-	-- a guardian's half: its gem pokes out on the left, so the two sit a gem's width apart
+	-- Paired guardians leave room for the gems at the inner edge.
 	local w = L.half and math.floor((db.width - L.side) / 2) or math.floor(db.width * L.w + 0.5)
 	r.frame:SetWidth(w)
 	r.frame:SetHeight(L.row)
@@ -201,7 +201,7 @@ local function Look(r, guardian)
 	r.bar.frame:SetPoint("TOPLEFT", r.frame, "TOPLEFT", 0, -(L.row - 6 - L.bar))
 	if guardian then
 		-- A name has nearly the entire bar width now. Health/percent have their own
-		-- line inside the bar, so the Four Horsemen can display readable names.
+		-- line inside the bar, so long guardian names remain readable.
 		r.name:SetWidth(w - 22)
 		r.value:SetWidth(w - 16)
 		r.value:ClearAllPoints()

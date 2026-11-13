@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression checks for the guardians' bars: two side by side under the bosses' full
-bars, so four guardians up at once take two short lines instead of a tall column."""
+"""Static guardrails for paired guardians, their labels, and narrow-width fallback."""
 from pathlib import Path
 import re
 import sys
@@ -19,7 +18,23 @@ if not look or "half = true" not in look.group(1):
     fail("a guardian's bar must be half a boss bar wide, so two fit side by side")
 for field in ("side", "dbMax"):
     if not re.search(rf"\b{field} = \d+", look.group(1)):
-        fail(f"the guardian look must set {field} (the space between the pair, and the debuffs that fit)")
+        fail(f"the guardian look must set {field} (the pair gap and supported debuffs)")
+
+# The regression math must use the actual Lua constants, not a second set of
+# numbers which could silently drift away from the runtime layout.
+pair_match = re.search(r"local GUARD_PAIR_MIN = (\d+)", source)
+gap_match = re.search(r"\bside = (\d+)", look.group(1))
+width_match = re.search(
+    r"db\.width = C\.Clamp\(tonumber\(db\.width\) or (\d+), (\d+), (\d+)\)",
+    source,
+)
+if not (pair_match and gap_match and width_match):
+    fail("could not read guardian width rules from the Lua implementation")
+PAIR_MIN = int(pair_match.group(1))
+GAP = int(gap_match.group(1))
+DEFAULT, MIN_WIDTH, MAX_WIDTH = map(int, width_match.groups())
+if not (MIN_WIDTH < PAIR_MIN < MAX_WIDTH and MIN_WIDTH <= DEFAULT <= MAX_WIDTH):
+    fail("the paired-to-single guardian threshold is outside the permitted width range")
 for fragment, message in (
     ("local function StepRow(r, e, slotX, slotY, dt, now, pal, since)", "a row must take its place across as well as down"),
     ("if ga ~= gb then return gb end", "the bosses must come first, then the guardians"),
@@ -37,14 +52,17 @@ for fragment, message in (
      "boss health must retain its original location"),
     ("local paired = db.width >= GUARD_PAIR_MIN", "pairing must depend on available width"),
     ("LOOKS.guardianSingle", "narrow layouts must give guardians a full-width bar"),
+    ("local half = (math.floor((db.width - LOOKS.guardian.side) / 2) + LOOKS.guardian.side) / 2",
+     "paired guardian offsets must use the same gap as their widths"),
 ):
     if fragment not in source:
         fail(message)
 
-# Geometry regression: the minimum user width has to stay readable; at normal
-# and large widths, the four Horsemen stay in two balanced rows below the boss.
-PAIR_MIN, GAP = 340, 24
-for width in (240, 300, 339, 340, 380, 500, 700):
+# Cover saved narrow widths, the exact transition, the default and the maximum.
+# At paired widths, four guardians require two rows; at narrower widths, four.
+widths = sorted(set((MIN_WIDTH, min(MIN_WIDTH + 60, MAX_WIDTH), PAIR_MIN - 1,
+                     PAIR_MIN, DEFAULT, 500, MAX_WIDTH)))
+for width in widths:
     paired = width >= PAIR_MIN
     bar_width = (width - GAP) // 2 if paired else width
     name_width = bar_width - 22
@@ -60,7 +78,7 @@ for width in (240, 300, 339, 340, 380, 500, 700):
         lines_for_four = 2
     else:
         lines_for_four = 4
-    if width == 380 and (bar_width != 178 or lines_for_four != 2):
-        fail("four Horsemen should occupy two rows at the default width")
+    if width == DEFAULT and paired and (bar_width != (width - GAP) // 2 or lines_for_four != 2):
+        fail("four guardians should occupy two rows at the default width")
 
 print("PASS: paired guardian bars retain readable names/HP, narrow widths fall back to single rows")
