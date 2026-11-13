@@ -122,6 +122,9 @@ jobs:
       - name: Audit paired guardian bar layout
         run: python tools/audit_guardian_bars.py
 
+      - name: Audit Party DPS in co-op
+        run: python tools/audit_coop_meter.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |

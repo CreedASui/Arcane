@@ -267,6 +267,23 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### Unreleased
+
+Keeps Party DPS moving in co-op and names every friend's best skill.
+
+#### Fixed
+
+- **Party DPS in co-op (P1):** the game's ledger holds the friends' damage only now and then and answers "not ready" in between. A friend's new spell or proc also keeps it "not ready" until that spell's name arrives. Party DPS used to keep the old numbers all that time. It now shows the game's own party lines (`AZS_PARTY`), which the game sends as they change, whenever they're newer than the ledger's last answer. Lines keep their place and portraits whichever source they come from. After a Reset the ledger alone counts, because the game's lines cover the whole run.
+- **Friends' best skills:** a friend the ledger gives no named best skill (none yet, or a proc it only knows by its key) takes the game's own top spell for them, procs included.
+- **Best-skill tag:** short of room, the tag keeps the skill's first words and ends in "..." ("Windfury..."), instead of its last word ("Weapon"). The tooltip still names it whole.
+- **Fresher numbers:** the meter reads as soon as the game sends new meter data (at most every 0.15 s), instead of on its next half-second tick.
+
+#### Validation
+
+- `tools/audit_coop_meter.py` (in CI) fails on v0.7.8 and passes here. All audits pass, and all 74 Lua chunks compile under Lua 5.0.
+- In a stand-in client with a party ledger that answers "not ready", nine checks pass here and five fail on v0.7.8. Lines follow the game's party lines; the order follows the numbers; portraits stay; procs are named; the game's lines never replace newer ledger numbers; new data shows within 0.2 s.
+- Not yet seen in game: whether the game still sends `AZS_PARTY` in co-op. If it doesn't, the meter behaves exactly as before.
+
 ### v0.7.8 — November 12, 2026
 
 Improves the readability and spacing of guardian health bars while preserving the compact two-column layout.

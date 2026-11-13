@@ -62,7 +62,9 @@ local db, root
 local rows = {}          -- row widgets
 local byKey = {}         -- line key -> row widget
 local S = { list = {}, n = 0, total = 0, rate = nil, readClock = 0, offset = 0, alpha = 0, stamp = -1,
-	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false }
+	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false,
+	portraitOf = {}, partyAt = nil }
+local SOON = 0.05 -- a read this soon after the game sends new meter data
 
 local Call = C.Call -- no stray nil arguments (see Core)
 
@@ -113,7 +115,7 @@ local function Line(i)
 		S.list[i] = e
 	end
 	e.icon, e.portrait, e.classKey, e.color, e.proc, e.top, e.topRate, e.school = nil, nil, nil, nil, false, nil, nil, nil
-	e.skill, e.pet, e.petLine, e.ownerId = nil, nil, nil, nil
+	e.skill, e.pet, e.petLine, e.ownerId, e.rawTop = nil, nil, nil, nil, nil
 	return e
 end
 
@@ -240,16 +242,50 @@ local function OwnerLines(snap)
 			n = n + 1
 			local e = Line(n)
 			local actor = actors[row.ownerId] or {}
-			e.key, e.amount, e.ownerId = "o" .. tostring(row.ownerId), amount, row.ownerId
+			e.amount, e.ownerId = amount, row.ownerId
 			e.rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate)
 			e.recent, e.share = RateValue(row.recentRate), tonumber(row.share) or 0
 			e.name = type(actor.name) == "string" and actor.name or "?"
+			-- keyed by name, as the game's own party lines are, so a line keeps its place whichever
+			-- of the two it was read from
+			e.key = "o" .. (e.name ~= "?" and e.name or tostring(row.ownerId))
 			e.classKey = type(actor.classKey) == "string" and string.upper(actor.classKey) or nil
 			e.color = CLASS_COLORS[e.classKey or ""]
-			if type(actor.portrait) == "table" and actor.portrait.status == "ready" then e.portrait = actor.portrait.portraitKey end
+			if type(actor.portrait) == "table" and actor.portrait.status == "ready" then
+				e.portrait = actor.portrait.portraitKey
+				S.portraitOf[e.name] = e.portrait
+			end
 		end
 	end
 	return n
+end
+
+-- the game's own party lines by hero name, when they hold anything
+local function GameParty()
+	if type(AZS_PARTY) ~= "table" or table.getn(AZS_PARTY) == 0 then return nil end
+	local out = {}
+	for i = 1, table.getn(AZS_PARTY) do
+		local l = AZS_PARTY[i]
+		if type(l) == "table" and type(l.name) == "string" then out[l.name] = l end
+	end
+	return out
+end
+
+-- A hero the ledger names no best skill for (or only by its raw key) takes the game's own: its
+-- party lines carry each hero's top spell, procs included.
+local function GameBestSkills()
+	local game = nil
+	for i = 1, S.n do
+		local e = S.list[i]
+		if e and (not e.top or e.rawTop) then
+			game = game or GameParty()
+			if not game then return end
+			local l = game[e.name or ""]
+			if l and type(l.top) == "string" and l.top ~= "" then
+				e.pet, e.top, e.topRate, e.rawTop = l.top, l.top, tonumber(l.topdps), nil
+			end
+		end
+	end
 end
 
 local function BestSkills(snap)
@@ -267,9 +303,9 @@ local function BestSkills(snap)
 			local e = perOwner[key]
 			if not e then
 				local src = sources[row.sourceKey] or {}
-				local name = (type(src.name) == "string" and src.name ~= "" and src.name)
-					or (string.gsub(key, ":r%d+.*$", ""))
-				e = { name = name, amount = 0, rate = 0 }
+				local named = type(src.name) == "string" and src.name ~= ""
+				local name = named and src.name or (string.gsub(key, ":r%d+.*$", ""))
+				e = { name = name, amount = 0, rate = 0, raw = not named }
 				perOwner[key] = e
 			end
 			e.amount = e.amount + amount
@@ -286,7 +322,7 @@ local function BestSkills(snap)
 	for i = 1, S.n do
 		local e = S.list[i]
 		local b = e and e.ownerId and best[e.ownerId]
-		if b then e.pet, e.top, e.topRate = b.name, b.name, b.rate end
+		if b then e.pet, e.top, e.topRate, e.rawTop = b.name, b.name, b.rate, b.raw end
 	end
 end
 
@@ -334,6 +370,15 @@ local function ReadSnapshot(tab)
 			return true
 		end
 		if not code or HARD_ERRORS[code] then return false end
+		-- In co-op the ledger holds the friends' damage only now and then (it answers "not ready"
+		-- between), and a friend's new spell or proc keeps it "not ready" until its name comes.
+		-- The game's own party lines come as they change: when they are newer than the ledger's
+		-- last answer, they're shown instead of the old numbers (not after a Reset: they count
+		-- the whole run).
+		if code == "NOT_READY" and tab == "party" and not S.checkpoint and GameParty()
+			and tonumber(AZS_PARTY_UPDATED) and (not S.partyAt or AZS_PARTY_UPDATED > S.partyAt) then
+			return "game"
+		end
 		if code ~= "NOT_READY" and code ~= "ART_NOT_READY" and code ~= "RUN_MISMATCH" then
 			S.n, S.status = 0, "empty" -- no boss fight, no party, no run: the empty line says so
 			S.emptyText = EMPTY_BY_CODE[code]
@@ -344,6 +389,7 @@ local function ReadSnapshot(tab)
 	FromSnapshot(snap, tab)
 	C.NoteSources(snap.sources) -- for the damage numbers: each line's own icon
 	if tab == "party" then
+		S.partyAt = GetTime()
 		-- Keep both actor and source attribution for the party; grouping every player
 		-- together by source can lose the owner needed for the best-skill label.
 		query.groupBy = "actor_source"
@@ -399,7 +445,8 @@ local function ReadLines(tab)
 					if tab == "party" then
 						e.classKey = type(l.class) == "string" and string.upper(l.class) or nil
 						e.color = CLASS_COLORS[e.classKey or ""]
-						if type(l.top) == "string" and l.top ~= "" then e.top, e.topRate = l.top, tonumber(l.topdps) end
+						if type(l.top) == "string" and l.top ~= "" then e.pet, e.top, e.topRate = l.top, l.top, tonumber(l.topdps) end
+						e.portrait = S.portraitOf[l.name] -- the hero's portrait, as the ledger last gave it
 					else
 						e.icon = (tab == "taken") and TAKEN_ICON or C.icons[l.name]
 						e.color = nil
@@ -453,8 +500,10 @@ local function Read()
 	if tab ~= "taken" and type(AZS_GetMeterSnapshot) == "function" and type(AZS_GetMeterContext) == "function" then
 		done = ReadSnapshot(tab)
 	end
-	S.usedLines = not done
-	if not done then ReadLines(tab) end
+	S.usedLines = not done -- "game": the ledger is still the meter's, only not ready this time
+	if not done or done == "game" then ReadLines(tab) end
+	if tab == "party" then GameBestSkills() end
+	S.lastRead = GetTime()
 	SortLines() -- the game sorts already; after a Reset here the order can change
 end
 
@@ -947,7 +996,9 @@ end
 
 -- a line's words on one line: the rank and skill, then a summon's name in a tag and the proc
 -- tag. Short of room the summon goes by its last word, then cut short, then not at all; then
--- the skill is cut short. Each width set to its words', so nothing ever wraps.
+-- the skill is cut short. Each width set to its words', so nothing ever wraps. On Party DPS the
+-- tag is the hero's best skill, which its last word doesn't name ("Weapon" for Windfury
+-- Weapon): it keeps its first words and ends in "..." instead (the tooltip names it whole).
 local function FitWords(r, rank, e, room)
 	local procW = 0
 	if e.proc then procW = (C.TextWidth(r.procTag) or 18) + 9 end
@@ -962,8 +1013,12 @@ local function FitWords(r, rank, e, room)
 			C.SetText(r.petTag, e.pet)
 			tagW = r.petTag:GetStringWidth() or 0
 			if tagW > left then
-				local last = string.gsub(e.pet, "^.*%s", "")
-				tagW = Fit(r.petTag, last, left)
+				if db.tab == "party" then
+					tagW = Fit(r.petTag, e.pet, left)
+				else
+					local last = string.gsub(e.pet, "^.*%s", "")
+					tagW = Fit(r.petTag, last, left)
+				end
 			end
 		end
 		if tagW and tagW > 0 then
@@ -1260,6 +1315,14 @@ C.OnInit(function()
 	C.OverCards(root) -- lit over the level-up cards' veil (Core)
 	Scripts(mover)
 	local driver = CreateFrame("Frame", "ArcaneMeterDriver")
+	-- New meter data from the game (a ledger frame, or the party's lines): read it right away
+	-- rather than up to half a second later, at most every 0.15 seconds.
+	driver:RegisterEvent("CHAT_MSG_ADDON")
+	driver:SetScript("OnEvent", function()
+		if arg1 ~= "AZSM" and arg1 ~= "AZSPARTY" then return end
+		local wait = math.max(SOON, 0.15 - (GetTime() - (S.lastRead or 0)))
+		if S.readClock > wait then S.readClock = wait end
+	end)
 	local broken = false
 	driver:SetScript("OnUpdate", function()
 		if broken then return end
