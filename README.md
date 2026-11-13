@@ -269,11 +269,11 @@ Add each new release as a dated section at the top of this embedded history. Git
 <!-- RELEASE_HISTORY_BEGIN -->
 ### v0.7.8 — November 12, 2026
 
-The guardian bar layout gets a readability pass based on live in-game testing with four Horsemen and a boss. This build is for in-game QA before the manually approved public release.
+Improves the readability and spacing of guardian health bars while preserving the compact two-column layout.
 
 #### Improved
 
-- **Guardian names:** give each guardian's name nearly the entire bar width instead of forcing name and HP onto the same line. Four Horsemen names have far more room and no longer compete with damage numbers.
+- **Guardian names:** use most of the available bar width, independently of the HP label, so longer names remain readable.
 - **Health labels:** show HP and percent together on the guardian's own health bar, where they have a separate line. Full-width boss health text stays in its original location.
 - **Spacing:** slightly increase guardian row height and bar thickness to avoid crowding, while retaining two compact guardian columns below full-width bosses.
 - **Narrow widths:** automatically switch to one readable guardian per row if the custom boss-bar width is below 340 rather than squeezing two tiny bars together. Debuffs stay bounded by the actual bar width.
@@ -285,8 +285,8 @@ The guardian bar layout gets a readability pass based on live in-game testing wi
 
 #### Validation
 
-- Static guardian geometry checks now cover 240–700 width, paired and single layouts, four guardians, and full-width boss placement.
-- Lua compilation, architecture audits, and ZIP integrity checks run before packaging; final text rendering still requires live in-game testing.
+- Guardian layout checks cover the supported width range, paired and single layouts, and four-guardian placement.
+- Lua compilation, architecture audits and package integrity checks passed. In-game testing confirmed readable names and health labels with four guardians.
 
 ### v0.7.7 — November 12, 2026
 
