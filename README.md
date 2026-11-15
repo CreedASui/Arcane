@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.9-beta.2**
+**Current release: v0.7.9-beta.3**
 
 *Beta testing only. The current public stable release remains v0.7.8.*
 
@@ -269,6 +269,24 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### v0.7.9-beta.3 — November 15, 2026
+
+Co-op test follow-up: make the Party DPS rate comparable to Damage Done.
+
+#### Fixed
+
+- **Matching DPS windows:** Party DPS and Damage Done now request the same 10-second recent rate for their overview headings. Party member DPS rows also display the 10-second rate.
+- **Unchanged totals:** accumulated damage, per-player damage shares, and Reset checkpoint totals still cover the run or the interval since Reset.
+- **No misleading fallback:** if recent party history is unavailable, the legacy Party DPS feed remains available and its average is explicitly marked **avg dps** rather than silently presented as recent DPS.
+- **Co-op efficiency:** the separate best-skill breakdown continues to use run/checkpoint totals and no longer requests an unnecessary recent-rate window.
+
+#### Validation
+
+- Lua regression checks cover Party DPS and Damage Done query alignment, party row rates, unavailable recent history, and Reset checkpoint semantics.
+- Multiplayer testing is still required before stable release.
+
+Thanks to the multiplayer tester who identified the rate-window mismatch.
+
 ### v0.7.9-beta.2 — November 14, 2026
 
 Co-op beta follow-up: fix unresolved remote spell labels reported by multiplayer testing.

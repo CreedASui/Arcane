@@ -29,7 +29,8 @@ local QUERIES = {
 	damage = { metric = "damage", scope = "self", period = "run", groupBy = "actor_source", windowSeconds = 10 },
 	healing = { metric = "healing", scope = "self", period = "run", groupBy = "actor_source", windowSeconds = 0 },
 	boss = { metric = "damage", scope = "self", period = "encounter", groupBy = "actor_source", windowSeconds = 0 },
-	party = { metric = "damage", scope = "party", period = "run", groupBy = "owner", windowSeconds = 0 },
+	-- As in Damage Done, damage amounts are run/checkpoint totals, but DPS is last 10 seconds.
+	party = { metric = "damage", scope = "party", period = "run", groupBy = "owner", windowSeconds = 10 },
 }
 -- answers that mean the API itself can't be used now: then the game's own meter lines are read
 local HARD_ERRORS = { INVALID_ARGUMENT = true, UNSUPPORTED_VERSION = true, UNSUPPORTED_QUERY = true, INTERNAL_ERROR = true,
@@ -308,8 +309,10 @@ local function OwnerLines(snap)
 			local e = Line(n)
 			local actor = actors[row.ownerId] or {}
 			e.key, e.amount, e.ownerId = "o" .. tostring(row.ownerId), amount, row.ownerId
-			e.rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate)
-			e.recent, e.share = RateValue(row.recentRate), tonumber(row.share) or 0
+			-- Party rows must use the same recent rate as the Party heading and
+			-- Damage Done heading. Never silently substitute a run average.
+			e.rate = RateValue(row.recentRate) or RateValue(row.displayRate)
+			e.recent, e.share = nil, tonumber(row.share) or 0
 			e.name = type(actor.name) == "string" and actor.name or "?"
 			if e.name ~= "?" and row.ownerId ~= nil then
 				local known = owners[e.name]
@@ -508,6 +511,9 @@ local function ReadSnapshot(tab)
 		-- Keep both actor and source attribution for the party; grouping every player
 		-- together by source can lose the owner needed for the best-skill label.
 		query.groupBy = "actor_source"
+		-- Best skill is ranked by cumulative damage; no recent-rate history
+		-- required for this extra snapshot.
+		query.windowSeconds = 0
 		local bySkill = Call(AZS_GetMeterSnapshot, query)
 		if type(bySkill) == "table" then BestSkills(bySkill) end
 	end
@@ -1422,9 +1428,12 @@ local function Step(dt)
 		Read()
 		if S.offset > math.max(0, S.n - db.rows) then S.offset = math.max(0, S.n - db.rows) end
 	end
-	if S.rateShown ~= S.rate or S.rateUnit ~= tab.unit then
-		S.rateShown, S.rateUnit = S.rate, tab.unit
-		C.SetText(root.rate, S.rate and (Amount(S.rate) .. " " .. tab.unit) or "")
+	-- Native party fallback has only average DPS, not a 10-second window.
+	-- Label that explicitly instead of presenting it as equivalent to recent DPS.
+	local rateUnit = (tab.key == "party" and S.usedLines) and "avg dps" or tab.unit
+	if S.rateShown ~= S.rate or S.rateUnit ~= rateUnit then
+		S.rateShown, S.rateUnit = S.rate, rateUnit
+		C.SetText(root.rate, S.rate and (Amount(S.rate) .. " " .. rateUnit) or "")
 	end
 	C.TextColor(root.rate, pal.title[1], pal.title[2], pal.title[3])
 	FitHead(tab)

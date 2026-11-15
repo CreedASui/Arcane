@@ -45,6 +45,10 @@ for fragment in (
     'stamp and (not S.partyAt or stamp > S.partyAt) and GameParty()',
     'if tab == "party" and context.partyState == "solo" then',
     'context.runId ~= S.partyRun then',
+    'party = { metric = "damage", scope = "party", period = "run", groupBy = "owner", windowSeconds = 10 }',
+    'e.rate = RateValue(row.recentRate) or RateValue(row.displayRate)',
+    'query.windowSeconds = 0',
+    'S.usedLines) and "avg dps" or tab.unit',
 ):
     if fragment not in source:
         fail("required meter contract missing: " + fragment)
@@ -70,13 +74,12 @@ CLASS_COLORS = { MAGE = {0.1,0.7,1} }
 HARD_ERRORS = { INVALID_ARGUMENT = true }
 EMPTY_BY_CODE = { NO_PARTY = "No party" }
 QUERIES = { party = { metric = "damage", scope = "party", period = "run",
-                     groupBy = "owner", windowSeconds = 0 } }
+                     groupBy = "owner", windowSeconds = 10 } }
 byKey = {}
 function GetTime() return 30 end
 function Call(f, args)
   if type(f) == "function" then return f(args) end
 end
-function RateValue(t) return type(t) == "table" and t.value or nil end
 function Line(n)
   local e = S.list[n] or {}
   S.list[n] = e
@@ -89,7 +92,6 @@ function SetPartyRun(id)
   S.partyRun = id; S.partyOwners = {}; S.partyAt = nil
   S.partyBaseOnly = false; S.base = nil; ClearRows()
 end
-function FromSnapshot(snap, tab) S.fromTab = tab end
 function SortLines() end
 function SchoolOf() return nil end
 function getglobal(k) return _G[k] end
@@ -129,6 +131,41 @@ local ambiguous = { rows={{ownerId="a",displayAmount=80},{ownerId="b",displayAmo
 OwnerLines(ambiguous)
 check(S.partyOwners.Mage == false, "duplicate names must not resolve to an owner")
 check(S.list[1].ownerId == nil and S.list[2].ownerId == nil, "duplicate name remains clickable")
+
+-- The party overview must show a ready last-10-second DPS rate, not the
+-- period or checkpoint average, while damage totals and shares stay cumulative.
+S.checkpoint = nil
+local rateRow = {
+  rows={{ownerId="a",displayAmount=85000,share=0.6,
+         periodAverage={status="ready",value=85},
+         recentRate={status="ready",value=250},
+         displayRate={status="ready",value=250}}},
+  actors={a={name="Mage",classKey="MAGE"}},
+  totals={displayAmount=150000,
+          periodAverage={status="ready",value=150},
+          recentRate={status="ready",value=400},
+          displayRate={status="ready",value=400}}
+}
+FromSnapshot(rateRow, "party")
+check(S.n==1 and S.list[1].rate==250 and S.rate==400, "party DPS is not the recent rate")
+check(S.total==150000 and S.list[1].amount==85000 and S.list[1].share==0.6,
+      "changing rate window modified cumulative amounts or damage shares")
+S.checkpoint = "cp1"
+rateRow.rows[1].checkpointAverage={status="ready",value=40}
+rateRow.totals.checkpointAverage={status="ready",value=70}
+FromSnapshot(rateRow, "party")
+check(S.list[1].rate==250 and S.rate==400,
+      "party DPS wrongly used checkpoint average instead of recent rate")
+rateRow.rows[1].recentRate={status="unavailable"}
+rateRow.rows[1].displayRate={status="unavailable"}
+rateRow.totals.recentRate={status="warming_up"}
+rateRow.totals.displayRate={status="warming_up"}
+FromSnapshot(rateRow, "party")
+check(S.list[1].rate==nil and S.rate==nil,
+      "unavailable recent history must not silently display whole-run averages")
+check(S.total==150000 and S.list[1].amount==85000,
+      "unavailable recent history must not hide cumulative damage")
+S.checkpoint = nil
 
 -- A remote source with unresolved metadata must never put literal Nil into
 -- the tag; the previously received, current-run native best skill can help
@@ -175,6 +212,8 @@ check(S.list[1].ownerId == nil and S.list[2].ownerId == nil,
       "duplicate native names wrongly inherited a ledger identity")
 check(S.list[1].top == nil and S.list[2].top == "Fireball",
       "native labels did not correctly reject unresolved names")
+check(S.list[1].rate==10 and S.list[2].rate==9 and S.rate==19,
+      "native party fallback must retain its existing average rates")
 GETTERS.party = previousGetter
 
 -- Native data from a prior run cannot supply a spell label.
@@ -198,14 +237,44 @@ check(ReadSnapshot("party") == true, "stale party feed should not override ledge
 check(GameParty() and GameParty().Mage.top == "Fireball",
       "valid label lost when amount fallback became stale")
 
+-- Party overview must request 10-second rates and the second (best-skill)
+-- snapshot must not request recent-rate calculations it does not use.
+local queries = {}
+S.checkpoint = "cp123"; S.checkpointRun = "r1"
+AZS_GetMeterSnapshot = function(q)
+  queries[#queries+1] = q
+  if q.groupBy=="owner" then
+    return {rows={{ownerId="a",displayAmount=1000,share=1,
+                   recentRate={status="ready",value=17}}},
+            actors={a={name="Mage"}}, totals={displayAmount=1000,
+                   recentRate={status="ready",value=17}}}
+  end
+  return {rows={},sources={}}
+end
+check(ReadSnapshot("party")==true and #queries==2, "party did not fetch both API snapshots")
+check(queries[1].windowSeconds==10 and queries[1].groupBy=="owner" and
+      queries[1].checkpointId=="cp123", "party overview used wrong rate window or checkpoint")
+check(queries[2].windowSeconds==0 and queries[2].groupBy=="actor_source" and
+      queries[2].checkpointId=="cp123", "best-skill query unnecessarily requested recent history")
+check(S.total==1000 and S.rate==17 and S.list[1].rate==17,
+      "queried party rate does not match its header and row")
+S.checkpoint = nil; S.checkpointRun = nil
+
 -- Focusing an owner must never query other owners, nor rewrite the pet bar.
 S.focus = {ownerId="a",name="Mage",runId="r1"}
 S.checkpoint = nil
 local requested
-AZS_GetMeterSnapshot = function(q) requested=q; return {rows={},totals={}} end
+AZS_GetMeterSnapshot = function(q)
+  requested=q
+  return {rows={{actorId="a",ownerId="a",sourceKey="Fireball:r1",displayAmount=20}},
+          actors={a={kind="hero"}},sources={["Fireball:r1"]={name="Fireball"}},
+          totals={displayAmount=20,recentRate={status="ready",value=5}}}
+end
 ReadPlayer()
 check(requested and requested.scope=="owner" and requested.ownerId=="a", "owner drilldown scope wrong")
-check(requested.groupBy=="actor_source" and S.fromTab=="player", "detail did not reuse skill reader")
+check(requested.groupBy=="actor_source" and requested.windowSeconds==10 and
+      S.list[1].name=="Fireball" and S.total==20,
+      "detail did not reuse skill reader with the existing rate window")
 S.focus = {ownerId="self",name="Me",runId="r1"}
 ReadPlayer()
 check(requested.scope=="self" and requested.ownerId==nil, "self detail must use self scope")
@@ -248,12 +317,14 @@ print("PASS: run-scoped identity, native freshness, owner skill queries and Rese
 '''
 
 chunks = [
+    section("local function RateValue(r)", "-- The game can publish"),
     section("local function SkillName(value)", "-- Changing views"),
     section("local function GameParty()", "------------------------------------------------------------------------ reading: the meter API"),
     section("local function SourceLines(snap, tab)", "-- One line per party member"),
     section("local function OwnerLines(snap)", "local function BestSkills(snap)"),
     section("local function BestSkills(snap)", "-- If the ledger cannot name"),
     section("local function FillPartyBestSkills()", "local function FromSnapshot(snap, tab)"),
+    section("local function FromSnapshot(snap, tab)", "-- A party member's skills"),
     section("local function ReadPlayer()", "-- true when it read the API"),
     section("local function ReadSnapshot(tab)", "------------------------------------------------------------------------ reading: the older getters"),
     section("local function ReadLines(tab)", "-- the most first:"),
