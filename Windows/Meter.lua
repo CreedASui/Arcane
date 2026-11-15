@@ -63,7 +63,8 @@ local rows = {}          -- row widgets
 local byKey = {}         -- line key -> row widget
 local S = { list = {}, n = 0, total = 0, rate = nil, readClock = 0, offset = 0, alpha = 0, stamp = -1,
 	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false,
-	focus = nil, partyRun = nil, partyAt = nil, partyOwners = {}, partyPortraits = {}, partyBaseOnly = false }
+	focus = nil, partyRun = nil, partyAt = nil, partyStartStamp = nil,
+	partyOwners = {}, partyPortraits = {}, partyBaseOnly = false }
 local PARTY_EVENT_INTERVAL = 0.30 -- party overview only; detailed snapshots keep their original cadence
 
 local Call = C.Call -- no stray nil arguments (see Core)
@@ -106,6 +107,15 @@ local function RateValue(r)
 	return nil
 end
 
+-- The game can publish a textual "Nil" while a remote skill name is unresolved.
+-- Treat it as unavailable at intake, not as a valid spell that blocks fallback.
+local function SkillName(value)
+	if type(value) ~= "string" then return nil end
+	local name = string.gsub(string.gsub(value, "^%s+", ""), "%s+$", "")
+	if name == "" or string.lower(name) == "nil" then return nil end
+	return name
+end
+
 -- Changing views must clear BOTH the widgets and their old data: a NOT_READY
 -- owner query must never display the previous party's rows under a player's title.
 local function ClearRows()
@@ -128,24 +138,29 @@ end
 local function SetPartyRun(runId)
 	S.partyRun, S.runId = runId, runId
 	S.partyAt = nil
+	-- A native feed is not run-scoped. Ignore anything already published
+	-- when this run first becomes known, until the next party update.
+	S.partyStartStamp = tonumber(AZS_PARTY_UPDATED) or -1
 	S.partyOwners, S.partyPortraits, S.partyBaseOnly = {}, {}, false
 	S.focus, S.headKey = nil, nil
 	S.checkpoint, S.checkpointRun, S.base, S.baseAt = nil, nil, nil, nil
 	ClearRows()
 end
 
--- The native party feed has no owner ID; only use its names and portraits when
--- the ledger has established an unambiguous owner for this particular run.
+-- The native party feed is not run-scoped or owner-ID keyed. Accept only
+-- updates received after this run was identified; never trust duplicate names.
+-- Labels may use an older (but current-run) feed, while amount fallback must
+-- be newer than the last successful ledger snapshot.
 local function GameParty()
 	local updated = tonumber(AZS_PARTY_UPDATED)
-	-- The native update stamp has its own clock; never compare it to GetTime().
-	if not (S.partyRun and S.partyAt and updated and updated > S.partyAt) then return nil end
+	if not (S.partyRun and updated and S.partyStartStamp and updated > S.partyStartStamp) then return nil end
 	if type(AZS_PARTY) ~= "table" or table.getn(AZS_PARTY) == 0 then return nil end
 	local out = {}
 	for i = 1, table.getn(AZS_PARTY) do
 		local row = AZS_PARTY[i]
 		if type(row) == "table" and type(row.name) == "string" and row.name ~= "" then
-			out[row.name] = row
+			if out[row.name] ~= nil then out[row.name] = false
+			else out[row.name] = row end
 		end
 	end
 	return out
@@ -200,13 +215,17 @@ local function SourceLines(snap, tab)
 			local who = own and "" or tostring(actor.summonKey or actor.totemKey or actor.name or row.actorId)
 			local proc = row.nativeProc and true or false
 			local src = sources[row.sourceKey] or {}
-			local skill = (type(src.name) == "string" and src.name ~= "" and src.name) or src.abilityKey or src.talentKey
+			-- In another player's detail the game may not have a source name yet.
+			-- Keep the source's ID for aggregation, but never show textual "Nil".
+			local sourceName = (tab == "player") and SkillName(src.name)
+				or ((tab ~= "player" and type(src.name) == "string" and src.name ~= "") and src.name or nil)
+			local skill = sourceName or src.abilityKey or src.talentKey
 				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
 			local pet = not own and not actor.totemKey and actor.kind ~= "totem"
 			local key = pet and "pet" or ("s" .. tostring(skill) .. "|" .. who .. (proc and "#p" or ""))
 			if pet then
 				local part = (type(actor.name) == "string" and actor.name ~= "" and (actor.name .. ": ") or "")
-					.. ((type(src.name) == "string" and src.name ~= "") and src.name or tostring(skill))
+					.. (sourceName or (tab == "player" and "?" or tostring(skill)))
 				petParts[part] = (petParts[part] or 0) + amount
 				if tab == "damage" then
 					local whoKey = tostring(actor.summonKey or actor.name or "?")
@@ -237,7 +256,7 @@ local function SourceLines(snap, tab)
 				e.key, e.amount, e.rate, e.proc = key, amount, rate, proc
 				e.recent = RateValue(row.recentRate)
 				e.share = tonumber(row.share) or 0
-				local name = type(src.name) == "string" and src.name or tostring(row.sourceKey)
+				local name = sourceName or (tab == "player" and "?" or tostring(row.sourceKey))
 				e.skill = name
 				if pet then
 					e.petLine, e.proc = true, false
@@ -333,9 +352,9 @@ local function BestSkills(snap)
 			local e = perOwner[key]
 			if not e then
 				local src = sources[row.sourceKey] or {}
-				local named = type(src.name) == "string" and src.name ~= ""
-				local name = named and src.name or (string.gsub(key, ":r%d+.*$", ""))
-				e = { name = name, amount = 0, rate = 0, raw = not named }
+				local resolved = SkillName(src.name)
+				local name = resolved or SkillName(string.gsub(key, ":r%d+.*$", ""))
+				e = { name = name, amount = 0, rate = 0, raw = not resolved }
 				perOwner[key] = e
 			end
 			e.amount = e.amount + amount
@@ -362,12 +381,13 @@ local function FillPartyBestSkills()
 	local game = nil
 	for i = 1, S.n do
 		local e = S.list[i]
-		if e and (not e.top or e.rawTop) then
+		if e and (not e.top or e.rawTop) and S.partyOwners[e.name or ""] ~= false then
 			game = game or GameParty()
 			if not game then return end
 			local row = game[e.name or ""]
-			if row and type(row.top) == "string" and row.top ~= "" then
-				e.pet, e.top, e.topRate, e.rawTop = row.top, row.top, tonumber(row.topdps), nil
+			local name = row and SkillName(row.top)
+			if name then
+				e.pet, e.top, e.topRate, e.rawTop = name, name, tonumber(row.topdps), nil
 			end
 		end
 	end
@@ -461,8 +481,9 @@ local function ReadSnapshot(tab)
 		if not code or HARD_ERRORS[code] then return false end
 		-- The native party feed is incremental. Use it only when newer than the
 		-- last valid ledger answer, never after Reset (it has whole-run totals).
+		local stamp = tonumber(AZS_PARTY_UPDATED)
 		if code == "NOT_READY" and tab == "party" and not S.checkpoint and not S.partyBaseOnly
-			and GameParty() then
+			and stamp and (not S.partyAt or stamp > S.partyAt) and GameParty() then
 			return "game"
 		end
 		if code ~= "NOT_READY" and code ~= "ART_NOT_READY" and code ~= "RUN_MISMATCH" then
@@ -515,6 +536,16 @@ local function ReadLines(tab)
 	if type(getter) == "string" then getter = getglobal(getter) end
 	local lines, total, rate = Call(getter)
 	if type(lines) ~= "table" then return false end
+	local nameCounts = nil
+	if tab == "party" then
+		nameCounts = {}
+		for i = 1, table.getn(lines) do
+			local l = lines[i]
+			if type(l) == "table" and type(l.name) == "string" then
+				nameCounts[l.name] = (nameCounts[l.name] or 0) + 1
+			end
+		end
+	end
 	local n = 0
 	if type(lines) == "table" then
 		-- Reset here keeps each line's amount at that moment and shows what came after
@@ -523,9 +554,11 @@ local function ReadLines(tab)
 			local l = lines[i]
 			if type(l) == "table" and type(l.name) == "string" then
 				local amount = tonumber(l.dmg) or 0
-				local owner = tab == "party" and S.partyOwners[l.name] or nil
-				-- Ledger keys stay owner-ID based; unverified native names are not IDs.
-				local key = tab == "party" and (owner and ("o" .. tostring(owner)) or ("n:" .. l.name))
+				local owner = tab == "party" and nameCounts[l.name] == 1 and S.partyOwners[l.name] or nil
+				-- Ledger keys stay owner-ID based. Duplicate native names have no
+				-- reliable owner and need distinct, non-clickable fallback row keys.
+				local key = tab == "party" and (owner and ("o" .. tostring(owner))
+					or ("n:" .. l.name .. ((nameCounts[l.name] or 0) > 1 and ("#" .. i) or "")))
 					or ("s" .. l.name .. ((tonumber(l.proc) == 1) and "#p" or ""))
 				if base then amount = amount - (base[key] or 0) end
 				if amount > 0 then
@@ -538,7 +571,8 @@ local function ReadLines(tab)
 					if tab == "party" then
 						e.classKey = type(l.class) == "string" and string.upper(l.class) or nil
 						e.color = CLASS_COLORS[e.classKey or ""]
-						if type(l.top) == "string" and l.top ~= "" then e.pet, e.top, e.topRate = l.top, l.top, tonumber(l.topdps) end
+						local top = SkillName(l.top)
+						if top then e.pet, e.top, e.topRate = top, top, tonumber(l.topdps) end
 						e.ownerId = owner or nil -- click only when the current run verified this owner
 						e.portrait = owner and S.partyPortraits[l.name] or nil
 					else
