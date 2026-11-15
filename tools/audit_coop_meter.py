@@ -43,6 +43,8 @@ for fragment in (
     'local top = SkillName(l.top)',
     'local name = row and SkillName(row.top)',
     'stamp and (not S.partyAt or stamp > S.partyAt) and GameParty()',
+    'if tab == "party" and context.partyState == "solo" then',
+    'context.runId ~= S.partyRun then',
 ):
     if fragment not in source:
         fail("required meter contract missing: " + fragment)
@@ -83,7 +85,10 @@ function Line(n)
 end
 function ClearRows() S.n = 0; S.list = {}; S.cleared = (S.cleared or 0) + 1 end
 function LeavePlayer() S.focus = nil; ClearRows() end
-function SetPartyRun(id) S.partyRun = id; S.partyOwners = {}; S.partyAt = nil; ClearRows() end
+function SetPartyRun(id)
+  S.partyRun = id; S.partyOwners = {}; S.partyAt = nil
+  S.partyBaseOnly = false; S.base = nil; ClearRows()
+end
 function FromSnapshot(snap, tab) S.fromTab = tab end
 function SortLines() end
 function SchoolOf() return nil end
@@ -181,6 +186,7 @@ S.partyRun, S.partyStartStamp = "r1", 10
 -- A co-op ledger that is temporarily NOT_READY may use only newer party lines.
 S.partyRun, S.partyAt, S.partyStartStamp, S.checkpoint, S.partyBaseOnly = "r1", 10, 5, nil, false
 AZS_PARTY = {{name="Mage",dmg=90,top="Fireball"}}
+AZS_PARTY_UPDATED = 11
 AZS_GetMeterContext = function() return {runId="r1",localOwnerId="self"} end
 AZS_GetMeterSnapshot = function() return nil, {code="NOT_READY"} end
 check(ReadSnapshot("party") == "game", "fresh party fallback blocked")
@@ -225,6 +231,18 @@ check(S.partyBaseOnly==true and S.base.oa==100, "missing checkpoint lost native 
 local before=S.nativeCalls or 0
 Read()
 check((S.nativeCalls or 0)>before, "native baseline no longer read")
+
+-- The current world can start a new run without calling a world-loading hook.
+-- This must expire the previous run's native Reset baseline immediately.
+AZS_GetMeterContext = function() return {runId="r2",partyState="party"} end
+Read()
+check(S.partyRun=="r2" and S.partyBaseOnly==false and S.base==nil,
+      "new run retained the old native Reset baseline")
+-- Leaving the party must also clear that old baseline without requiring a new zone.
+S.partyRun="r2"; S.partyBaseOnly=true
+AZS_GetMeterContext = function() return {runId="r2",partyState="solo"} end
+Read()
+check(S.partyBaseOnly==false and S.status=="empty", "solo transition retained old party rows")
 
 print("PASS: run-scoped identity, native freshness, owner skill queries and Reset lifecycle")
 '''

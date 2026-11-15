@@ -464,6 +464,11 @@ local function ReadSnapshot(tab)
 		return false
 	end
 	if S.partyRun ~= context.runId then SetPartyRun(context.runId) end
+	if tab == "party" and context.partyState == "solo" then
+		S.partyOwners, S.partyPortraits = {}, {}
+		S.n, S.total, S.rate, S.status, S.emptyText = 0, 0, nil, "empty", EMPTY_BY_CODE.NO_PARTY
+		return true
+	end
 	if S.checkpoint and S.checkpointRun ~= context.runId then S.checkpoint = nil end
 	local q = QUERIES[tab]
 	local query = { apiVersion = 1, runId = context.runId, metric = q.metric, scope = q.scope, period = q.period,
@@ -629,10 +634,25 @@ local function Read()
 		ReadPlayer()
 		S.usedLines = false
 	elseif tab == "party" and S.partyBaseOnly then
-		-- A legacy Reset must stay on its native baseline. Polling the
-		-- uncheckpointed ledger would overwrite these relative amounts.
-		S.usedLines = true
-		if not ReadLines(tab) then S.n, S.total, S.rate = 0, 0, nil end
+		-- A native Reset must not mix whole-run ledger totals into its baseline.
+		-- Check the cheap run context before reading the legacy feed, though:
+		-- a new run may start without a world-loading event.
+		local context, err = Call(AZS_GetMeterContext)
+		local code = type(err) == "table" and err.code or nil
+		if type(context) == "table" and context.runId and context.runId ~= S.partyRun then
+			SetPartyRun(context.runId)
+		elseif type(context) == "table" and context.partyState == "solo" then
+			SetPartyRun(nil)
+			S.status, S.emptyText = "empty", EMPTY_BY_CODE.NO_PARTY
+		elseif code == "NO_RUN" or code == "NO_WORLD" or code == "NO_PARTY" then
+			SetPartyRun(nil)
+		end
+		if S.partyBaseOnly then
+			S.usedLines = true
+			if not ReadLines(tab) then S.n, S.total, S.rate = 0, 0, nil end
+		else
+			S.usedLines = false
+		end
 	else
 		local done = false
 		if tab ~= "taken" and type(AZS_GetMeterSnapshot) == "function" and type(AZS_GetMeterContext) == "function" then
