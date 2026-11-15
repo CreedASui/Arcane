@@ -242,7 +242,10 @@ check(GameParty() and GameParty().Mage.top == "Fireball",
 local queries = {}
 S.checkpoint = "cp123"; S.checkpointRun = "r1"
 AZS_GetMeterSnapshot = function(q)
-  queries[#queries+1] = q
+  -- Capture arguments as passed, since Arcane reuses the query table
+  -- for its secondary, cumulative best-skill request.
+  queries[#queries+1] = {windowSeconds=q.windowSeconds,groupBy=q.groupBy,
+                         checkpointId=q.checkpointId}
   if q.groupBy=="owner" then
     return {rows={{ownerId="a",displayAmount=1000,share=1,
                    recentRate={status="ready",value=17}}},
