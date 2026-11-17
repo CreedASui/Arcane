@@ -47,20 +47,22 @@ function C.NoteHitValue(ev)
 	if type(ev) ~= "table" then return end
 	local amount = tonumber(ev.amount)
 	if ev.kind ~= "damage" or not amount or amount <= 0 or ev.periodic then return end
-	local keys
+	-- This runs for every direct combat hit. Keep the same three aliases
+	-- without allocating a temporary keys table for every single event.
+	local first, second, third
 	if ev.meterSourceKey ~= nil then
-		keys = { ev.meterSourceKey, C.SkillKey(ev.meterSourceKey), ev.meterSource }
+		first, second, third = ev.meterSourceKey, C.SkillKey(ev.meterSourceKey), ev.meterSource
 	else
-		keys = { ev.meterSource, ev.abilityName, C.SkillKey(ev.meterSource or ev.abilityName) }
+		first, second, third = ev.meterSource, ev.abilityName, C.SkillKey(ev.meterSource or ev.abilityName)
 	end
 	local v
-	for i = 1, 3 do
-		if keys[i] ~= nil and C.hitValues[keys[i]] then v = C.hitValues[keys[i]] end
-	end
+	if first and C.hitValues[first] then v = C.hitValues[first] end
+	if second and C.hitValues[second] then v = C.hitValues[second] end
+	if third and C.hitValues[third] then v = C.hitValues[third] end
 	if not v then v = { times = {} } end
-	for i = 1, 3 do
-		if keys[i] ~= nil then C.hitValues[keys[i]] = v end
-	end
+	if first then C.hitValues[first] = v end
+	if second then C.hitValues[second] = v end
+	if third then C.hitValues[third] = v end
 	if ev.critical then
 		v.crit = amount
 	else
@@ -69,17 +71,18 @@ function C.NoteHitValue(ev)
 		if not v.low or amount < v.low then v.low = amount end
 		if not v.high or amount > v.high then v.high = amount end
 	end
-	local now = GetTime()
-	table.insert(v.times, now)
-	while table.getn(v.times) > 0 and (now - v.times[1] > 10 or table.getn(v.times) > 200) do
-		table.remove(v.times, 1)
-	end
+	-- Fixed ring of the most recent 200 timestamps. The previous front
+	-- table.remove shifted up to 199 elements on every late-game hit.
+	local slot = v.timeNext or 1
+	v.times[slot] = GetTime()
+	v.timeNext = slot == 200 and 1 or slot + 1
+	v.timeCount = math.min((v.timeCount or 0) + 1, 200)
 end
 
 function C.HitRate(v)
 	if not v or not v.times then return 0 end
 	local now, n = GetTime(), 0
-	for i = 1, table.getn(v.times) do
+	for i = 1, v.timeCount or 0 do
 		if now - v.times[i] <= 10 then n = n + 1 end
 	end
 	return n / 10

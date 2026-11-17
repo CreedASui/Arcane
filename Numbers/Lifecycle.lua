@@ -7,7 +7,7 @@ local C = N.Config
 ------------------------------------------------------------------------------
 -- Every frame
 
-S.lastNow, S.nextBossRefresh, S.nextSweep = nil, 0, 0
+S.lastNow = nil
 
 local function RefreshBossNames()
 	N.Combat.bossNames = {}
@@ -35,16 +35,24 @@ end
 
 local function Sweep()
 	for key, label in pairs(N.Combat.byKey) do
-		if label.dead then
-			N.Combat.byKey[key] = nil
-		end
+		if label.dead then N.Combat.byKey[key] = nil end
 	end
 	for key, label in pairs(N.Combat.missByKey) do
-		if label.dead then
-			N.Combat.missByKey[key] = nil
-		end
+		if label.dead then N.Combat.missByKey[key] = nil end
 	end
 end
+
+-- Housekeeping uses the same shared polling bus as nameplate metadata.
+-- The combat event stream and live number animations remain frame-driven.
+AUI.Poll.Add("numbers.boss_names", 1, function()
+	if N.CombatAPI.active then RefreshBossNames() end
+end, true)
+AUI.Poll.Add("numbers.housekeeping", 2, function(now)
+	if not N.CombatAPI.active then return end
+	Sweep()
+	N.Combat.PruneCrowd(now)
+	N.Icons.RefreshFallbackIcons(now)
+end, true)
 
 -- The level-up cards: while they're up the numbers step aside (under the game's veil their icons
 -- come out black), and the ones from before are dropped as the cards close, so none of them flies
@@ -74,15 +82,6 @@ local function Step(now)
 	end
 	dt = AUI.Clamp(dt, 0, 0.1)
 	S.lastNow = now
-	if now >= S.nextBossRefresh then
-		RefreshBossNames()
-		S.nextBossRefresh = now + 1
-	end
-	if now >= S.nextSweep then
-		Sweep()
-		N.Icons.RefreshFallbackIcons(now)
-		S.nextSweep = now + 2
-	end
 	N.Icons.WatchSummons(now)
 
 	if N.CombatAPI.active then
@@ -198,6 +197,8 @@ S.Activate = function()
 	end
 	N.Combat.ClearAll()
 	N.CombatAPI.cursor = nil
+	RefreshBossNames()
+	N.Icons.RefreshFallbackIcons(GetTime())
 	HideGameNumbers()
 	N.CombatAPI.active = true
 end

@@ -7,7 +7,6 @@ local WIDTH, HEIGHT = 144, 36
 local TEXT_WIDTH, TEXT_HEIGHT = 120, 20
 
 local db, frame, readout, mover
-local elapsed, themeElapsed = 0, 0
 local themeState = { palStamp = -1, styleStamp = -1 }
 
 local function SuppressCtrlRToggle()
@@ -56,7 +55,7 @@ local function SetShown(on)
 	on = on and true or false
 	HideNativeReadout()
 	db.enabled = on
-	if on then frame:Show() else frame:Hide() end
+	if on then frame:Show(); ApplyTheme() else frame:Hide() end
 end
 
 C.OnInit(function()
@@ -100,24 +99,18 @@ C.OnInit(function()
 		SetShown(db.enabled)
 	end)
 
-	local watch = CreateFrame("Frame", "ArcaneFPSDriver")
-	watch:SetScript("OnUpdate", function()
+	-- Read FPS and theme on the shared low-frequency bus. No separate
+	-- every-frame FPS driver is needed for a quarter-second text label.
+	C.Poll.Add("fps.readout", 0.25, function()
 		if not db.enabled then return end
-		local dt = arg1 or 0
-		elapsed = elapsed + dt
-		themeElapsed = themeElapsed + dt
-		if elapsed >= 0.25 then
-			elapsed = 0
-			local fps = GetFramerate()
-			if type(fps) == "number" then
-				C.SetText(readout, string.format("FPS: %d", math.floor(fps + 0.5)))
-			end
+		local fps = GetFramerate()
+		if type(fps) == "number" then
+			C.SetText(readout, string.format("FPS: %d", math.floor(fps + 0.5)))
 		end
-		if themeElapsed >= 0.5 then
-			themeElapsed = 0
-			ApplyTheme()
-		end
-	end)
+	end, true)
+	C.Poll.Add("fps.theme", 0.50, function()
+		if db.enabled then ApplyTheme() end
+	end, true)
 end)
 
 C.RegisterPart({

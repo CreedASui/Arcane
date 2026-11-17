@@ -316,6 +316,7 @@ local ROWS = {
 	{ "Last 10 seconds", "10 dernières secondes", "Letzte 10 Sekunden", "Últimos 10 segundos", "Últimos 10 segundos" },
 	{ "Share", "Part", "Anteil", "Porcentaje", "Parcela" },
 	{ "Best spell", "Meilleur sort", "Bester Zauber", "Mejor hechizo", "Melhor feitiço" },
+	{ "Click for their skills.", "Cliquez pour voir ses compétences.", "Klicken, um die Fertigkeiten zu sehen.", "Haz clic para ver sus habilidades.", "Clique para ver as habilidades." },
 	{ "A talent's or amulet's own damage.", "Les dégâts propres d'un talent ou d'une amulette.", "Eigener Schaden eines Talents oder Amuletts.", "Daño propio de un talento o amuleto.", "Dano próprio de um talento ou amuleto." },
 	{ "Since you pressed Reset.", "Depuis votre dernière réinitialisation.", "Seit du Reset gedrückt hast.", "Desde que pulsaste Borrar.", "Desde que você zerou." },
 	{ "+{1} more", "+{1} de plus", "+{1} weitere", "+{1} más", "+{1} mais" },

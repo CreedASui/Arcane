@@ -16,6 +16,29 @@ S.frameNow = 0            -- the time of the frame being worked on
 local crowdTargets = {}      -- per spell: enemy -> until when it counts as hit
 local dotCrowd, crowdAt, crowdUntil = {}, {}, {}
 
+-- Expire target identities for spells no longer ticking, including after a
+-- run change. Previously dormant spell maps could linger for an entire session.
+S.ResetCrowd = function()
+	crowdTargets, dotCrowd, crowdAt, crowdUntil = {}, {}, {}, {}
+end
+
+S.PruneCrowd = function(now)
+	for skill, targets in pairs(crowdTargets) do
+		local remaining = false
+		for id, untilAt in pairs(targets) do
+			if untilAt < now then
+				targets[id] = nil
+			else
+				remaining = true
+			end
+		end
+		if not remaining and (crowdUntil[skill] or 0) <= now then
+			crowdTargets[skill] = nil
+			dotCrowd[skill], crowdAt[skill], crowdUntil[skill] = nil, nil, nil
+		end
+	end
+end
+
 -- How long a DoT's number waits for its next tick: a bit more than the
 -- longest wait seen between its ticks so far.
 S.DotHold = function(label)
@@ -72,7 +95,7 @@ end
 -- hits merge, and stay merged two seconds after the crowd thins out, so it
 -- can't flip back and forth around three.
 S.NoteHit = function(ev, now)
-	if not (ev.kind == "damage" and ev.targetId) then
+	if not (C.db.crowd and not C.db.bySpell and ev.kind == "damage" and ev.targetId) then
 		return
 	end
 	local skill = S.SkillOf(ev)
@@ -113,38 +136,47 @@ end
 -- Whether a hit joins its spell's one number a second (over the middle of the
 -- enemies it hit) instead of a number on its enemy.
 S.Merges = function(ev)
-	if ev.kind ~= "damage" then
-		return false
+	if ev.arcaneMerges ~= nil then return ev.arcaneMerges end
+	local merged = false
+	if ev.kind == "damage" then
+		if C.db.bySpell then
+			merged = true
+		elseif C.db.crowd then
+			merged = Crowded(S.SkillOf(ev), S.frameNow)
+		end
 	end
-	if C.db.bySpell then
-		return true
-	end
-	return C.db.crowd and Crowded(S.SkillOf(ev), S.frameNow) or false
+	ev.arcaneMerges = merged
+	return merged
 end
 
 -- A tick of a DoT, with "DoT totals" on (and not merged with a crowd).
 S.IsDotTick = function(ev)
-	return ev.periodic and ev.kind == "damage" and C.db.dotTotals and not S.Merges(ev)
+	if ev.arcaneDotTick ~= nil then return ev.arcaneDotTick end
+	local tick = (ev.periodic and ev.kind == "damage" and C.db.dotTotals and not S.Merges(ev)) and true or false
+	ev.arcaneDotTick = tick
+	return tick
 end
 
 -- With icons on, every number holds one skill's hits on one enemy, so its
 -- icon is always right; with them off, one number holds all of an enemy's.
 S.KeyOf = function(ev)
-	if not ev.targetId then
-		return nil
-	end
+	if not ev.targetId then return nil end
+	if ev.arcaneKey then return ev.arcaneKey end
+	local key
 	if S.Merges(ev) then
-		return "spell#" .. S.SkillOf(ev)
-	end
-	if S.IsDotTick(ev) then
+		key = "spell#" .. S.SkillOf(ev)
+	elseif S.IsDotTick(ev) then
 		-- A DoT's ticks add up in a number of their own, apart from the hits.
 		if C.db.icons then
-			return ev.targetId .. "#dot#" .. S.SkillOf(ev)
+			key = ev.targetId .. "#dot#" .. S.SkillOf(ev)
+		else
+			key = ev.targetId .. "#dot"
 		end
-		return ev.targetId .. "#dot"
+	elseif C.db.icons then
+		key = ev.targetId .. "#" .. S.SkillOf(ev)
+	else
+		key = ev.targetId
 	end
-	if C.db.icons then
-		return ev.targetId .. "#" .. S.SkillOf(ev)
-	end
-	return ev.targetId
+	ev.arcaneKey = key
+	return key
 end

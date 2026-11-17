@@ -179,6 +179,7 @@ Arcane.AddLanguage("pl", "Polski", Arcane.FACE_LETTERS, {
 	["Last 10 seconds"] = "Ostatnie 10 s",
 	["Share"] = "Udział",
 	["Best spell"] = "Najlepszy czar",
+	["Click for their skills."] = "Kliknij, aby zobaczyć umiejętności.",
 	["A talent's or amulet's own damage."] = "Własne obrażenia talentu lub amuletu.",
 	["Since you pressed Reset."] = "Od wciśnięcia Reset.",
 	["+{1} more"] = "+{1} więcej",

@@ -7,7 +7,6 @@ local HEAL_TYPES = { "HEAL", "HEAL_CRIT", "PERIODIC_HEAL" }
 
 local themedCombatFonts = false
 local lastPalette = {}
-local poll = 0
 
 local function SetFont(fs, face)
 	if not fs or type(fs.GetFont) ~= "function" then return end
@@ -80,13 +79,12 @@ C.OnInit(function()
 		ApplyTheme()
 		if not themedCombatFonts then ApplyCombatText(C.Pal()) end
 	end)
-	watch:SetScript("OnUpdate", function()
-		poll = poll + (arg1 or 0)
-		if poll < 0.2 then return end
-		poll = 0
+	-- Check native palette/font readiness on the common polling heartbeat.
+	-- Event updates remain immediate; never hook the game's own text flow.
+	C.Poll.Add("native_text.theme", 0.20, function()
 		ApplyTheme()
 		if not themedCombatFonts then ApplyCombatText(C.Pal()) end
-	end)
+	end, true)
 
 	ApplyTheme()
 	ApplyCombatText(C.Pal())
