@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-module regression guards for the combined co-op and performance beta."""
+"""Cross-module regression guards for consolidated co-op and performance releases."""
 from pathlib import Path
 import re
 import shutil
@@ -14,7 +14,7 @@ def src(path):
 
 def require(test, message):
     if not test:
-        raise SystemExit("FAIL: beta integration: " + message)
+        raise SystemExit("FAIL: combined integration: " + message)
 
 
 toc = src("Arcane.toc")
@@ -27,12 +27,16 @@ plates = src("Nameplates/ArcaneNameplates.lua")
 readme = src("README.md")
 workflow = src(".github/workflows/arcane-audit.yml")
 
-require('Arcane.VERSION = "0.7.9-beta.5"' in core
-        and "## Version: v0.7.9-beta.5" in toc
-        and "**Current release: v0.7.9-beta.5**" in readme,
+match = re.search(r'Arcane\.VERSION\s*=\s*"([^"]+)"', core)
+require(match is not None, "Core.VERSION must be present")
+version = match.group(1)
+tag = "v" + version
+require(f'Arcane.VERSION = "{version}"' in core
+        and f"## Version: {tag}" in toc
+        and f"**Current release: {tag}**" in readme,
         "version metadata must agree across source and README")
-require(readme.count("### v0.7.9-beta.5 —") == 1
-        and "ArcaneV0.7.9-beta.5.zip" in readme,
+require(readme.count(f"### {tag} —") == 1
+        and f"ArcaneV{version}.zip" in readme,
         "single-README release notes and installer metadata must agree")
 require(toc.index("Core/Poll.lua") < toc.index("Core/Cards.lua")
         and toc.index("Core/Poll.lua") < toc.index("Numbers/Numbers.lua")
@@ -111,4 +115,4 @@ run = subprocess.run([lua, "-"], input=script, text=True, capture_output=True, c
 require(run.returncode == 0, "integrated combat stream + tooltip ring failed:\n"
         + run.stdout + run.stderr)
 print("PASS: real event-adapter to shared hit-history Lua integration")
-print("PASS: beta.5 combined regression and manual stable-release gate")
+print("PASS: combined regression and manual stable-release gate")

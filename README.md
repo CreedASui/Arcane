@@ -1,8 +1,8 @@
 # Arcane UI
 
-**Current release: v0.7.9-beta.5**
+**Current release: v0.7.9**
 
-*Beta testing only. The current public stable release remains v0.7.8.*
+*Current stable release. Co-op meter improvements have automated test coverage; broader live multiplayer validation is ongoing.*
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -42,11 +42,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.9-beta.5.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.9.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.9-beta.5.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.9.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
@@ -269,6 +269,33 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### v0.7.9 — November 16, 2026
+
+**Stable release — consolidated co-op meter improvements and a comprehensive performance audit.**
+
+#### Co-op meter
+
+- **Comparable DPS:** Party DPS and Damage Done use the same 10-second recent-rate window. Party totals and damage shares remain accumulated since the start of the run or the meter's Reset checkpoint.
+- **Player breakdowns:** Select a party member to inspect their individual damage sources, talents, pets and summons. Keep player ownership tied to the game's run-scoped owner IDs, including when party membership changes.
+- **Clearer skill names:** Handle temporarily unresolved remote ability names without displaying misleading values such as `Nil`; retain valid names from the native party feed where available.
+- **Accurate fallbacks:** Clearly label legacy party averages as `avg dps` rather than presenting them as recent DPS.
+- Preserve existing Damage Done, Healing Done, Reset behavior and the intentionally removed selected-target pane.
+
+#### Performance and reliability
+
+- **Shared polling:** Consolidate low-frequency HUD and nameplate data refreshes into one lightweight scheduler while keeping real-time animations and nameplate reuse immediate.
+- **Nameplate efficiency:** Cache the native plate registry, avoid repeated WorldFrame child enumeration when unchanged, cache stable name/level strings and handle partially constructed or reused plates safely.
+- **Combat bursts:** Bound cosmetic combat-text reads to 256 events per frame, keep recent hit history in a fixed 200-entry ring and expire stale DoT/crowd-tracking identities. The game's authoritative damage accounting is unchanged.
+- Improve polling scheduler behavior when jobs unregister one another during an update.
+
+#### Validation and feedback
+
+- Repository architecture, Lua 5.1 compilation, co-op snapshot/Reset handling, combat-stream integration, nameplate lifecycle, performance regressions and installation ZIP integrity passed automated checks.
+- **Multiplayer testing note:** Co-op improvements have been reviewed and covered by automated regression tests, but have **not yet received comprehensive live multiplayer validation** across different party sizes and late-wave conditions. Wider player feedback will help identify edge cases the current testing environment cannot reproduce.
+- When reporting an issue, please include the class, party size, relevant game situation, steps to reproduce, the expected and observed behavior, and screenshots or error messages if available.
+
+Thanks to Creed for the original co-op contribution and to everyone who reported multiplayer and performance issues.
+
 ### v0.7.9-beta.5 — November 16, 2026
 
 **Consolidated co-op and performance test build.** This beta combines the reviewed multiplayer meter changes and the full beta.4 performance audit on one branch, without merging into stable `main`.

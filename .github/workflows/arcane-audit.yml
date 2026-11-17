@@ -130,7 +130,7 @@ jobs:
         run: python tools/audit_performance.py
 
       - name: Verify combined co-op and performance beta integration
-        run: python tools/audit_beta5_integration.py
+        run: python tools/audit_combined_integration.py
 
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
