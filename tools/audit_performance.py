@@ -115,6 +115,19 @@ assert(Arcane.Poll.Remove("broken"))
 assert(Arcane.Poll.Remove("fast"))
 assert(Arcane.Poll.Remove("slow"))
 assert(not frame.shown, "empty polling bus should stop updating")
+-- A poll job can remove another queued job without crashing the bus or
+-- preventing the remaining jobs from firing.
+local survivors=0
+Arcane.Poll.Add("remover",0.1,function()
+  assert(Arcane.Poll.Remove("victim"))
+end,true)
+Arcane.Poll.Add("victim",0.1,function() error("removed job executed") end,true)
+Arcane.Poll.Add("survivor",0.1,function() survivors=survivors+1 end,true)
+frame.OnUpdate()
+assert(survivors==1)
+Arcane.Poll.Remove("remover")
+Arcane.Poll.Remove("survivor")
+assert(not frame.shown)
 ''')
 
 run_lua("direct-hit ring retains aliases, 200-hit cap and 10-second rates", r'''

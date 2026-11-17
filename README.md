@@ -285,7 +285,7 @@ Add each new release as a dated section at the top of this embedded history. Git
 
 - Use the single low-frequency `Core/Poll.lua` bus for nameplate metadata, number housekeeping, FPS text, native text theming, cards, stored-level preferences, and Talents.
 - Keep combat callbacks, reactive plate reuse, and visual animations immediate; do **not** move them onto slow polling.
-- Avoid repeated WorldFrame child allocations when the native plate pool is unchanged; cache unchanged native name/level text.
+- Avoid repeated WorldFrame child allocations when the native plate pool is unchanged; cache unchanged native name/level text. Retry incomplete native plate construction and clear stale names on pooled-frame reuse.
 - Limit **cosmetic** combat-event processing to two batches of 128 per frame, keep tooltip hit history in a bounded 200-sample ring, and expire stale DoT/crowd identities.
 - The game's authoritative damage ledger is untouched. Combat-text work can be bounded without changing total damage accounting.
 

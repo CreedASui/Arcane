@@ -48,7 +48,9 @@ driver:SetScript("OnUpdate", function()
 	local now = GetTime()
 	for i = 1, table.getn(ordered) do
 		local job = ordered[i]
-		if now >= job.nextAt then
+		-- A callback is allowed to unregister a different job while we
+		-- traverse this array; a removed slot may be nil later this frame.
+		if job and jobs[job.key] == job and now >= job.nextAt then
 			-- Never replay missed intervals after an FPS hitch or a loading screen.
 			job.nextAt = now + job.interval
 			local ok, err = pcall(job.callback, now)
