@@ -261,6 +261,10 @@ P.State.RegisterPlate=function(frame,known,ordered)
   if frame.generation~=frame.knownGeneration then
     frame.knownGeneration=frame.generation
     frame.arcaneNameplatesNeedsStyle=true
+    -- Mirror the real pooled-plate lifecycle: an old category/revision
+    -- must be invalidated before the new unit is styled.
+    frame.arcaneNameplatesAppliedCategory=nil
+    frame.arcaneNameplatesStyleRevision=-1
     return true,true,true,true
   end
   return true,false,false,false
