@@ -68,5 +68,5 @@ do
 		C.cardsUp = up
 		C.cardsFade = C.Toward(C.cardsFade, up and 1 or 0, up and 10 or 6, dt)
 	end)
-	C.Poll.Add("cards.layer_order", 1, function() pcall(C.KeepOverCards, false) end, true)
+	C.Poll.Add("cards.layer_order", 1, function() C.KeepOverCards(false) end, true)
 end

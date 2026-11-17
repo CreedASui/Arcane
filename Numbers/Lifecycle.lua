@@ -199,8 +199,6 @@ S.Activate = function()
 	N.CombatAPI.cursor = nil
 	RefreshBossNames()
 	N.Icons.RefreshFallbackIcons(GetTime())
-	AUI.Poll.Kick("numbers.boss_names")
-	AUI.Poll.Kick("numbers.housekeeping")
 	HideGameNumbers()
 	N.CombatAPI.active = true
 end

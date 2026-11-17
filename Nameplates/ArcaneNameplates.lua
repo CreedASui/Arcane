@@ -49,7 +49,7 @@ local function SyncOverlayValues()
 	SafeCall("health-bar update", P.Visuals.SyncOverlayValues, orderedPlates)
 end
 
-local function ApplyKnownPlate(frame, updateDebuffs)
+local function ApplyKnownPlate(frame)
 	if not frame or not frame.GetObjectType or frame:GetObjectType() ~= "Button" then return end
 	if not frame.IsVisible or not frame:IsVisible() then return end
 

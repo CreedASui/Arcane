@@ -228,4 +228,84 @@ name.raw=nil
 assert(P.GetPlateName(frame)==nil)
 ''')
 
+
+run_lua("same-frame pooled plate reuse without full WorldFrame enumeration", r'''
+Arcane = { Nameplates = {State={},Special={},Visuals={} } }
+local C=Arcane
+local P=C.Nameplates
+local now, enumerated, styled, hidden = 0, 0, 0, 0
+function GetTime() return now end
+local world = { children={} }
+function world:GetNumChildren() return table.getn(self.children) end
+function world:GetChildren()
+  enumerated=enumerated+1
+  return unpack(self.children)
+end
+WorldFrame=world
+function C.OnInit(fn) C.init=fn end
+function C.OnWorld(fn) C.world=fn end
+function C.OnLogout(fn) C.logout=fn end
+function C.DB() return {} end
+function C.Print() error("nameplate controller unexpectedly errored") end
+function C.L(x) return x end
+C.Poll={ tasks={},Add=function(key,period,fn) C.Poll.tasks[key]=fn end,
+         Kick=function() end }
+P.State.IdentifyNameplate=function(frame) return true end
+P.State.RegisterPlate=function(frame,known,ordered)
+  if not known[frame] then
+    known[frame]=true
+    table.insert(ordered,frame)
+    frame.arcaneNameplatesNeedsStyle=true
+    return true,true,true,true
+  end
+  if frame.generation~=frame.knownGeneration then
+    frame.knownGeneration=frame.generation
+    frame.arcaneNameplatesNeedsStyle=true
+    return true,true,true,true
+  end
+  return true,false,false,false
+end
+P.State.HideNativePresentation=function() hidden=hidden+1 end
+P.State.RestoreNativeState=function() end
+P.Special.IsBossOrGuardianPlate=function() return false end
+P.Special.RefreshNames=function() end
+P.Special.HideDebuffs=function() end
+P.Visuals.Apply=function() styled=styled+1;return true end
+P.Visuals.SyncOverlayValues=function() end
+local driver = {}
+function driver:RegisterEvent() end
+function driver:SetScript(name,fn) self[name]=fn end
+function driver:Show() end
+function CreateFrame() return driver end
+local function plate()
+  local f={generation=1}
+  function f:GetObjectType() return "Button" end
+  function f:IsVisible() return true end
+  function f:GetWidth() return 100 end
+  function f:GetHeight() return 20 end
+  return f
+end
+dofile("Nameplates/ArcaneNameplates.lua")
+C.init()
+assert(C.Poll.tasks["nameplates.overlay"] and C.Poll.tasks["nameplates.debuffs"])
+world.children[1]=plate()
+driver.OnUpdate()
+assert(enumerated==1 and styled==1 and hidden==1, "first plate not styled immediately")
+for i=1,100 do driver.OnUpdate() end
+assert(enumerated==1, "unchanged WorldFrame was re-enumerated every frame")
+local first=world.children[1]
+first.generation=2
+driver.OnUpdate()
+assert(styled==2 and enumerated==1, "reused plate must restyle same frame")
+world.children[2]=plate()
+driver.OnUpdate()
+assert(styled==3 and enumerated==2, "new pool entry must style on the growth frame")
+now=2.5
+driver.OnUpdate()
+assert(enumerated==3, "periodic fallback probe missing")
+C.ArcaneNameplatesRefresh(true)
+driver.OnUpdate()
+assert(styled==5, "style revisions must still restyle existing plates")
+''')
+
 print("PASS: performance-specific static and Lua 5.1 behavior guardrails")
