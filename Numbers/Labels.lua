@@ -31,6 +31,7 @@ S.ClearAll = function()
 		S.pending[i] = nil
 	end
 	S.nPending = 0
+	S.ResetCrowd()
 end
 
 local function MissWord(ev)

@@ -125,6 +125,9 @@ jobs:
       - name: Exercise co-op damage meter contracts and behavior
         run: python tools/audit_coop_meter.py
 
+      - name: Stress-test shared polling and combat-number hot paths
+        run: python tools/audit_performance.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |

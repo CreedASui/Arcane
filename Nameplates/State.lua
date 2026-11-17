@@ -74,7 +74,12 @@ local function GetPlateName(frame)
 		if not CacheNativeParts(frame) then return nil end
 		region = frame.arcaneNameplatesNameRegion
 	end
-	return NormalizeName(region:GetText())
+	local raw = region:GetText()
+	if frame.arcaneNameplatesRawName ~= raw then
+		frame.arcaneNameplatesRawName = raw
+		frame.arcaneNameplatesCachedName = NormalizeName(raw)
+	end
+	return frame.arcaneNameplatesCachedName
 end
 
 local function GetPlateLevel(frame)
@@ -83,9 +88,12 @@ local function GetPlateLevel(frame)
 		if not CacheNativeParts(frame) then return nil end
 		region = frame.arcaneNameplatesLevelRegion
 	end
-	local value = region:GetText()
-	if value and string.find(value, "^%d+$") then return tonumber(value) end
-	return nil
+	local raw = region:GetText()
+	if frame.arcaneNameplatesRawLevel ~= raw then
+		frame.arcaneNameplatesRawLevel = raw
+		frame.arcaneNameplatesCachedLevel = raw and string.find(raw, "^%d+$") and tonumber(raw) or nil
+	end
+	return frame.arcaneNameplatesCachedLevel
 end
 
 local function SaveObjectState(object, states, plate)

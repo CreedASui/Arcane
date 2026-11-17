@@ -15,9 +15,10 @@ local orderedPlates = {}
 local checkedWorldChildren = {}
 local OVERLAY_INTERVAL = 0.10
 local DEBUFF_INTERVAL = 0.25
-local overlayClock = 0
-local debuffClock = 0
 local refreshPending = true
+local worldChildCount = -1
+local nextPoolProbe = 0
+local retryUnreadyChildren = false
 local styleRevision = 0
 local scanFrame
 
@@ -65,56 +66,66 @@ local function ApplyKnownPlate(frame, updateDebuffs)
 		end
 	end
 
-	if special then
-		if updateDebuffs then
+	if not special and frame.arcaneNameplatesDebuffRow then
+		P.Special.HideDebuffs(frame)
+	end
+end
+
+-- Only debuff metadata needs the slow polling bus; plate identity/reuse
+-- remains same-frame to avoid showing the previous enemy on a pooled plate.
+local function RefreshDebuffs()
+	SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
+	for i = 1, table.getn(orderedPlates) do
+		local frame = orderedPlates[i]
+		if frame.arcaneNameplatesBossGuardian and frame:IsVisible() then
 			if P.Option("showDebuffs") then
 				SafeCall("boss debuff update", P.Special.UpdateDebuffs, frame)
 			else
 				P.Special.HideDebuffs(frame)
 			end
 		end
-	elseif frame.arcaneNameplatesDebuffRow then
-		P.Special.HideDebuffs(frame)
-	end
-end
-
-local function StyleKnownPlates(updateDebuffs)
-	SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
-	for i = 1, table.getn(orderedPlates) do
-		local frame = orderedPlates[i]
-		local scope = "plate " .. tostring(frame)
-		local ok = SafeCall(scope, ApplyKnownPlate, frame, updateDebuffs)
-		if not ok then
-			frame.arcaneNameplatesAppliedCategory = nil
-			frame.arcaneNameplatesStyleRevision = -1
-		end
 	end
 end
 
 local function DiscoverNativePool(children)
+	local retry = false
 	for i = 1, table.getn(children) do
 		local frame = children[i]
 		if frame and not checkedWorldChildren[frame] then
 			if frame.GetObjectType and frame:GetObjectType() == "Button" then
 				local ok, recognized = SafeCall("plate discovery", P.State.IdentifyNameplate, frame)
 				if ok and recognized then
-					checkedWorldChildren[frame] = true
-					SafeCall("plate registration", RegisterPlate, frame)
+					local registered, success = SafeCall("plate registration", RegisterPlate, frame)
+					if registered and success then checkedWorldChildren[frame] = true
+					else retry = true end
 				elseif frame.GetWidth and frame:GetWidth() > 0
 						and frame.GetHeight and frame:GetHeight() > 0 then
 						checkedWorldChildren[frame] = true
+				else
+					retry = true -- plate may still be constructing its native regions
 				end
 			else
 				checkedWorldChildren[frame] = true
 			end
 		end
 	end
+	return retry
 end
 
-local function ScanNameplates(updateDebuffs)
+local function ScanNameplates()
 	if type(WorldFrame) ~= "table" or type(WorldFrame.GetChildren) ~= "function" then return end
-	local children = { WorldFrame:GetChildren() }
-	DiscoverNativePool(children)
+	local now = GetTime()
+	local childCount = type(WorldFrame.GetNumChildren) == "function" and WorldFrame:GetNumChildren() or nil
+	-- Direct WorldFrame children are not destroyed in this client. Re-enumerate
+	-- when the pool grows; known pooled plates still get their identity checked
+	-- every frame. A sparse periodic probe covers incomplete initial frames and
+	-- clients lacking GetNumChildren, without allocating an array every frame.
+	if childCount ~= worldChildCount or now >= nextPoolProbe then
+		local children = { WorldFrame:GetChildren() }
+		retryUnreadyChildren = DiscoverNativePool(children)
+		worldChildCount = childCount
+		nextPoolProbe = now + ((childCount == nil or retryUnreadyChildren) and 0.10 or 2)
+	end
 
 	local refreshSpecialNames = false
 	local anyIdentityChange = false
@@ -142,8 +153,8 @@ local function ScanNameplates(updateDebuffs)
 		SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
 	end
 
-	-- Reuse the one cached plate registry directly. No temporary active/dirty arrays are
-	-- allocated each frame, and a pooled frame is styled on the same update that notices reuse.
+	-- Reuse the one cached plate registry directly. Pooled frames are checked
+	-- on the very update that notices reuse; full child discovery is infrequent.
 	for i = 1, table.getn(orderedPlates) do
 		local frame = orderedPlates[i]
 		if frame:IsVisible() then
@@ -153,7 +164,7 @@ local function ScanNameplates(updateDebuffs)
 					or frame.arcaneNameplatesNameChangedPending
 					or frame.arcaneNameplatesAppliedCategory ~= category
 					or frame.arcaneNameplatesStyleRevision ~= styleRevision then
-					SafeCall("plate style", ApplyKnownPlate, frame, updateDebuffs)
+					SafeCall("plate style", ApplyKnownPlate, frame)
 					frame.arcaneNameplatesNeedsStyle = nil
 					frame.arcaneNameplatesNameChangedPending = nil
 			end
@@ -204,43 +215,25 @@ C.OnInit(function()
 		if event == "CHAT_MSG_ADDON" and arg1 ~= "AZSUNITS" then return end
 		RefreshAll()
 	end)
+	-- These are the only nameplate jobs that need a regular interval. Their
+	-- clocks and error isolation now belong to the shared Arcane polling bus.
+	C.Poll.Add("nameplates.overlay", OVERLAY_INTERVAL, SyncOverlayValues, true)
+	C.Poll.Add("nameplates.debuffs", DEBUFF_INTERVAL, RefreshDebuffs, true)
 	scanFrame:SetScript("OnUpdate", function()
-		local dt = arg1 or 0
-		if dt > 0.1 then dt = 0.1 end
-		if dt < 0 then dt = 0 end
-
-		-- Scan the tiny native child pool every UI frame. Recognition is exact and cached;
-		-- known frames are read by their two cached native FontStrings, never recursively walked.
-		local updateDebuffs = false
-		debuffClock = debuffClock - dt
-		if debuffClock <= 0 then
-			debuffClock = DEBUFF_INTERVAL
-			updateDebuffs = true
-		end
-		ScanNameplates(updateDebuffs)
-
-		overlayClock = overlayClock - dt
-		if overlayClock <= 0 then
-			overlayClock = OVERLAY_INTERVAL
-			SyncOverlayValues()
-		end
-		if refreshPending then
-			refreshPending = false
-			StyleKnownPlates(updateDebuffs)
-		elseif updateDebuffs then
-			SafeCall("boss and guardian index", P.Special.RefreshNames, false, orderedPlates)
-			for i = 1, table.getn(orderedPlates) do
-				local frame = orderedPlates[i]
-				if frame.arcaneNameplatesBossGuardian and frame:IsVisible() and P.Option("showDebuffs") then
-					SafeCall("boss debuff update", P.Special.UpdateDebuffs, frame)
-				end
-			end
-		end
+		-- Native nameplate reuse can occur between any two frames; keep this
+		-- inexpensive identity check immediate, never delay it behind a poll.
+		ScanNameplates()
 	end)
 end)
 
 C.OnWorld(function()
-	if scanFrame then RefreshAll(); scanFrame:Show() end
+	if scanFrame then
+		RefreshAll()
+		worldChildCount, nextPoolProbe = -1, 0
+		scanFrame:Show()
+		C.Poll.Kick("nameplates.overlay")
+		C.Poll.Kick("nameplates.debuffs")
+	end
 end)
 
 C.OnLogout(function() RestoreAll() end)
