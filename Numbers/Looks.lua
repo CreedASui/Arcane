@@ -121,11 +121,12 @@ S.Color = function(label, now)
 			color = C.COLOR_NORMAL
 		end
 	elseif label.crit then
-		-- a crit shimmers between its two colors, each number in its own time
+		-- A crit shimmers between its two colors, each number in its own time: crits landing
+		-- together (a spell's crits on a crowd) shimmer out of step, not in lockstep.
 		local school = SchoolLook(look, label)
 		local pair = (school and school.crit) or look.crit
 		local a, b = pair[1], pair[2]
-		local wave = 0.5 + 0.5 * math.sin(now * (look.pulse or 6) + (label.born or 0) * 7)
+		local wave = 0.5 + 0.5 * math.sin(now * (look.pulse or 6) + (label.id or 0) * 2.4)
 		local red, green, blue = a[1] + (b[1] - a[1]) * wave, a[2] + (b[2] - a[2]) * wave, a[3] + (b[3] - a[3]) * wave
 		-- and lands white-hot
 		local since = now - (label.critAt or now)
