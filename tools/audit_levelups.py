@@ -28,12 +28,13 @@ for fragment, message in required:
     if fragment not in source:
         fail(message)
 
+poll = source.find('C.Poll.Add("levelups.storing", 0.20')
+sync = source.find("SyncStoring(true)", poll)
 driver = source.find('driver:SetScript("OnUpdate", function()')
-sync = source.find("SyncStoring(true)", driver)
 guard = source.find("if not db.enabled then return end", driver)
 step = source.find("local ok, err = pcall(Step, dt, GetTime())", driver)
-if min(driver, sync, guard, step) < 0 or not (driver < sync < guard < step):
-    fail("the live native preference must sync before the driver decides whether the replacement runs")
+if min(poll, sync, driver, guard, step) < 0 or not (poll < sync < driver < guard < step):
+    fail("native preference sync must use the shared 0.2s poll, separate from per-frame animation")
 
 if "and not C.Call(AZS_IsStoringLevels)" in source:
     fail("do not treat numeric zero as true when checking the native setting")

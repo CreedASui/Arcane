@@ -10,6 +10,11 @@ local C = N.Config
 S.apiReady, S.active, S.registered, S.warnedNoApi = false, false, false, false
 S.cursor = nil
 
+-- Combat text is cosmetic. Bound work per frame so one Magma Totem/Deep
+-- Wounds burst cannot make the UI process thousands of events before drawing.
+local EVENTS_PER_BATCH = 128
+local MAX_BATCHES_PER_FRAME = 2
+
 S.ApiReady = function()
 	if type(AZS_GetCombatTextCapabilities) ~= "function"
 		or type(AZS_GetCombatTextEvents) ~= "function"
@@ -39,7 +44,7 @@ end
 
 local function Subscribe()
 	-- With no cursor the game starts us at the newest hit, with no history.
-	local ok, batch = pcall(AZS_GetCombatTextEvents, nil, 256)
+	local ok, batch = pcall(AZS_GetCombatTextEvents, nil, EVENTS_PER_BATCH)
 	if ok and type(batch) == "table" and batch.cursor then
 		S.cursor = batch.cursor
 	end
@@ -50,8 +55,8 @@ S.ReadEvents = function(now)
 		Subscribe()
 		return
 	end
-	for round = 1, 8 do
-		local ok, batch, err = pcall(AZS_GetCombatTextEvents, S.cursor, 256)
+	for round = 1, MAX_BATCHES_PER_FRAME do
+		local ok, batch, err = pcall(AZS_GetCombatTextEvents, S.cursor, EVENTS_PER_BATCH)
 		if not ok then
 			return
 		end
@@ -69,7 +74,7 @@ S.ReadEvents = function(now)
 		end
 		local events = batch.events
 		if type(events) == "table" then
-			local count = table.getn(events)
+			local count = math.min(table.getn(events), EVENTS_PER_BATCH)
 			for i = 1, count do
 				local ev = events[i]
 				if S.Wanted(ev, now) then

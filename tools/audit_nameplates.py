@@ -110,11 +110,22 @@ require("local checkedWorldChildren = {}" in CONTROLLER,
 require("local function DiscoverNativePool(children)" in CONTROLLER
         and 'SafeCall("plate discovery", P.State.IdentifyNameplate, frame)' in CONTROLLER,
         "unseen WorldFrame buttons must go through the exact native signature")
-require("local function ScanNameplates(updateDebuffs)" in CONTROLLER
+require("local function ScanNameplates()" in CONTROLLER
         and "return P.State.RegisterPlate(frame, knownPlates, orderedPlates)" in CONTROLLER,
         "known pool entries must refresh their identity and reuse state")
-require("ScanNameplates(updateDebuffs)" in CONTROLLER and "scanFrame:SetScript(\"OnUpdate\"" in CONTROLLER,
-        "native plate lifecycle must be driven without a half-second timer")
+require("ScanNameplates()" in CONTROLLER and "scanFrame:SetScript(\"OnUpdate\"" in CONTROLLER,
+        "native plate lifecycle must be driven without delaying pooled-plate reuse")
+require("WorldFrame:GetNumChildren()" in CONTROLLER
+        and "now >= nextPoolProbe" in CONTROLLER
+        and CONTROLLER.count("WorldFrame:GetChildren()") == 1,
+        "full WorldFrame child discovery must be triggered by pool growth or fallback probe")
+require('C.Poll.Add("nameplates.overlay"' in CONTROLLER
+        and 'C.Poll.Add("nameplates.debuffs"' in CONTROLLER
+        and "overlayClock" not in CONTROLLER and "debuffClock" not in CONTROLLER,
+        "nameplate data polling must use Arcane's shared bus")
+require("frame.arcaneNameplatesRawName" in STATE
+        and "frame.arcaneNameplatesRawLevel" in STATE,
+        "same-frame identity checks must cache unchanged native text")
 require("SCAN_INTERVAL" not in CONTROLLER and "scanClock" not in CONTROLLER,
         "there must be no arbitrary half-second discovery delay")
 require("P.State.HideNativePresentation(frame)" in CONTROLLER,

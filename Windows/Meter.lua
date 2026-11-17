@@ -29,7 +29,8 @@ local QUERIES = {
 	damage = { metric = "damage", scope = "self", period = "run", groupBy = "actor_source", windowSeconds = 10 },
 	healing = { metric = "healing", scope = "self", period = "run", groupBy = "actor_source", windowSeconds = 0 },
 	boss = { metric = "damage", scope = "self", period = "encounter", groupBy = "actor_source", windowSeconds = 0 },
-	party = { metric = "damage", scope = "party", period = "run", groupBy = "owner", windowSeconds = 0 },
+	-- As in Damage Done, damage amounts are run/checkpoint totals, but DPS is last 10 seconds.
+	party = { metric = "damage", scope = "party", period = "run", groupBy = "owner", windowSeconds = 10 },
 }
 -- answers that mean the API itself can't be used now: then the game's own meter lines are read
 local HARD_ERRORS = { INVALID_ARGUMENT = true, UNSUPPORTED_VERSION = true, UNSUPPORTED_QUERY = true, INTERNAL_ERROR = true,
@@ -62,7 +63,10 @@ local db, root
 local rows = {}          -- row widgets
 local byKey = {}         -- line key -> row widget
 local S = { list = {}, n = 0, total = 0, rate = nil, readClock = 0, offset = 0, alpha = 0, stamp = -1,
-	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false }
+	checkpoint = nil, base = nil, baseAt = nil, status = nil, levelled = false, menuOpen = false,
+	focus = nil, partyRun = nil, partyAt = nil, partyStartStamp = nil,
+	partyOwners = {}, partyPortraits = {}, partyBaseOnly = false }
+local PARTY_EVENT_INTERVAL = 0.30 -- party overview only; detailed snapshots keep their original cadence
 
 local Call = C.Call -- no stray nil arguments (see Core)
 
@@ -86,9 +90,9 @@ local function ColorFor(name)
 	return PALETTE[i] or PALETTE[1]
 end
 
--- a line's color: a hero's class color in Party DPS, else its skill's own
+-- a line's color: class on the party overview, skill color inside a player's detail.
 local function ColorOf(e)
-	if db.tab == "party" then return e.color or { 0.7, 0.7, 0.7 } end
+	if db.tab == "party" and not S.focus then return e.color or { 0.7, 0.7, 0.7 } end
 	return ColorFor(e.proc and ((e.name or "?") .. " #proc") or e.name) -- a proc line apart from its skill's
 end
 
@@ -104,6 +108,65 @@ local function RateValue(r)
 	return nil
 end
 
+-- The game can publish a textual "Nil" while a remote skill name is unresolved.
+-- Treat it as unavailable at intake, not as a valid spell that blocks fallback.
+local function SkillName(value)
+	if type(value) ~= "string" then return nil end
+	local name = string.gsub(string.gsub(value, "^%s+", ""), "%s+$", "")
+	if name == "" or string.lower(name) == "nil" then return nil end
+	return name
+end
+
+-- Changing views must clear BOTH the widgets and their old data: a NOT_READY
+-- owner query must never display the previous party's rows under a player's title.
+local function ClearRows()
+	for key, r in pairs(byKey) do
+		r.key, r.entry = nil, nil
+		C.Vis(r.frame, false)
+		byKey[key] = nil
+	end
+	S.n, S.total, S.rate, S.rank, S.tipRow, S.offset, S.emptyText = 0, 0, nil, nil, nil, 0, nil
+end
+
+local function LeavePlayer()
+	S.focus, S.headKey = nil, nil
+	ClearRows()
+	S.readClock = 0
+end
+
+-- A name is useful for joining the legacy party feed to the ledger, but NOT
+-- as a durable player key. Bound every mapping to the meter's actual run ID.
+local function SetPartyRun(runId)
+	S.partyRun, S.runId = runId, runId
+	S.partyAt = nil
+	-- A native feed is not run-scoped. Ignore anything already published
+	-- when this run first becomes known, until the next party update.
+	S.partyStartStamp = tonumber(AZS_PARTY_UPDATED) or -1
+	S.partyOwners, S.partyPortraits, S.partyBaseOnly = {}, {}, false
+	S.focus, S.headKey = nil, nil
+	S.checkpoint, S.checkpointRun, S.base, S.baseAt = nil, nil, nil, nil
+	ClearRows()
+end
+
+-- The native party feed is not run-scoped or owner-ID keyed. Accept only
+-- updates received after this run was identified; never trust duplicate names.
+-- Labels may use an older (but current-run) feed, while amount fallback must
+-- be newer than the last successful ledger snapshot.
+local function GameParty()
+	local updated = tonumber(AZS_PARTY_UPDATED)
+	if not (S.partyRun and updated and S.partyStartStamp and updated > S.partyStartStamp) then return nil end
+	if type(AZS_PARTY) ~= "table" or table.getn(AZS_PARTY) == 0 then return nil end
+	local out = {}
+	for i = 1, table.getn(AZS_PARTY) do
+		local row = AZS_PARTY[i]
+		if type(row) == "table" and type(row.name) == "string" and row.name ~= "" then
+			if out[row.name] ~= nil then out[row.name] = false
+			else out[row.name] = row end
+		end
+	end
+	return out
+end
+
 ------------------------------------------------------------------------ reading: the meter API
 -- each line: key, name, icon, amount, rate, share, proc, color (and class, portrait for heroes)
 local function Line(i)
@@ -113,7 +176,7 @@ local function Line(i)
 		S.list[i] = e
 	end
 	e.icon, e.portrait, e.classKey, e.color, e.proc, e.top, e.topRate, e.school = nil, nil, nil, nil, false, nil, nil, nil
-	e.skill, e.pet, e.petLine, e.ownerId = nil, nil, nil, nil
+	e.skill, e.pet, e.petLine, e.ownerId, e.rawTop = nil, nil, nil, nil, nil
 	return e
 end
 
@@ -153,13 +216,17 @@ local function SourceLines(snap, tab)
 			local who = own and "" or tostring(actor.summonKey or actor.totemKey or actor.name or row.actorId)
 			local proc = row.nativeProc and true or false
 			local src = sources[row.sourceKey] or {}
-			local skill = (type(src.name) == "string" and src.name ~= "" and src.name) or src.abilityKey or src.talentKey
+			-- In another player's detail the game may not have a source name yet.
+			-- Keep the source's ID for aggregation, but never show textual "Nil".
+			local sourceName = (tab == "player") and SkillName(src.name)
+				or ((tab ~= "player" and type(src.name) == "string" and src.name ~= "") and src.name or nil)
+			local skill = sourceName or src.abilityKey or src.talentKey
 				or (string.gsub(tostring(row.sourceKey), ":r%d+.*$", ""))
 			local pet = not own and not actor.totemKey and actor.kind ~= "totem"
 			local key = pet and "pet" or ("s" .. tostring(skill) .. "|" .. who .. (proc and "#p" or ""))
 			if pet then
 				local part = (type(actor.name) == "string" and actor.name ~= "" and (actor.name .. ": ") or "")
-					.. ((type(src.name) == "string" and src.name ~= "") and src.name or tostring(skill))
+					.. (sourceName or (tab == "player" and "?" or tostring(skill)))
 				petParts[part] = (petParts[part] or 0) + amount
 				if tab == "damage" then
 					local whoKey = tostring(actor.summonKey or actor.name or "?")
@@ -190,7 +257,7 @@ local function SourceLines(snap, tab)
 				e.key, e.amount, e.rate, e.proc = key, amount, rate, proc
 				e.recent = RateValue(row.recentRate)
 				e.share = tonumber(row.share) or 0
-				local name = type(src.name) == "string" and src.name or tostring(row.sourceKey)
+				local name = sourceName or (tab == "player" and "?" or tostring(row.sourceKey))
 				e.skill = name
 				if pet then
 					e.petLine, e.proc = true, false
@@ -231,6 +298,7 @@ end
 -- One line per party member, tagged with their best skill.
 local function OwnerLines(snap)
 	local n = 0
+	local owners, portraits = {}, {}
 	local list = type(snap.rows) == "table" and snap.rows or {}
 	local actors = type(snap.actors) == "table" and snap.actors or {}
 	for i = 1, table.getn(list) do
@@ -241,13 +309,33 @@ local function OwnerLines(snap)
 			local e = Line(n)
 			local actor = actors[row.ownerId] or {}
 			e.key, e.amount, e.ownerId = "o" .. tostring(row.ownerId), amount, row.ownerId
-			e.rate = RateValue(S.checkpoint and row.checkpointAverage or row.periodAverage) or RateValue(row.displayRate)
-			e.recent, e.share = RateValue(row.recentRate), tonumber(row.share) or 0
+			-- Party rows must use the same recent rate as the Party heading and
+			-- Damage Done heading. Never silently substitute a run average.
+			e.rate = RateValue(row.recentRate) or RateValue(row.displayRate)
+			e.recent, e.share = nil, tonumber(row.share) or 0
 			e.name = type(actor.name) == "string" and actor.name or "?"
+			if e.name ~= "?" and row.ownerId ~= nil then
+				local known = owners[e.name]
+				if known == nil then
+					owners[e.name] = row.ownerId
+				elseif known ~= row.ownerId then
+					owners[e.name] = false -- ambiguous: never map a name to the wrong owner
+				end
+			end
 			e.classKey = type(actor.classKey) == "string" and string.upper(actor.classKey) or nil
 			e.color = CLASS_COLORS[e.classKey or ""]
-			if type(actor.portrait) == "table" and actor.portrait.status == "ready" then e.portrait = actor.portrait.portraitKey end
+			if type(actor.portrait) == "table" and actor.portrait.status == "ready" then
+				e.portrait = actor.portrait.portraitKey
+				if e.name ~= "?" then portraits[e.name] = e.portrait end
+			end
 		end
+	end
+	-- Replace the roster on each successful read; departed players cannot be
+	-- selected via a leftover name-to-owner mapping.
+	S.partyOwners, S.partyPortraits = owners, portraits
+	for i = 1, n do
+		local e = S.list[i]
+		if not owners[e.name] or owners[e.name] == false then e.ownerId = nil end
 	end
 	return n
 end
@@ -267,9 +355,9 @@ local function BestSkills(snap)
 			local e = perOwner[key]
 			if not e then
 				local src = sources[row.sourceKey] or {}
-				local name = (type(src.name) == "string" and src.name ~= "" and src.name)
-					or (string.gsub(key, ":r%d+.*$", ""))
-				e = { name = name, amount = 0, rate = 0 }
+				local resolved = SkillName(src.name)
+				local name = resolved or SkillName(string.gsub(key, ":r%d+.*$", ""))
+				e = { name = name, amount = 0, rate = 0, raw = not resolved }
 				perOwner[key] = e
 			end
 			e.amount = e.amount + amount
@@ -286,7 +374,25 @@ local function BestSkills(snap)
 	for i = 1, S.n do
 		local e = S.list[i]
 		local b = e and e.ownerId and best[e.ownerId]
-		if b then e.pet, e.top, e.topRate = b.name, b.name, b.rate end
+		if b then e.pet, e.top, e.topRate, e.rawTop = b.name, b.name, b.rate, b.raw end
+	end
+end
+
+-- If the ledger cannot name a top skill, a recent native party feed can fill
+-- the LABEL only. The ledger remains authoritative for owner IDs and amounts.
+local function FillPartyBestSkills()
+	local game = nil
+	for i = 1, S.n do
+		local e = S.list[i]
+		if e and (not e.top or e.rawTop) and S.partyOwners[e.name or ""] ~= false then
+			game = game or GameParty()
+			if not game then return end
+			local row = game[e.name or ""]
+			local name = row and SkillName(row.top)
+			if name then
+				e.pet, e.top, e.topRate, e.rawTop = name, name, tonumber(row.topdps), nil
+			end
+		end
 	end
 end
 
@@ -306,6 +412,46 @@ local function FromSnapshot(snap, tab)
 	S.runId = type(snap.context) == "table" and snap.context.runId or S.runId
 end
 
+-- A party member's skills reuse the ordinary source-row reader, not a new
+-- renderer. Owner IDs come from the current ledger; a stale/absent snapshot
+-- leaves the detail empty or keeps the last valid detail, never party rows.
+local function ReadPlayer()
+	local f = S.focus
+	local context, cerr = Call(AZS_GetMeterContext)
+	if type(context) ~= "table" or not context.runId then
+		local code = type(cerr) == "table" and cerr.code or nil
+		if code == "NO_RUN" or code == "NO_WORLD" or code == "NO_PARTY" then LeavePlayer() end
+		return
+	end
+	if context.runId ~= f.runId or context.partyState == "solo" then
+		LeavePlayer()
+		return
+	end
+	local query = { apiVersion = 1, runId = f.runId, metric = "damage", period = "run",
+		groupBy = "actor_source", windowSeconds = 10 }
+	if f.ownerId == context.localOwnerId then
+		query.scope = "self"
+	else
+		query.scope, query.ownerId = "owner", f.ownerId
+	end
+	if S.checkpoint then query.checkpointId = S.checkpoint end
+	local snap, err = Call(AZS_GetMeterSnapshot, query)
+	if type(snap) ~= "table" then
+		local code = type(err) == "table" and err.code or nil
+		if code == "CHECKPOINT_EXPIRED" or code == "CHECKPOINT_INVALIDATED" or code == "INVALID_CHECKPOINT" then
+			S.checkpoint, S.checkpointRun = nil, nil
+			ClearRows()
+			S.readClock = 0
+		elseif code == "UNKNOWN_OWNER" or code == "OWNER_NOT_PRESENT" or code == "NO_PARTY"
+			or code == "RUN_MISMATCH" or code == "NO_RUN" then
+			LeavePlayer()
+		end
+		return
+	end
+	S.emptyText = nil
+	FromSnapshot(snap, "player") -- never update C.petSkills, which belongs to Damage Done
+end
+
 -- true when it read the API (or it answered "wait" or "nothing there"); false when the API can't
 -- be used, and the game's own meter lines should be read instead
 local function ReadSnapshot(tab)
@@ -314,10 +460,17 @@ local function ReadSnapshot(tab)
 		local code = type(cerr) == "table" and cerr.code or nil
 		if code == "NOT_READY" or code == "NO_PLAYER" then return true end
 		if code == "NO_RUN" or code == "NO_WORLD" then
+			if S.partyRun then SetPartyRun(nil) end
 			S.n, S.status, S.emptyText = 0, "empty", nil
 			return true
 		end
 		return false
+	end
+	if S.partyRun ~= context.runId then SetPartyRun(context.runId) end
+	if tab == "party" and context.partyState == "solo" then
+		S.partyOwners, S.partyPortraits = {}, {}
+		S.n, S.total, S.rate, S.status, S.emptyText = 0, 0, nil, "empty", EMPTY_BY_CODE.NO_PARTY
+		return true
 	end
 	if S.checkpoint and S.checkpointRun ~= context.runId then S.checkpoint = nil end
 	local q = QUERIES[tab]
@@ -334,7 +487,17 @@ local function ReadSnapshot(tab)
 			return true
 		end
 		if not code or HARD_ERRORS[code] then return false end
+		-- The native party feed is incremental. Use it only when newer than the
+		-- last valid ledger answer, never after Reset (it has whole-run totals).
+		local stamp = tonumber(AZS_PARTY_UPDATED)
+		if code == "NOT_READY" and tab == "party" and not S.checkpoint and not S.partyBaseOnly
+			and stamp and (not S.partyAt or stamp > S.partyAt) and GameParty() then
+			return "game"
+		end
 		if code ~= "NOT_READY" and code ~= "ART_NOT_READY" and code ~= "RUN_MISMATCH" then
+			if tab == "party" and code == "NO_PARTY" then
+				S.partyOwners, S.partyPortraits = {}, {}
+			end
 			S.n, S.status = 0, "empty" -- no boss fight, no party, no run: the empty line says so
 			S.emptyText = EMPTY_BY_CODE[code]
 		end
@@ -344,9 +507,13 @@ local function ReadSnapshot(tab)
 	FromSnapshot(snap, tab)
 	C.NoteSources(snap.sources) -- for the damage numbers: each line's own icon
 	if tab == "party" then
+		S.partyAt = tonumber(AZS_PARTY_UPDATED) or 0
 		-- Keep both actor and source attribution for the party; grouping every player
 		-- together by source can lose the owner needed for the best-skill label.
 		query.groupBy = "actor_source"
+		-- Best skill is ranked by cumulative damage; no recent-rate history
+		-- required for this extra snapshot.
+		query.windowSeconds = 0
 		local bySkill = Call(AZS_GetMeterSnapshot, query)
 		if type(bySkill) == "table" then BestSkills(bySkill) end
 	end
@@ -379,6 +546,17 @@ local function ReadLines(tab)
 	local getter = GETTERS[tab]
 	if type(getter) == "string" then getter = getglobal(getter) end
 	local lines, total, rate = Call(getter)
+	if type(lines) ~= "table" then return false end
+	local nameCounts = nil
+	if tab == "party" then
+		nameCounts = {}
+		for i = 1, table.getn(lines) do
+			local l = lines[i]
+			if type(l) == "table" and type(l.name) == "string" then
+				nameCounts[l.name] = (nameCounts[l.name] or 0) + 1
+			end
+		end
+	end
 	local n = 0
 	if type(lines) == "table" then
 		-- Reset here keeps each line's amount at that moment and shows what came after
@@ -387,7 +565,12 @@ local function ReadLines(tab)
 			local l = lines[i]
 			if type(l) == "table" and type(l.name) == "string" then
 				local amount = tonumber(l.dmg) or 0
-				local key = (tab == "party" and "o" or "s") .. l.name .. ((tonumber(l.proc) == 1) and "#p" or "")
+				local owner = tab == "party" and nameCounts[l.name] == 1 and S.partyOwners[l.name] or nil
+				-- Ledger keys stay owner-ID based. Duplicate native names have no
+				-- reliable owner and need distinct, non-clickable fallback row keys.
+				local key = tab == "party" and (owner and ("o" .. tostring(owner))
+					or ("n:" .. l.name .. ((nameCounts[l.name] or 0) > 1 and ("#" .. i) or "")))
+					or ("s" .. l.name .. ((tonumber(l.proc) == 1) and "#p" or ""))
 				if base then amount = amount - (base[key] or 0) end
 				if amount > 0 then
 					n = n + 1
@@ -399,7 +582,10 @@ local function ReadLines(tab)
 					if tab == "party" then
 						e.classKey = type(l.class) == "string" and string.upper(l.class) or nil
 						e.color = CLASS_COLORS[e.classKey or ""]
-						if type(l.top) == "string" and l.top ~= "" then e.top, e.topRate = l.top, tonumber(l.topdps) end
+						local top = SkillName(l.top)
+						if top then e.pet, e.top, e.topRate = top, top, tonumber(l.topdps) end
+						e.ownerId = owner or nil -- click only when the current run verified this owner
+						e.portrait = owner and S.partyPortraits[l.name] or nil
 					else
 						e.icon = (tab == "taken") and TAKEN_ICON or C.icons[l.name]
 						e.color = nil
@@ -420,6 +606,7 @@ local function ReadLines(tab)
 	end
 	S.status = (n == 0) and "empty" or nil
 	S.emptyText = (n == 0 and tab == "party") and EMPTY_BY_CODE.NO_PARTY or nil -- empty out of a party
+	return true
 end
 
 -- the most first: only the lines read now (the list keeps older tables for reuse past them).
@@ -449,33 +636,76 @@ end
 
 local function Read()
 	local tab = db.tab
-	local done = false
-	if tab ~= "taken" and type(AZS_GetMeterSnapshot) == "function" and type(AZS_GetMeterContext) == "function" then
-		done = ReadSnapshot(tab)
+	if tab == "party" and S.focus then
+		ReadPlayer()
+		S.usedLines = false
+	elseif tab == "party" and S.partyBaseOnly then
+		-- A native Reset must not mix whole-run ledger totals into its baseline.
+		-- Check the cheap run context before reading the legacy feed, though:
+		-- a new run may start without a world-loading event.
+		local context, err = Call(AZS_GetMeterContext)
+		local code = type(err) == "table" and err.code or nil
+		if type(context) == "table" and context.runId and context.runId ~= S.partyRun then
+			SetPartyRun(context.runId)
+		elseif type(context) == "table" and context.partyState == "solo" then
+			SetPartyRun(nil)
+			S.status, S.emptyText = "empty", EMPTY_BY_CODE.NO_PARTY
+		elseif code == "NO_RUN" or code == "NO_WORLD" or code == "NO_PARTY" then
+			SetPartyRun(nil)
+		end
+		if S.partyBaseOnly then
+			S.usedLines = true
+			if not ReadLines(tab) then S.n, S.total, S.rate = 0, 0, nil end
+		else
+			S.usedLines = false
+		end
+	else
+		local done = false
+		if tab ~= "taken" and type(AZS_GetMeterSnapshot) == "function" and type(AZS_GetMeterContext) == "function" then
+			done = ReadSnapshot(tab)
+		end
+		S.usedLines = not done or done == "game"
+		if done == "game" then
+			ReadLines(tab)
+		elseif not done and not ReadLines(tab) then
+			S.n, S.total, S.rate = 0, 0, nil
+		end
+		if tab == "party" then FillPartyBestSkills() end
 	end
-	S.usedLines = not done
-	if not done then ReadLines(tab) end
+	S.lastRead = GetTime()
 	SortLines() -- the game sorts already; after a Reset here the order can change
 end
 
 ------------------------------------------------------------------------ Reset: this window only
 local function Reset()
+	local oldBase, oldLines = S.base, S.usedLines
 	S.base, S.baseAt = nil, nil
-	if not S.usedLines and type(AZS_CreateMeterCheckpoint) == "function" and type(AZS_GetMeterContext) == "function" then
+	local checkpointMade = false
+	-- A party fallback can still have a valid ledger checkpoint API.
+	-- Prefer it to mixing whole-run party totals with reset-relative data.
+	local canCheckpoint = not oldLines or (db.tab == "party" and S.partyRun)
+	if canCheckpoint and type(AZS_CreateMeterCheckpoint) == "function" and type(AZS_GetMeterContext) == "function" then
 		local context = Call(AZS_GetMeterContext)
 		if type(context) == "table" and context.runId then
 			local cp = Call(AZS_CreateMeterCheckpoint, context.runId)
 			if type(cp) == "table" and cp.checkpointId then
 				if S.checkpoint then Call(AZS_ReleaseMeterCheckpoint, S.checkpoint) end
 				S.checkpoint, S.checkpointRun = cp.checkpointId, context.runId
+				checkpointMade = true
 			end
 		end
+	end
+	if checkpointMade then
+		S.partyBaseOnly = false
+		ClearRows() -- immediately hide pre-checkpoint whole-run data
 	else
-		-- the older getters: remember where every line stood
+		-- Older getters: save their baseline. In the native party fallback,
+		-- stay native for this run rather than switching to raw ledger totals.
+		S.partyBaseOnly = db.tab == "party" or S.partyBaseOnly
 		local base = {}
 		for i = 1, S.n do
 			local e = S.list[i]
-			base[e.key] = (e.amount or 0) + ((S.base and S.base[e.key]) or 0)
+			base[e.key] = (e.amount or 0) + ((oldBase and oldBase[e.key]) or 0)
 		end
 		S.base, S.baseAt = base, GetTime()
 	end
@@ -571,6 +801,9 @@ local function NewRow()
 		if S.tipRow == r then S.tipRow = nil end
 		if GameTooltip then GameTooltip:Hide() end
 	end)
+	f:SetScript("OnMouseUp", function()
+		if S.rowClick then S.rowClick(r, arg1) end
+	end)
 	f:Hide()
 	return r
 end
@@ -603,11 +836,8 @@ local function BuildMenu()
 			ShowMenu(false)
 			S.offset = 0
 			S.readClock = 0
-			for key, r in pairs(byKey) do
-				r.key, r.entry = nil, nil
-				C.Vis(r.frame, false)
-				byKey[key] = nil
-			end
+			S.focus, S.headKey = nil, nil
+			ClearRows()
 		end)
 		b.text:SetJustifyH("LEFT")
 		b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -4 - (i - 1) * 18)
@@ -907,6 +1137,9 @@ local function ShowTip(r)
 		GameTooltip:AddDoubleLine(C.L("Best spell"), e.top .. (e.topRate and ("  " .. Amount(e.topRate) .. " dps") or ""), 0.8, 0.8, 0.8, 1, 1, 1)
 	end
 	if e.proc then GameTooltip:AddLine(C.L("A talent's or amulet's own damage."), 0.55, 0.75, 1, 1) end
+	if db.tab == "party" and not S.focus and not S.partyBaseOnly and e.ownerId then
+		GameTooltip:AddLine(C.L("Click for their skills."), 0.6, 0.85, 1)
+	end
 	if S.checkpoint or S.base then GameTooltip:AddLine(C.L("Since you pressed Reset."), 0.6, 0.6, 0.6) end
 	C.ShowTip()
 end
@@ -962,8 +1195,12 @@ local function FitWords(r, rank, e, room)
 			C.SetText(r.petTag, e.pet)
 			tagW = r.petTag:GetStringWidth() or 0
 			if tagW > left then
-				local last = string.gsub(e.pet, "^.*%s", "")
-				tagW = Fit(r.petTag, last, left)
+				if db.tab == "party" and not S.focus then
+					tagW = Fit(r.petTag, e.pet, left) -- keep the start of a long best-skill name
+				else
+					local last = string.gsub(e.pet, "^.*%s", "")
+					tagW = Fit(r.petTag, last, left)
+				end
 			end
 		end
 		if tagW and tagW > 0 then
@@ -989,15 +1226,18 @@ end
 local HEAD_L, CARET_ROOM, HEAD_GAP = 9, 14, 8
 local HEAD_R = 4 + 16 + 1 + 16 + 1 + 36 + 5 -- from the right edge to the total's end: x, ^ and Reset (Build)
 local function FitHead(tab)
+	local focus = tab.key == "party" and S.focus or nil
+	C.Vis(root.caret, not focus)
 	if not S.rate or S.rateTab ~= tab.key then S.rateRoom = 0 end
 	S.rateTab = tab.key
 	local rateW = S.rate and C.TextWidth(root.rate) or 0
 	if rateW > S.rateRoom then S.rateRoom = rateW end
 	local room = math.floor(W - HEAD_L - CARET_ROOM - HEAD_GAP - S.rateRoom - HEAD_R)
-	local key = tab.key .. "|" .. room .. "|" .. C.langStamp
+	local key = tab.key .. "|" .. room .. "|" .. C.langStamp .. "|" .. (focus and focus.name or "")
 	if S.headKey == key then return end
 	local names = { C.L(tab.name) }
 	for i = 1, table.getn(tab.short or {}) do names[i + 1] = C.L(tab.short[i]) end
+	if focus then names = { "< " .. focus.name } end
 	local w
 	for i = 1, table.getn(names) do
 		C.SetText(root.title, names[i])
@@ -1045,7 +1285,7 @@ local function StepRow(r, e, rank, slot, max, dt, now)
 	end
 
 	-- the icon: the spell's, or a hero's portrait
-	local look = e.portrait and ("portrait:" .. e.portrait) or (e.icon or (db.tab ~= "party" and QUESTION) or "class")
+	local look = e.portrait and ("portrait:" .. e.portrait) or (e.icon or ((db.tab ~= "party" or S.focus) and QUESTION) or "class")
 	if r.look ~= look then
 		r.look = look
 		if e.portrait and S.runId then
@@ -1188,9 +1428,12 @@ local function Step(dt)
 		Read()
 		if S.offset > math.max(0, S.n - db.rows) then S.offset = math.max(0, S.n - db.rows) end
 	end
-	if S.rateShown ~= S.rate or S.rateUnit ~= tab.unit then
-		S.rateShown, S.rateUnit = S.rate, tab.unit
-		C.SetText(root.rate, S.rate and (Amount(S.rate) .. " " .. tab.unit) or "")
+	-- Native party fallback has only average DPS, not a 10-second window.
+	-- Label that explicitly instead of presenting it as equivalent to recent DPS.
+	local rateUnit = (tab.key == "party" and S.usedLines) and "avg dps" or tab.unit
+	if S.rateShown ~= S.rate or S.rateUnit ~= rateUnit then
+		S.rateShown, S.rateUnit = S.rate, rateUnit
+		C.SetText(root.rate, S.rate and (Amount(S.rate) .. " " .. rateUnit) or "")
 	end
 	C.TextColor(root.rate, pal.title[1], pal.title[2], pal.title[3])
 	FitHead(tab)
@@ -1233,8 +1476,18 @@ local function Scripts(mover)
 	for i = 1, table.getn(rows) do drag.handle(rows[i].frame) end
 	root.head:SetScript("OnClick", function()
 		if GetTime() - drag.endedAt < 0.25 then return end -- the end of a drag, not a click
+		if S.focus then LeavePlayer(); return end
 		ShowMenu(not S.menuOpen)
 	end)
+	S.rowClick = function(r, button)
+		if button ~= "LeftButton" or drag.moving or GetTime() - drag.endedAt < 0.25 then return end
+		local e = r.entry
+		if db.tab ~= "party" or S.focus or S.partyBaseOnly or not e or not e.ownerId or not S.partyRun then return end
+		ShowMenu(false)
+		S.focus = { ownerId = e.ownerId, name = e.name or "?", runId = S.partyRun }
+		S.headKey, S.readClock = nil, 0
+		ClearRows() -- NOT_READY cannot display old party rows as player skills
+	end
 	S.mover = mover -- the edges save the place they leave it in
 	root:SetScript("OnMouseWheel", function()
 		if not arg1 then return end
@@ -1260,6 +1513,15 @@ C.OnInit(function()
 	C.OverCards(root) -- lit over the level-up cards' veil (Core)
 	Scripts(mover)
 	local driver = CreateFrame("Frame", "ArcaneMeterDriver")
+	-- Refresh the party overview promptly, but keep expensive owner/skill queries
+	-- on the existing half-second schedule.
+	driver:RegisterEvent("CHAT_MSG_ADDON")
+	driver:SetScript("OnEvent", function()
+		if arg1 ~= "AZSPARTY" and arg1 ~= "AZSM" then return end
+		if not db or db.tab ~= "party" or S.focus then return end
+		local remaining = math.max(0.05, PARTY_EVENT_INTERVAL - (GetTime() - (S.lastRead or -100)))
+		if S.readClock > remaining then S.readClock = remaining end
+	end)
 	local broken = false
 	driver:SetScript("OnUpdate", function()
 		if broken then return end
@@ -1284,7 +1546,8 @@ end)
 C.OnWorld(function()
 	if not db then return end
 	if db.enabled then C.TakeHud("meter") end
-	S.checkpoint, S.base, S.baseAt = nil, nil, nil -- a new world ends the game's checkpoints
+	SetPartyRun(nil) -- expire focus and owner/name associations with the old world
+	S.readClock = 0
 	for i = 1, table.getn(C.movers) do
 		if C.movers[i].frame == root then C.ApplyPos(C.movers[i]) end
 	end

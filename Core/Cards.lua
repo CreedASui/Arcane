@@ -54,7 +54,8 @@ end
 C.cardsUp, C.cardsFade = false, 0
 
 do
-	local overClock = 0
+	-- Fade tracks the game every frame; only the slower HUD-on-top refresh
+	-- is scheduled on the shared polling bus.
 	local watch = CreateFrame("Frame", "ArcaneOverCards")
 	watch:SetScript("OnUpdate", function()
 		local dt = arg1 or 0
@@ -66,9 +67,6 @@ do
 		end
 		C.cardsUp = up
 		C.cardsFade = C.Toward(C.cardsFade, up and 1 or 0, up and 10 or 6, dt)
-		overClock = overClock - dt
-		if overClock > 0 then return end
-		overClock = 1
-		pcall(C.KeepOverCards, false)
 	end)
+	C.Poll.Add("cards.layer_order", 1, function() C.KeepOverCards(false) end, true)
 end

@@ -14,7 +14,7 @@ local READ_EVERY = 1
 
 local root
 local cols = {}
-local S = { readAt = -10, broken = false, key = nil }
+local S = { broken = false, key = nil }
 local Call = C.Call
 
 ------------------------------------------------------------------------ the game's answer
@@ -215,12 +215,10 @@ local function Build()
 		f:ClearAllPoints()
 		f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 	end)
-	root:SetScript("OnShow", function() S.readAt = -10 end)
-	root:SetScript("OnUpdate", function()
-		if S.broken then return end
-		local now = GetTime()
-		if now - S.readAt < READ_EVERY then return end
-		S.readAt = now
+	-- The window refreshes immediately when opened (ToggleTalents below).
+	-- Later data polls use the shared bus, and do no work while hidden.
+	C.Poll.Add("talents.refresh", READ_EVERY, function()
+		if S.broken or not root:IsShown() then return end
 		local ok, err = pcall(Refresh)
 		if not ok then
 			S.broken = true

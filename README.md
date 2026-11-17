@@ -1,6 +1,8 @@
 # Arcane UI
 
-**Current release: v0.7.8**
+**Current release: v0.7.9**
+
+*Current stable release. Co-op meter improvements have automated test coverage; broader live multiplayer validation is ongoing.*
 
 A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethus.pl)), the World of Warcraft 1.12 roguelike. Everything is drawn in one look (dark glass, a gold rail, the timer's metal) and steps aside while you pick your cards.
 
@@ -20,7 +22,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Kills, gold and cache:** in the panel; hover for what each gives.
 - **Loot pop-up:** each drop appears with its icon, name and rarity color; earned marks appear as their own notification. Up to three stack, and the game's own pop-up returns when Loot is turned off.
 - **Stored level-ups:** Arcane's checkbox controls and mirrors the game's actual Store Level-Ups setting. When enabled, a glowing Level Up! button shows how many choices wait; its default position clears the skill bar and XP display.
-- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS (with each member's best skill) and Damage Taken, with icons, per second and shares. Resizable from any edge.
+- **Damage meter:** Damage Done, Healing Done, Boss Damage, Party DPS (with each member's best skill and optional click-to-view skill breakdown) and Damage Taken, with icons, per second and shares. Resizable from any edge.
 - **Luck medallion:** your luck and the odds of a Rare, Epic or Legendary card.
 - **Minimap:** a metal ring, your local time, the caches and the guardians' lairs (with the time until each empty lair fills); cache and lair pins fade when they overlap your arrow. The **A** button on its edge opens Arcane Options; use the **Luck** and **Damage meter** toggles in that menu to show or hide those windows. The unused stock **M** world-map shortcut is suppressed while Arcane is loaded, without overwriting saved or custom keybindings.
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
@@ -40,11 +42,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.8.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.9.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.8.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.9.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
@@ -304,6 +306,135 @@ Gives the damage numbers looks: fonts, colors and critical-hit backdrops that go
   - Preview in every look and motion.
 - A sweep of the options in all 11 languages finds no word running out of its place (495 places).
 - Not yet seen in the game: the fonts switching per crit and the added flash.
+
+### v0.7.9 — November 16, 2026
+
+**Stable release — consolidated co-op meter improvements and a comprehensive performance audit.**
+
+#### Co-op meter
+
+- **Comparable DPS:** Party DPS and Damage Done use the same 10-second recent-rate window. Party totals and damage shares remain accumulated since the start of the run or the meter's Reset checkpoint.
+- **Player breakdowns:** Select a party member to inspect their individual damage sources, talents, pets and summons. Keep player ownership tied to the game's run-scoped owner IDs, including when party membership changes.
+- **Clearer skill names:** Handle temporarily unresolved remote ability names without displaying misleading values such as `Nil`; retain valid names from the native party feed where available.
+- **Accurate fallbacks:** Clearly label legacy party averages as `avg dps` rather than presenting them as recent DPS.
+- Preserve existing Damage Done, Healing Done, Reset behavior and the intentionally removed selected-target pane.
+
+#### Performance and reliability
+
+- **Shared polling:** Consolidate low-frequency HUD and nameplate data refreshes into one lightweight scheduler while keeping real-time animations and nameplate reuse immediate.
+- **Nameplate efficiency:** Cache the native plate registry, avoid repeated WorldFrame child enumeration when unchanged, cache stable name/level strings and handle partially constructed or reused plates safely.
+- **Combat bursts:** Bound cosmetic combat-text reads to 256 events per frame, keep recent hit history in a fixed 200-entry ring and expire stale DoT/crowd-tracking identities. The game's authoritative damage accounting is unchanged.
+- Improve polling scheduler behavior when jobs unregister one another during an update.
+
+#### Validation and feedback
+
+- Repository architecture, Lua 5.1 compilation, co-op snapshot/Reset handling, combat-stream integration, nameplate lifecycle, performance regressions and installation ZIP integrity passed automated checks.
+- **Multiplayer testing note:** Co-op improvements have been reviewed and covered by automated regression tests, but have **not yet received comprehensive live multiplayer validation** across different party sizes and late-wave conditions. Wider player feedback will help identify edge cases the current testing environment cannot reproduce.
+- When reporting an issue, please include the class, party size, relevant game situation, steps to reproduce, the expected and observed behavior, and screenshots or error messages if available.
+
+Thanks to Creed for the original co-op contribution and to everyone who reported multiplayer and performance issues.
+
+### v0.7.9-beta.5 — November 16, 2026
+
+**Consolidated co-op and performance test build.** This beta combines the reviewed multiplayer meter changes and the full beta.4 performance audit on one branch, without merging into stable `main`.
+
+#### Co-op meter
+
+- Party DPS and Damage Done headings use matching **10-second recent DPS** windows; party-member DPS uses that window too.
+- Click a party member to inspect their skill damage. The native fallback is marked **avg dps** when the game cannot supply recent rates.
+- Reject unresolved remote skill names such as `Nil`, preserve valid names from the current-run legacy feed, and guard against duplicate character names.
+- Keep local Reset checkpoint totals and run/party transitions separated; damage amounts and percentages remain accumulated from run start or Reset.
+- Preserve original meter UI, row animation, existing Damage Done and Healing Done behavior, and the intentionally removed selected-target pane.
+
+#### Performance
+
+- Use the single low-frequency `Core/Poll.lua` bus for nameplate metadata, number housekeeping, FPS text, native text theming, cards, stored-level preferences, and Talents.
+- Keep combat callbacks, reactive plate reuse, and visual animations immediate; do **not** move them onto slow polling.
+- Avoid repeated WorldFrame child allocations when the native plate pool is unchanged; cache unchanged native name/level text. Retry incomplete native plate construction and clear stale names on pooled-frame reuse.
+- Limit **cosmetic** combat-event processing to two batches of 128 per frame, keep tooltip hit history in a bounded 200-sample ring, and expire stale DoT/crowd identities.
+- The game's authoritative damage ledger is untouched. Combat-text work can be bounded without changing total damage accounting.
+
+#### QA and release policy
+
+- Validate full repository architecture, Lua 5.1 compilation, owner/skill attribution, checkpoint Reset, single-README metadata, performance behavior, and the install ZIP.
+- Multiplayer volunteers are still needed to test two-player and larger parties, owner drill-downs, remote skill names, joined/left players, Reset and FPS in late waves.
+- Compare FPS and frametimes during heavy Magma Totem / Deep Wounds builds with and without Arcane. Report repeatable differences rather than assuming the game is free of its own bottlenecks.
+- **Testing only:** keep this beta off `main`. No stable merge or automated stable release without the owner's separate approval.
+
+Thanks to Creed for the original co-op contribution, and to the multiplayer testers and performance reporters for the findings.
+
+### v0.7.9-beta.4 — November 16, 2026
+
+Performance audit test build, prompted by late-game hitching reports involving Magma Totem and Deep Wounds.
+
+#### Improvements
+
+- **One polling bus:** nameplate health/debuff refreshes, damage-number housekeeping, FPS text, native text theming, stored-level preference syncing, talents reads, and the cards' layer-order check share a small keyed scheduler. Genuine frame-critical nameplate reuse and animations remain immediate.
+- **Nameplate scanning:** avoid constructing a fresh WorldFrame child array every frame when the native pool has not changed; cache unchanged native name/level strings.
+- **Combat bursts:** bound cosmetic combat-event reads to two 128-event batches per frame, preventing one burst from monopolizing a UI frame.
+- **Damage history:** replace front-of-array shifting for the 200 most recent direct hits with a fixed-size ring; preserve skill aliases and 10-second tooltip hit-rate behavior.
+- **DoT crowds:** expire old spell/target tracking and recompute each event's merge identity only when necessary.
+- **Regression coverage:** verify scheduler cadence, missed-frame coalescing, API batch limits, hit-ring semantics, and crowd-reset behavior.
+
+#### Validation
+
+- Static and Lua 5.1 behavior tests plus complete installer packaging are required.
+- In-game late-wave FPS and multiplayer comparisons are needed before any merge or stable release. This build does not claim that all engine-side frame drops are fixed.
+
+### v0.7.9-beta.3 — November 15, 2026
+
+Co-op test follow-up: make the Party DPS rate comparable to Damage Done.
+
+#### Fixed
+
+- **Matching DPS windows:** Party DPS and Damage Done now request the same 10-second recent rate for their overview headings. Party member DPS rows also display the 10-second rate.
+- **Unchanged totals:** accumulated damage, per-player damage shares, and Reset checkpoint totals still cover the run or the interval since Reset.
+- **No misleading fallback:** if recent party history is unavailable, the legacy Party DPS feed remains available and its average is explicitly marked **avg dps** rather than silently presented as recent DPS.
+- **Co-op efficiency:** the separate best-skill breakdown continues to use run/checkpoint totals and no longer requests an unnecessary recent-rate window.
+
+#### Validation
+
+- Lua regression checks cover Party DPS and Damage Done query alignment, party row rates, unavailable recent history, and Reset checkpoint semantics.
+- Multiplayer testing is still required before stable release.
+
+Thanks to the multiplayer tester who identified the rate-window mismatch.
+
+### v0.7.9-beta.2 — November 14, 2026
+
+Co-op beta follow-up: fix unresolved remote spell labels reported by multiplayer testing.
+
+#### Fixed
+
+- **Party best-skill names:** do not display textual "Nil" as a spell; accept valid names as remote metadata becomes available.
+- **Native skill-name fallback:** use current-run native party spell names for labels even when the native damage totals are older than the latest ledger answer. Damage totals retain their stricter freshness rule.
+- **Individual player details:** unresolved remote spell names no longer appear as "Nil" when opening a player's own skills.
+- **Run safety:** reject native party feeds from previous runs and ambiguous duplicate-name matches.
+
+#### Validation
+
+- Lua-executed regression cases cover unresolved and later-resolved skill names, native versus ledger freshness, owner identity, Reset and focused views.
+- Multiplayer verification remains required before stable release.
+
+Initial co-op feature proposal: Creed.
+
+### v0.7.9-beta.1 — November 14, 2026
+
+Beta test build for co-op damage-meter improvements. Stable v0.7.8 remains available; the beta needs multiplayer verification before any stable release.
+
+#### Improvements
+
+- **Party DPS:** use newer native party updates when the detailed co-op ledger temporarily reports that it is not ready; preserve the ledger's owner-ID identity and its checkpoint-based Reset behavior.
+- **Party member details:** click a player in Party DPS to view their individual skills, proc damage and combined summon damage using the existing skill-row renderer. Click the player title to return.
+- **Best skill:** retain descriptive skill labels in the party overview, including top skills from the native party feed when the detailed ledger has no resolved name.
+- **Refresh:** respond promptly to party updates, while maintaining the existing reading cadence for detailed skill snapshots.
+- **Lifecycle:** prevent old run/party identities and old rows from leaking into a newly selected player.
+
+#### Validation
+
+- Automated syntax, packaging, localization and meter-contract checks are required.
+- Multiplayer testing is still required for party transitions, skill ownership, Reset, latency and frame-rate behavior.
+
+Initial co-op feature contribution and design reference: Creed.
 
 ### v0.7.8 — November 12, 2026
 

@@ -179,6 +179,7 @@ Arcane.AddLanguage("zh", "中文", Arcane.FACE_CJK, {
 	["Last 10 seconds"] = "最近 10 秒",
 	["Share"] = "占比",
 	["Best spell"] = "最强法术",
+	["Click for their skills."] = "点击查看其技能。",
 	["A talent's or amulet's own damage."] = "天赋或护符自身的伤害。",
 	["Since you pressed Reset."] = "自你按下重置以来。",
 	["+{1} more"] = "+{1} 更多",

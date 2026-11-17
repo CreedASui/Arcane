@@ -15,7 +15,7 @@ EXPECTED_NUMBERS_ORDER = [
 ]
 CORE_ORDER = [
     "Core/Math.lua", "Core/Rendering.lua", "Core/Localization.lua",
-    "Core/Theme.lua", "Core/Storage.lua", "Core/HUD.lua",
+    "Core/Theme.lua", "Core/Storage.lua", "Core/Poll.lua", "Core/HUD.lua",
     "Core/Bars.lua", "Core/Sizing.lua", "Core/Panels.lua",
     "Core/SafeCalls.lua", "Core/Movement.lua", "Core/Options.lua",
     "Core/Commands.lua", "Core/Cards.lua", "Core/UnitFrames.lua",
@@ -47,7 +47,7 @@ TUPLE_INITIALIZED = {
     "Combat.bossNames", "Combat.frameNow",
     "CombatAPI.apiReady", "CombatAPI.active", "CombatAPI.registered",
     "CombatAPI.warnedNoApi", "CombatAPI.cursor",
-    "Lifecycle.lastNow", "Lifecycle.nextBossRefresh", "Lifecycle.nextSweep",
+    "Lifecycle.lastNow",
     "Lifecycle.errors", "Lifecycle.lastErrorAt", "Lifecycle.errorShown",
     "Lifecycle.giveUp", "Lifecycle.blocked", "Lifecycle.handlerAt",
 }

@@ -6,6 +6,7 @@ on:
       - main
       - "refactor/**"
       - "feature/**"
+      - "beta/**"
       - "release/**"
     tags:
       - "v*"
@@ -121,6 +122,15 @@ jobs:
 
       - name: Audit paired guardian bar layout
         run: python tools/audit_guardian_bars.py
+
+      - name: Exercise co-op damage meter contracts and behavior
+        run: python tools/audit_coop_meter.py
+
+      - name: Stress-test shared polling and combat-number hot paths
+        run: python tools/audit_performance.py
+
+      - name: Verify combined co-op and performance beta integration
+        run: python tools/audit_combined_integration.py
 
       - name: Audit damage-number looks and crit backdrops
         run: python tools/audit_number_looks.py

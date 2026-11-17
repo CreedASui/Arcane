@@ -162,10 +162,12 @@ C.OnInit(function()
 		f:ClearAllPoints()
 		f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 276) -- clear above the XP bar and HUD, at the tested height
 	end)
+	-- Native Options changes need a periodic sync, not an API read every
+	-- rendered frame. The button's glow/animation stays frame-driven.
+	C.Poll.Add("levelups.storing", 0.20, function() SyncStoring(true) end, true)
 	local driver = CreateFrame("Frame", "ArcaneLevelUpsDriver")
 	driver:SetScript("OnUpdate", function()
 		if S.broken then return end
-		SyncStoring(true)
 		if not db.enabled then return end
 		local dt = arg1 or 0
 		if dt > 0.1 then dt = 0.1 end

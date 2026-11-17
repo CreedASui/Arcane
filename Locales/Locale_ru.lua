@@ -179,6 +179,7 @@ Arcane.AddLanguage("ru", "Русский", Arcane.FACE_LETTERS, {
 	["Last 10 seconds"] = "Последние 10 с",
 	["Share"] = "Доля",
 	["Best spell"] = "Лучшее заклинание",
+	["Click for their skills."] = "Нажмите, чтобы увидеть умения.",
 	["A talent's or amulet's own damage."] = "Собственный урон таланта или амулета.",
 	["Since you pressed Reset."] = "С момента сброса.",
 	["+{1} more"] = "+{1} ещё",
