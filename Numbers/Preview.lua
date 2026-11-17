@@ -8,13 +8,15 @@ local C = N.Config
 -- Preview: a ring of pretend enemies around the middle of the screen.
 
 local TEST_ENEMIES = 9
--- A pretend hero's skills: four spells and a weapon swing, plus a DoT ticking
--- on every pretend enemy until it dies (then a new one takes its place).
+-- A pretend hero's skills: five spells and a weapon swing, plus a DoT ticking
+-- on every pretend enemy until it dies (then a new one takes its place). Between
+-- them they deal every spell school, so a look shows all it has.
 local TEST_SKILLS = {
 	{ id = 133, name = "Fireball", school = 4, icon = "Interface\\Icons\\Spell_Fire_FlameBolt" },
 	{ id = 116, name = "Frostbolt", school = 16, icon = "Interface\\Icons\\Spell_Frost_FrostBolt02" },
 	{ id = 403, name = "Lightning Bolt", school = 8, icon = "Interface\\Icons\\Spell_Nature_Lightning" },
 	{ id = 8921, name = "Moonfire", school = 64, icon = "Interface\\Icons\\Spell_Nature_StarFall" },
+	{ id = 585, name = "Smite", school = 2, icon = "Interface\\Icons\\Spell_Holy_HolySmite" },
 	{ school = 1 },
 }
 local TEST_DOT = { id = 172, name = "Corruption", school = 32, icon = "Interface\\Icons\\Spell_Shadow_AbominationExplosion" }
@@ -100,7 +102,7 @@ S.TestHits = function(now, dt)
 	S.testAcc = S.testAcc + dt * 30 -- hits per second
 	while S.testAcc >= 1 do
 		S.testAcc = S.testAcc - 1
-		local ev = TestEvent(math.random(1, TEST_ENEMIES), now, TEST_SKILLS[math.random(1, 5)])
+		local ev = TestEvent(math.random(1, TEST_ENEMIES), now, TEST_SKILLS[math.random(1, table.getn(TEST_SKILLS))])
 		if math.random() < 0.05 then
 			ev.kind = "miss"
 			ev.result = { key = "immune" }

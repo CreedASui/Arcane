@@ -15,15 +15,24 @@ S.layer:EnableMouse(false)
 local widgetPool, nWidgetPool = {}, 0
 local allWidgets, nAllWidgets = {}, 0
 
--- the face picked; in a language the game's own face draws (Core), that one
-local function FontPath()
-	local font = C.FONTS[C.db and C.db.font or 1] or C.FONTS[1]
-	if AUI.Face then return AUI.Face(font.path) end
+-- The file of a face, by its place in C.FONTS (the player's pick when none is given). A word
+-- (Miss, Immune) is drawn in the face the language picked draws its letters with (Core); a
+-- number's digits are in every face, so a number keeps the face asked for in any language.
+local function FontPath(index, word)
+	local font = C.FONTS[index or (C.db and C.db.font) or 1] or C.FONTS[1]
+	if word and AUI.Face then return AUI.Face(font.path) end
 	return font.path
 end
 
-local function ApplyFont(w)
-	local ok = pcall(w.text.SetFont, w.text, FontPath(), C.FONT_SIZE, "OUTLINE")
+-- Draw a widget's number in a face: a look can give a crit, or each spell school's crit,
+-- letters of its own, so the face follows the number each frame and is set only when it changes.
+S.SetFace = function(w, index, word)
+	local path = FontPath(index, word)
+	if w.face == path then
+		return
+	end
+	w.face = path
+	local ok = pcall(w.text.SetFont, w.text, path, C.FONT_SIZE, "OUTLINE")
 	if not ok or not w.text:GetFont() then
 		pcall(w.text.SetFont, w.text, C.FONTS[1].path, C.FONT_SIZE, "OUTLINE")
 	end
@@ -68,8 +77,14 @@ local function NewWidget()
 	local back = visual:CreateTexture(nil, "BACKGROUND")
 	back:SetPoint("CENTER", visual, "CENTER", 0, 0)
 	back:Hide()
-	local w = { holder = holder, visual = visual, text = text, icon = icon, edge = edge, back = back }
-	ApplyFont(w)
+	-- the flash of light a look's crit lands in: over the backdrop, under the number
+	local flash = visual:CreateTexture(nil, "BORDER")
+	flash:SetTexture(AUI.ART .. "Glow")
+	flash:SetBlendMode("ADD")
+	flash:SetPoint("CENTER", visual, "CENTER", 0, 0)
+	flash:Hide()
+	local w = { holder = holder, visual = visual, text = text, icon = icon, edge = edge, back = back, flash = flash }
+	S.SetFace(w)
 	nAllWidgets = nAllWidgets + 1
 	allWidgets[nAllWidgets] = w
 	return w
@@ -86,6 +101,7 @@ S.Layout = function(w, textWidth, iconPath, dt)
 			w.iconPath = iconPath
 		end
 	end
+	w.block = block -- a crit's backdrop is sized to the icon and number together
 	local target = -block / 2
 	if w.left == nil or w.layoutIcon ~= iconPath then
 		w.left = target
@@ -127,14 +143,18 @@ end
 S.ReleaseWidget = function(w)
 	w.holder:Hide()
 	if w.back then w.back:Hide(); w.backShown = false end
+	if w.flash then w.flash:Hide(); w.flashShown = false end
 	w.shown = false
 	nWidgetPool = nWidgetPool + 1
 	widgetPool[nWidgetPool] = w
 end
 
+-- The font, the look or the language changed: every number takes its face again as it is
+-- next drawn (S.SetFace).
 S.ApplyFontAll = function()
 	for i = 1, nAllWidgets do
-		ApplyFont(allWidgets[i])
+		allWidgets[i].face = nil
+		allWidgets[i].lastText = nil
 	end
 end
 

@@ -24,4 +24,4 @@ Damage-number fonts and critical-hit artwork
 
 The optional damage-number font choices include six bundled fonts adapted from the corresponding open font releases. Their original copyright notices and SIL Open Font License terms are retained in Fonts/NumberFonts-LICENSE.txt (Fonts/NumberFonts-LICENSE.txt); the font files are not relicensed by Arcane.
 
-The optional critical-hit backdrops reuse six effect textures from the synced Creed working base. They are only used behind critical damage numbers when selected; they do not recolor Arcane's panels, bars, medallions, or overall bronze/gold theme.
+The optional critical-hit backdrops reuse six effect textures from the synced Creed working base. Three more (Steel, Burst and Gilded) are original artwork drawn for Arcane by tools/build_crit_backdrops.py. They are only used behind critical damage numbers when selected; they do not recolor Arcane's panels, bars, medallions, or overall bronze/gold theme.

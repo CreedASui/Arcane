@@ -12,7 +12,7 @@ S.BaseScale = function(label)
 	if label.miss then
 		scale = 0.62
 	elseif label.crit then
-		scale = 1.15
+		scale = N.Looks.CritScale() -- 1.15, or as large as the look draws its crits
 	elseif label.finished then
 		scale = 0.95 -- a DoT's final total grows a little as its enemy dies
 	elseif label.merged then

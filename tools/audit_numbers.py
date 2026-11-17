@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_NUMBERS_ORDER = [
-    "Numbers/Numbers.lua", "Numbers/Widgets.lua", "Numbers/Combat.lua",
+    "Numbers/Numbers.lua", "Numbers/Looks.lua", "Numbers/Widgets.lua", "Numbers/Combat.lua",
     "Numbers/Icons.lua", "Numbers/Labels.lua", "Numbers/CombatAPI.lua",
     "Numbers/Preview.lua", "Numbers/Anchors.lua", "Numbers/Layout.lua",
     "Numbers/Culling.lua", "Numbers/Placement.lua", "Numbers/Animation.lua",
@@ -24,6 +24,7 @@ CORE_ORDER = [
 
 MODULES = {
     "Numbers/Numbers.lua": ("Config", "C"),
+    "Numbers/Looks.lua": ("Looks", "S"),
     "Numbers/Widgets.lua": ("Widgets", "S"),
     "Numbers/Combat.lua": ("Combat", "S"),
     "Numbers/Icons.lua": ("Icons", "I"),

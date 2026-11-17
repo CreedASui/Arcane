@@ -34,6 +34,7 @@ Timer/Data.lua
 Timer/Timer.lua
 
 Numbers/Numbers.lua
+Numbers/Looks.lua
 Numbers/Widgets.lua
 Numbers/Combat.lua
 Numbers/Icons.lua

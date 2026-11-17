@@ -2,6 +2,7 @@ local AUI = Arcane
 AUI.Numbers = AUI.Numbers or {}
 local N = AUI.Numbers
 N.Config = N.Config or {}
+N.Looks = N.Looks or {}
 N.Widgets = N.Widgets or {}
 N.Combat = N.Combat or {}
 N.Icons = N.Icons or {}
@@ -17,7 +18,7 @@ N.Options = N.Options or {}
 N.Commands = N.Commands or {}
 local C = N.Config
 -- Load order in Arcane.toc follows the data flow:
--- Widgets -> combat rules -> icons -> labels -> combat API -> preview -> anchors ->
+-- Looks -> widgets -> combat rules -> icons -> labels -> combat API -> preview -> anchors ->
 -- geometry -> culling -> placement -> animation -> lifecycle -> options -> commands.
 -- Shared behavior stays with its owner; other modules call that implementation.
 
@@ -84,6 +85,7 @@ C.DOT_FIRST_HOLD = 3.4       -- a DoT's number waits this long for the next tick
 C.DOT_MAX_HOLD = 3.9         -- and never longer (the game keeps a hit's place 5 s)
 C.KILL_HOLD = 1.2            -- a DoT's total stays this long once its enemy dies
 C.KILL_GRACE = 0.4           -- ticks read just after the death still count
+C.FLASH_TIME = 0.3           -- a look's crit lands in a flash of light this long
 C.CROWD_COUNT = 3            -- a spell hitting this many enemies at once merges
 C.CROWD_TICK = 3.2           -- an enemy counts this long after a DoT's tick on it
 C.CROWD_HIT = 1.6            -- and this long after any other hit
@@ -112,9 +114,11 @@ C.FONTS = {
 }
 
 C.CRIT_BACKDROPS = {
-	order = { "none", "flame", "frost", "arcane", "holy", "shadow", "storm" },
-	names = { none = "None", flame = "Flame", frost = "Frost", arcane = "Arcane", holy = "Holy", shadow = "Shadow", storm = "Storm" },
-	tex = { flame = "NumFlame", frost = "NumFrost", arcane = "NumArcane", holy = "NumHoly", shadow = "NumShadow", storm = "NumStorm" },
+	order = { "none", "flame", "frost", "arcane", "holy", "shadow", "storm", "steel", "burst", "gilded" },
+	names = { none = "None", flame = "Flame", frost = "Frost", arcane = "Arcane", holy = "Holy", shadow = "Shadow", storm = "Storm",
+		steel = "Steel", burst = "Burst", gilded = "Gilded" },
+	tex = { flame = "NumFlame", frost = "NumFrost", arcane = "NumArcane", holy = "NumHoly", shadow = "NumShadow", storm = "NumStorm",
+		steel = "NumSteel", burst = "NumBurst", gilded = "NumGilded" },
 }
 
 C.COLOR_NORMAL = { 1.00, 0.96, 0.88 }
@@ -129,6 +133,47 @@ C.SCHOOL_COLORS = {
 	[16] = { 0.52, 0.84, 1.00 }, -- Frost
 	[32] = { 0.74, 0.52, 1.00 }, -- Shadow
 	[64] = { 1.00, 0.58, 1.00 }, -- Arcane
+}
+
+-- The looks: each dresses the numbers in letters, colors and a crit backdrop of its own.
+-- "custom" is no look at all: your own font, crit backdrop and switches, as they always were.
+-- A look's `font` draws its hits and `critFont` its crits. `normal` colors a hit, `dot` a DoT's
+-- ticks, and `heat` is what the hardest hits glow toward. A crit shimmers between its two `crit`
+-- colors (`pulse` sets how fast), `critScale` large, over the `back` backdrop, landing in a
+-- `flash` of light. With `schools`, every number takes its spell school's color and a crit its
+-- school's own letters, colors and backdrop (`tint` colors a backdrop that is shared).
+C.LOOKS = {
+	order = { "custom", "elemental", "comic", "royal", "grim" },
+	names = { custom = "Custom", elemental = "Elemental", comic = "Comic", royal = "Royal", grim = "Grim" },
+	notes = {
+		custom = "Your own font and critical hit backdrop, below.",
+		elemental = "Each school in its color; a crit wears its school's letters and burst.",
+		comic = "Comic letters; harder hits glow hotter; crits burst.",
+		royal = "Carved letters; crits shimmer in gold on a plaque.",
+		grim = "Gothic letters; crits drip green over a dark void.",
+	},
+	looks = {
+		elemental = { font = "Friz Quadrata", critScale = 1.2, flash = true, pulse = 5,
+			schools = {
+				[1] = { font = "Black Ops One", back = "steel", crit = { { 1.00, 0.86, 0.58 }, { 1.00, 0.97, 0.90 } } },
+				[2] = { font = "Cinzel", back = "holy", crit = { { 1.00, 0.84, 0.32 }, { 1.00, 0.97, 0.74 } } },
+				[4] = { font = "Bangers", back = "flame", crit = { { 1.00, 0.50, 0.12 }, { 1.00, 0.84, 0.30 } } },
+				[8] = { font = "Creepster", back = "storm", tint = { 0.62, 1.00, 0.50 },
+					crit = { { 0.45, 1.00, 0.32 }, { 0.84, 1.00, 0.56 } } },
+				[16] = { font = "Cinzel", back = "frost", crit = { { 0.50, 0.82, 1.00 }, { 0.88, 0.97, 1.00 } } },
+				[32] = { font = "Pirata One", back = "shadow", crit = { { 0.72, 0.46, 1.00 }, { 0.92, 0.78, 1.00 } } },
+				[64] = { font = "Uncial Antiqua", back = "arcane", crit = { { 1.00, 0.50, 0.96 }, { 1.00, 0.84, 1.00 } } },
+			} },
+		comic = { font = "Bangers", critScale = 1.28, flash = true, pulse = 11, back = "burst",
+			normal = { 1.00, 1.00, 1.00 }, dot = { 0.80, 0.86, 0.92 }, heat = { 1.00, 0.86, 0.24 },
+			crit = { { 1.00, 0.93, 0.25 }, { 1.00, 1.00, 0.85 } } },
+		royal = { font = "Cinzel", critScale = 1.18, flash = true, pulse = 4.5, back = "gilded",
+			normal = { 1.00, 0.95, 0.84 }, dot = { 0.84, 0.79, 0.68 }, heat = { 1.00, 0.86, 0.50 },
+			crit = { { 1.00, 0.76, 0.22 }, { 1.00, 0.95, 0.62 } } },
+		grim = { font = "Pirata One", critFont = "Creepster", critScale = 1.22, flash = true, pulse = 3.6, back = "shadow",
+			normal = { 0.86, 0.90, 0.80 }, dot = { 0.62, 0.74, 0.58 }, heat = { 0.74, 1.00, 0.52 },
+			crit = { { 0.55, 1.00, 0.35 }, { 0.84, 0.66, 1.00 } } },
+	},
 }
 
 -- The three styles. Picking one sets these; the switches can then be changed.
@@ -155,7 +200,7 @@ C.MOTION_NOTES = {
 
 C.DEFAULTS = {
 	enabled = true,
-	preset = "clean", motion = "smooth", backdrop = "none",
+	preset = "clean", motion = "smooth", backdrop = "none", look = "custom",
 	maxLabels = 12, group = false, mergeAge = 0.9, misses = false, minShare = 0,
 	size = 1.0, font = 1,
 	short = true, spread = true, count = false, school = false, icons = true,
@@ -258,6 +303,9 @@ C.InitDB = function()
 	if not C.CRIT_BACKDROPS.names[C.db.backdrop or ""] then
 		C.db.backdrop = "none"
 	end
+	if not C.LOOKS.names[C.db.look or ""] then
+		C.db.look = "custom"
+	end
 end
 
 C.ApplyPreset = function(name)
@@ -269,6 +317,16 @@ C.ApplyPreset = function(name)
 		C.db[key] = value
 	end
 	C.db.preset = name
+end
+
+-- Put a look on (or "custom" for none): the numbers on screen change their letters at once.
+C.SetLook = function(name)
+	if not C.LOOKS.names[name or ""] then
+		return
+	end
+	C.db.look = name
+	N.Widgets.ApplyFontAll()
+	N.Widgets.RefreshAllText()
 end
 
 ------------------------------------------------------------------------------

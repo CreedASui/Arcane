@@ -18,6 +18,7 @@ AUI.NumbersHelp = function()
 	C.Print(C.L("/Arcane numbers crowd - merge a spell hitting 3+ enemies, on or off"))
 	C.Print(C.L("/Arcane numbers spells - merge every spell, on or off"))
 	C.Print(C.L("/Arcane numbers smooth | fountain | rise | impact - choose how numbers move"))
+	C.Print(C.L("/Arcane numbers custom | elemental | comic | royal | grim - pick a look"))
 	C.Print(C.L("/Arcane numbers preview - show some pretend numbers"))
 	C.Print(C.L("/Arcane numbers reset - default settings"))
 end
@@ -48,6 +49,10 @@ AUI.NumbersSlash = function(msg)
 		C.db.motion = command
 		N.Options.RefreshOptions()
 		C.Print(C.L("number motion: ") .. C.L(C.MOTION_NAMES[command]) .. ". " .. C.L(C.MOTION_NOTES[command]))
+	elseif C.LOOKS.names[command] then
+		C.SetLook(command)
+		N.Options.RefreshOptions()
+		C.Print(C.L("number look: ") .. C.L(C.LOOKS.names[command]) .. ". " .. C.L(C.LOOKS.notes[command]))
 	elseif command == "size" then
 		local value = tonumber(rest)
 		if value then

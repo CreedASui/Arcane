@@ -122,6 +122,9 @@ jobs:
       - name: Audit paired guardian bar layout
         run: python tools/audit_guardian_bars.py
 
+      - name: Audit damage-number looks and crit backdrops
+        run: python tools/audit_number_looks.py
+
       - name: Compile every Lua chunk and enforce local-variable limits
         shell: bash
         run: |

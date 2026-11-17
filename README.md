@@ -26,7 +26,7 @@ A clean, smooth HUD for **Azeroth Survivors** ([wow.aethus.pl](https://wow.aethu
 - **Character window:** gear slots lit in their rarity color and your run's stats grouped beside it (zeros dimmed, changes flashing); its Talents tab opens Arcane UI's talent window (your trees, points and learned talents with their ranks).
 - **Standalone Stats window:** independently track the run's 29 stats in customizable groups; choose which values appear and see changes flash green or red.
 - **Chat:** dressed to match, and kept clear of the skill bar's full Arcane medallion.
-- **Damage numbers:** calm and readable; a spell hitting a crowd adds up into one number a second, and a number that keeps stacking grows.
+- **Damage numbers:** calm and readable; a spell hitting a crowd adds up into one number a second, and a number that keeps stacking grows. Pick a **look** in their options (`/Arcane numbers`): **Custom** (your own font and critical-hit backdrop), **Elemental** (every spell school in its color, and each school's crit in its own letters, colors and burst), **Comic**, **Royal** or **Grim**. A look's crits shimmer between two colors and land in a flash of light.
 - **FPS display:** an Arcane-owned readout inside the standard movable-frame system, with a larger grab target in Move frames mode. Toggle it from Arcane Options; Ctrl+R is disabled while Arcane is loaded.
 - **Native game text:** positive buff/cast and healing feedback use Arcane's known-good text colors and font. Zone announcements such as “Tower of Azora” remain completely original; gameplay notices keep their existing Arcane theme.
 - **Damage-number customization:** six optional custom typefaces and six selectable critical-hit backdrops (Flame, Frost, Arcane, Holy, Shadow and Storm); existing defaults remain unchanged.
@@ -158,7 +158,7 @@ This document describes the source layout and the runtime rules behind it. The a
 | `Core/` | Shared math, drawing, language/font handling, saved settings, stock-HUD handoff, bars, sizing, panels, safe calls, movement, options, commands, cards and shared unit-frame helpers. |
 | `Locales/` | English source strings and translated dictionaries. |
 | `Timer/` | Boss timer data and its renderer/controller. |
-| `Numbers/` | Damage-number configuration, combat intake, icons, labels, world anchors, layout, culling, placement, animation, lifecycle, options and commands. |
+| `Numbers/` | Damage-number configuration, looks, combat intake, icons, labels, world anchors, layout, culling, placement, animation, lifecycle, options and commands. |
 | `SkillBar/` | Class/style data, visual style controller and the skill-slot/XP renderer. |
 | `Frames/` | Bosses, skulls, the player frame, party, downed-player and stored-level-up frames, native FPS readout, stock notifications and native text styling. |
 | `Minimap/` | Minimap presentation, edge button, cache pins and lair pins. |
@@ -260,13 +260,51 @@ The Hybrid-only Arcane medallion is original generated artwork adapted for Arcan
 
 The optional damage-number font choices include six bundled fonts adapted from the corresponding open font releases. Their original copyright notices and SIL Open Font License terms are retained in [Fonts/NumberFonts-LICENSE.txt](Fonts/NumberFonts-LICENSE.txt); the font files are not relicensed by Arcane.
 
-The optional critical-hit backdrops reuse six effect textures from the synced Creed working base. They are only used behind critical damage numbers when selected; they do not recolor Arcane's panels, bars, medallions, or overall bronze/gold theme.
+The optional critical-hit backdrops reuse six effect textures from the synced Creed working base. Three more (Steel, Burst and Gilded) are original artwork drawn for Arcane by `tools/build_crit_backdrops.py`. They are only used behind critical damage numbers when selected; they do not recolor Arcane's panels, bars, medallions, or overall bronze/gold theme.
 
 ## Consolidated release history
 
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### Unreleased
+
+Gives the damage numbers looks: fonts, colors and critical-hit backdrops that go together, with crits that shimmer and land in a flash.
+
+#### New
+
+- **Number looks:** pick one in the damage-number options (`/Arcane numbers`) with the new **Look** row, or type `/Arcane numbers custom | elemental | comic | royal | grim`.
+  - **Custom:** your own font, critical-hit backdrop and switches, exactly as before. It is the default, so nothing changes until a look is picked. Picking a font or a backdrop by hand also goes back to Custom.
+  - **Elemental:** every hit in its spell school's color. Each school's crit has its own letters, colors and backdrop: Black Ops One on Steel for physical, Cinzel on Holy, Bangers on Flame for fire, Creepster on green lightning for nature, Cinzel on Frost, Pirata One on Shadow, Uncial Antiqua on Arcane.
+  - **Comic:** Bangers letters; a hit glows hotter the harder it lands against the usual hits; crits burst on a comic-book star.
+  - **Royal:** Cinzel letters in ivory; crits shimmer in gold on a dark plaque in a gold rim.
+  - **Grim:** Pirata One letters, bone pale; crits drip in Creepster, green and violet, over the shadow void.
+- **Dynamic crits:** in a look, a crit lands white-hot in a flash of light, then shimmers between its two colors, drawn a little larger. A number that turns crit as its crits come to outweigh the rest gets its letters, backdrop and flash at that moment.
+- **Three new critical-hit backdrops:** Steel (crossing blade slashes), Burst (a comic star) and Gilded (a plaque). Original art, drawn by `tools/build_crit_backdrops.py`; Custom can pick them too.
+
+#### Fixed
+
+- **Critical-hit backdrop size:** the backdrop now spans the icon and number it sits behind. It never knew their width before (`w.block` was never set), so every backdrop had the same size.
+- **Stepping back through the backdrops:** `<` on None now goes round to the last backdrop. Lua 5.0's `math.mod` keeps a negative remainder, so the step went nowhere.
+- **Untranslated words:** the motions, their notes, the backdrop names, "Critical hit backdrop", "Motion" and the motion slash help had no translations. All are now in the 11 languages, with the looks' words.
+- **Words in their language's letters:** a Miss or Immune keeps the face its language draws with; a number's digits keep the look's face in every language.
+
+#### Validation
+
+- `tools/audit_number_looks.py` (in CI) checks that every font and backdrop a look names exists, that the backdrop art is a valid texture, that every word is translated, and that Custom keeps the player's picks. It fails on v0.7.8. All 14 audits pass, and all 75 Lua chunks compile under Lua 5.0.
+- In a stand-in client running Arcane's load order, 53 behaviour checks pass here; 38 of them fail on v0.7.8. They cover:
+  - Custom unchanged;
+  - each look's letters, colors and backdrop for hits and for each school's crits;
+  - the shimmer, flash and white-hot landing;
+  - Comic's heat;
+  - a number turning crit;
+  - Russian and its words;
+  - the backdrop fitting its number;
+  - the options window, the slash commands, Reset and an unknown saved look;
+  - Preview in every look and motion.
+- A sweep of the options in all 11 languages finds no word running out of its place (495 places).
+- Not yet seen in the game: the fonts switching per crit and the added flash.
+
 ### v0.7.8 — November 12, 2026
 
 Improves the readability and spacing of guardian health bars while preserving the compact two-column layout.

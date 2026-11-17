@@ -7,22 +7,6 @@ local C = N.Config
 ------------------------------------------------------------------------------
 -- Drawing
 
-local function LabelColor(label)
-	if label.miss then
-		return C.COLOR_MISS
-	end
-	if label.crit then
-		return C.COLOR_CRIT
-	end
-	if C.db.school and label.school and C.SCHOOL_COLORS[label.school] then
-		return C.SCHOOL_COLORS[label.school]
-	end
-	if not label.direct and not label.finished then
-		return C.COLOR_DOT
-	end
-	return C.COLOR_NORMAL
-end
-
 local function LabelText(label)
 	local text
 	if label.miss then
@@ -116,6 +100,17 @@ local function Animate(label, now, dt, ratio)
 			label.shown = label.total
 		end
 	end
+	-- The moment it became a crit (as it first shows, or when its crits come to outweigh the
+	-- rest): its backdrop bursts in from here, and so do a look's flash and white-hot letters.
+	if label.crit then
+		if not label.critAt then
+			label.critAt = now
+		end
+	else
+		label.critAt = nil
+	end
+	-- Its letters: a look can draw a crit, or each spell school's crit, in a face of its own.
+	N.Widgets.SetFace(w, N.Looks.Font(label), label.miss)
 	local text = LabelText(label)
 	if text ~= w.lastText then
 		w.text:SetText(text)
@@ -132,16 +127,16 @@ local function Animate(label, now, dt, ratio)
 	end
 	N.Widgets.Layout(w, label.textWidth or 0, icon, dt)
 
-	-- Colours blend into each other (a crit's gold, a DoT's final white).
-	local color = LabelColor(label)
-	local r, g, b = color[1], color[2], color[3]
+	-- Colours blend into each other (a crit's gold, a DoT's final white, a look's shimmer).
+	local goalR, goalG, goalB = N.Looks.Color(label, now)
+	local r, g, b = goalR, goalG, goalB
 	if w.r then
 		local k = 1 - math.exp(-dt * 12)
 		r = w.r + (r - w.r) * k
 		g = w.g + (g - w.g) * k
 		b = w.b + (b - w.b) * k
-		if math.abs(r - color[1]) + math.abs(g - color[2]) + math.abs(b - color[3]) < 0.01 then
-			r, g, b = color[1], color[2], color[3]
+		if math.abs(r - goalR) + math.abs(g - goalG) + math.abs(b - goalB) < 0.01 then
+			r, g, b = goalR, goalG, goalB
 		end
 	end
 	if w.r ~= r or w.g ~= g or w.b ~= b then
@@ -196,22 +191,34 @@ local function Animate(label, now, dt, ratio)
 		alpha = alpha * AUI.Smooth(shownAge / C.FADE_IN)
 	end
 	alpha = AUI.Clamp(alpha, 0, 1)
-	local back = label.crit and C.CRIT_BACKDROPS.tex[C.db.backdrop or "none"]
+	-- A crit's backdrop: the one picked, or the look's own (each school's, in Elemental).
+	local critAge = now - (label.critAt or label.shownAt)
+	local span = (w.block or 60) * 1.6 + 46 -- as wide as the icon and number together, and some
+	local back, tint = N.Looks.Backdrop(label)
 	if back and w.back then
 		if w.backTex ~= back then
 			w.back:SetTexture(AUI.ART .. back)
 			w.backTex = back
 		end
-		local grow = AUI.Smooth(shownAge / 0.16)
-		local settle = AUI.Smooth((shownAge - 0.16) / 0.22)
+		local wantTint = tint or false
+		if w.backTint ~= wantTint then
+			if tint then
+				w.back:SetVertexColor(tint[1], tint[2], tint[3])
+			else
+				w.back:SetVertexColor(1, 1, 1)
+			end
+			w.backTint = wantTint
+		end
+		local grow = AUI.Smooth(critAge / 0.16)
+		local settle = AUI.Smooth((critAge - 0.16) / 0.22)
 		local burst = 0.6 + 0.55 * grow - 0.15 * settle
-		local backWidth = math.floor(((w.block or 60) * 1.6 + 46) * burst)
+		local backWidth = math.floor(span * burst)
 		if w.backW ~= backWidth then
 			w.back:SetWidth(backWidth)
 			w.back:SetHeight(math.min(math.floor(backWidth * 0.5 + 0.5), C.FONT_SIZE * 3.4))
 			w.backW = backWidth
 		end
-		local glow = 0.78 + 0.22 * (1 - AUI.Smooth(shownAge / 0.45)) + 0.06 * math.sin(now * 5 + (label.born or 0))
+		local glow = 0.78 + 0.22 * (1 - AUI.Smooth(critAge / 0.45)) + 0.06 * math.sin(now * 5 + (label.born or 0))
 		if not w.backA or math.abs(w.backA - glow) > 0.01 then
 			w.back:SetAlpha(AUI.Clamp(glow, 0, 1))
 			w.backA = glow
@@ -220,6 +227,22 @@ local function Animate(label, now, dt, ratio)
 	elseif w.backShown then
 		w.back:Hide()
 		w.backShown = false
+	end
+	-- A look's crit lands in a flash of light: it swells out from behind the number and is gone.
+	local flashR, flashG, flashB = N.Looks.Flash(label)
+	if flashR and critAge < C.FLASH_TIME and w.flash then
+		local t = critAge / C.FLASH_TIME
+		local flashWidth = math.floor(span * (0.55 + 0.75 * AUI.Smooth(t)))
+		if w.flashW ~= flashWidth then
+			w.flash:SetWidth(flashWidth)
+			w.flash:SetHeight(math.floor(flashWidth * 0.62 + 0.5))
+			w.flashW = flashWidth
+		end
+		w.flash:SetVertexColor(flashR, flashG, flashB, 0.95 * (1 - t) * (1 - t))
+		if not w.flashShown then w.flash:Show(); w.flashShown = true end
+	elseif w.flashShown then
+		w.flash:Hide()
+		w.flashShown = false
 	end
 	if not w.alpha or math.abs(w.alpha - alpha) > 0.004 then
 		w.holder:SetAlpha(alpha)
