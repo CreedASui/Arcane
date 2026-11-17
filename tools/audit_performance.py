@@ -57,6 +57,20 @@ check("table.remove(v.times, 1)" not in core_math
 check("frame.arcaneNameplatesRawName" in plate_state
       and "frame.arcaneNameplatesRawLevel" in plate_state,
       "native plate text must cache unchanged raw values")
+for path, poll_key in (
+    ("Core/Cards.lua", "cards.layer_order"),
+    ("Frames/LevelUps.lua", "levelups.storing"),
+    ("Frames/Framerate.lua", "fps.readout"),
+    ("Frames/Framerate.lua", "fps.theme"),
+    ("Frames/NativeText.lua", "native_text.theme"),
+    ("Windows/Talents.lua", "talents.refresh"),
+):
+    check(f'C.Poll.Add("{poll_key}"' in source(path),
+          f"{path} must schedule {poll_key} on the shared bus")
+check('SetScript("OnUpdate"' not in source("Frames/Framerate.lua")
+      and 'SetScript("OnUpdate"' not in source("Frames/NativeText.lua")
+      and 'SetScript("OnUpdate"' not in source("Windows/Talents.lua"),
+      "slow FPS, native text and talents readers must not own individual frame drivers")
 
 run_lua("shared keyed polling cadence, coalescing, errors and removal", r'''
 Arcane = { errors = {}, Print = function(msg) end }

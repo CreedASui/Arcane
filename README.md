@@ -275,7 +275,7 @@ Performance audit test build, prompted by late-game hitching reports involving M
 
 #### Improvements
 
-- **One polling bus:** nameplate health/debuff refreshes and damage-number housekeeping share a small keyed scheduler. Genuine frame-critical nameplate reuse and damage-number animation remain immediate.
+- **One polling bus:** nameplate health/debuff refreshes, damage-number housekeeping, FPS text, native text theming, stored-level preference syncing, talents reads, and the cards' layer-order check share a small keyed scheduler. Genuine frame-critical nameplate reuse and animations remain immediate.
 - **Nameplate scanning:** avoid constructing a fresh WorldFrame child array every frame when the native pool has not changed; cache unchanged native name/level strings.
 - **Combat bursts:** bound cosmetic combat-event reads to two 128-event batches per frame, preventing one burst from monopolizing a UI frame.
 - **Damage history:** replace front-of-array shifting for the 200 most recent direct hits with a fixed-size ring; preserve skill aliases and 10-second tooltip hit-rate behavior.
