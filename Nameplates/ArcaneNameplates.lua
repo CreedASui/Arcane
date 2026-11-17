@@ -98,11 +98,20 @@ local function DiscoverNativePool(children)
 					local registered, success = SafeCall("plate registration", RegisterPlate, frame)
 					if registered and success then checkedWorldChildren[frame] = true
 					else retry = true end
-				elseif frame.GetWidth and frame:GetWidth() > 0
-						and frame.GetHeight and frame:GetHeight() > 0 then
-						checkedWorldChildren[frame] = true
 				else
-					retry = true -- plate may still be constructing its native regions
+					-- The native button can be sized before its FontStrings and
+					-- StatusBar are constructed. Retry plausible anonymous plates.
+					local width = frame.GetWidth and frame:GetWidth()
+					local height = frame.GetHeight and frame:GetHeight()
+					local anonymous = not frame.GetName or frame:GetName() == nil
+					if anonymous and width and height and width > 0 and width <= 640
+							and height > 0 and height <= 192 then
+						retry = true
+					elseif width and height and width > 0 and height > 0 then
+						checkedWorldChildren[frame] = true
+					else
+						retry = true
+					end
 				end
 			else
 				checkedWorldChildren[frame] = true

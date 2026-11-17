@@ -232,7 +232,9 @@ local function RegisterPlate(frame, knownPlates, orderedPlates)
 	local oldName = frame.arcaneNameplatesPlateName
 	local reactivated = frame.arcaneNameplatesPendingReuse or not frame.arcaneNameplatesWasShown
 	frame.arcaneNameplatesPendingReuse = nil
-	local nameChanged = currentName and currentName ~= oldName
+	-- A reused plate may have no name for its first frame. Clearing the
+	-- previous unit name avoids showing a stale boss-style overlay.
+	local nameChanged = currentName ~= oldName
 	local changed = not known or nameChanged or reactivated
 
 	if known and changed then
@@ -240,7 +242,7 @@ local function RegisterPlate(frame, knownPlates, orderedPlates)
 		-- The native pool keeps the same six regions and StatusBar for the frame's lifetime.
 		RestoreNativeState(frame)
 	end
-	if currentName then frame.arcaneNameplatesPlateName = currentName end
+	frame.arcaneNameplatesPlateName = currentName
 	if currentLevel then
 		frame.arcaneNameplatesPlateLevel = currentLevel
 	elseif changed then

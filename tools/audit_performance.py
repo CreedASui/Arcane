@@ -312,4 +312,55 @@ driver.OnUpdate()
 assert(styled==5, "style revisions must still restyle existing plates")
 ''')
 
+
+run_lua("reused native nameplate clears stale boss identity before next name", r'''
+Arcane = {Nameplates={}}
+dofile("Nameplates/State.lua")
+local state=Arcane.Nameplates.State
+local function native(kind, text, width, height)
+  local o={kind=kind, text=text, width=width, height=height, shown=true, alpha=1,
+           regions={}, children={},scripts={}}
+  function o:GetObjectType() return self.kind end
+  function o:GetWidth() return self.width end
+  function o:GetHeight() return self.height end
+  function o:GetName() return nil end
+  function o:GetText() return self.text end
+  function o:GetRegions() return unpack(self.regions) end
+  function o:GetChildren() return unpack(self.children) end
+  function o:GetScript(name) return self.scripts[name] end
+  function o:SetScript(name,fn) self.scripts[name]=fn end
+  function o:IsShown() return self.shown end
+  function o:IsVisible() return self.shown end
+  function o:Show() self.shown=true end
+  function o:Hide() self.shown=false end
+  function o:GetAlpha() return self.alpha end
+  function o:SetAlpha(v) self.alpha=v end
+  return o
+end
+local root=native("Button",nil,185,30)
+local name=native("FontString","Boss",nil,nil)
+local level=native("FontString","70",nil,nil)
+root.regions={native("Texture"),native("Texture"),name,level,
+              native("Texture"),native("Texture")}
+root.children={native("StatusBar",nil,90,10)}
+local known,ordered={},{}
+local registered,changed=state.RegisterPlate(root,known,ordered)
+assert(registered and changed and root.arcaneNameplatesPlateName=="Boss"
+       and root.arcaneNameplatesPlateLevel==70)
+root.scripts.OnHide()
+root.scripts.OnShow()
+name.text=nil
+level.text=nil
+registered,changed=state.RegisterPlate(root,known,ordered)
+assert(registered and changed and root.arcaneNameplatesPlateName==nil
+       and root.arcaneNameplatesPlateLevel==nil,
+       "reusing an unnamed native plate must not show its previous boss")
+name.text="Totem"
+level.text="25"
+registered,changed=state.RegisterPlate(root,known,ordered)
+assert(registered and changed and root.arcaneNameplatesPlateName=="Totem"
+       and root.arcaneNameplatesPlateLevel==25
+       and #ordered==1, "new identity must restyle without duplicating pool entries")
+''')
+
 print("PASS: performance-specific static and Lua 5.1 behavior guardrails")
