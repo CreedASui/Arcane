@@ -1,6 +1,6 @@
 # Arcane UI
 
-**Current release: v0.7.9-beta.4**
+**Current release: v0.7.9-beta.5**
 
 *Beta testing only. The current public stable release remains v0.7.8.*
 
@@ -42,11 +42,11 @@ Every optional HUD part can be turned on or off, sized and moved. Arcane Namepla
 
 The addon's load map, `Arcane.toc`, stays at the repository root. Lua modules are grouped by responsibility under `Core/`, `Timer/`, `Numbers/`, `SkillBar/`, `Frames/`, `Minimap/`, `Windows/`, `Nameplates/`, `Loot/` and `Locales/`. `Art/` and `Fonts/` also stay at the addon root so the game's existing asset paths remain unchanged. The repository itself is not the install folder. For a release ZIP, place the root files and all module and asset folders inside a top-level folder named `Arcane/`, then zip that folder. The ZIP must open to `Arcane/Arcane.toc` — never a branch-named folder such as `Arcane-main/`.
 
-The release asset is named `ArcaneV0.7.9-beta.4.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
+The release asset is named `ArcaneV0.7.9-beta.5.zip`. The complete release history and detailed version notes are embedded below in this README. The tag publisher extracts the matching version section from this document for each GitHub Release. GitHub Actions runs the architecture and regression audits, compiles every Lua chunk with Lua 5.1, and builds an installable test ZIP for pull requests and supported branch pushes. Merging a change into `main` only runs the audits and builds a test installer, without creating a tag or a release page. **Releases require your manual approval after in-game testing:** open GitHub Actions, choose **Arcane QA and Manual Release**, select **Run workflow** on `main`, and click **Run workflow**. That one approval runs the full checks again and, only if they pass, creates the matching version tag, publishes the release notes from this README, and attaches the verified ZIP. A tag already belonging to an older commit cannot be moved; bump the version for the next release. Rerunning the approved workflow can repair a release for the exact same tagged commit. These automated checks do not replace a live test in the client's Lua 5.0 runtime.
 
 ## Install
 
-1. Download `ArcaneV0.7.9-beta.4.zip` from [Releases](../../releases).
+1. Download `ArcaneV0.7.9-beta.5.zip` from [Releases](../../releases).
 2. Unzip it into your game's `Interface/AddOns` folder. You should end up with `Interface/AddOns/Arcane/Arcane.toc`.
 3. The folder must stay named `Arcane`: the game loads it by that name, and your settings are kept under it.
 
@@ -269,6 +269,35 @@ The optional critical-hit backdrops reuse six effect textures from the synced Cr
 Add each new release as a dated section at the top of this embedded history. GitHub Actions extracts the matching versioned section from this README when publishing a tag.
 
 <!-- RELEASE_HISTORY_BEGIN -->
+### v0.7.9-beta.5 — November 16, 2026
+
+**Consolidated co-op and performance test build.** This beta combines the reviewed multiplayer meter changes and the full beta.4 performance audit on one branch, without merging into stable `main`.
+
+#### Co-op meter
+
+- Party DPS and Damage Done headings use matching **10-second recent DPS** windows; party-member DPS uses that window too.
+- Click a party member to inspect their skill damage. The native fallback is marked **avg dps** when the game cannot supply recent rates.
+- Reject unresolved remote skill names such as `Nil`, preserve valid names from the current-run legacy feed, and guard against duplicate character names.
+- Keep local Reset checkpoint totals and run/party transitions separated; damage amounts and percentages remain accumulated from run start or Reset.
+- Preserve original meter UI, row animation, existing Damage Done and Healing Done behavior, and the intentionally removed selected-target pane.
+
+#### Performance
+
+- Use the single low-frequency `Core/Poll.lua` bus for nameplate metadata, number housekeeping, FPS text, native text theming, cards, stored-level preferences, and Talents.
+- Keep combat callbacks, reactive plate reuse, and visual animations immediate; do **not** move them onto slow polling.
+- Avoid repeated WorldFrame child allocations when the native plate pool is unchanged; cache unchanged native name/level text.
+- Limit **cosmetic** combat-event processing to two batches of 128 per frame, keep tooltip hit history in a bounded 200-sample ring, and expire stale DoT/crowd identities.
+- The game's authoritative damage ledger is untouched. Combat-text work can be bounded without changing total damage accounting.
+
+#### QA and release policy
+
+- Validate full repository architecture, Lua 5.1 compilation, owner/skill attribution, checkpoint Reset, single-README metadata, performance behavior, and the install ZIP.
+- Multiplayer volunteers are still needed to test two-player and larger parties, owner drill-downs, remote skill names, joined/left players, Reset and FPS in late waves.
+- Compare FPS and frametimes during heavy Magma Totem / Deep Wounds builds with and without Arcane. Report repeatable differences rather than assuming the game is free of its own bottlenecks.
+- **Testing only:** keep this beta off `main`. No stable merge or automated stable release without the owner's separate approval.
+
+Thanks to Creed for the original co-op contribution, and to the multiplayer testers and performance reporters for the findings.
+
 ### v0.7.9-beta.4 — November 16, 2026
 
 Performance audit test build, prompted by late-game hitching reports involving Magma Totem and Deep Wounds.
